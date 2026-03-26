@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Frontend build output
+frontend/dist/
+frontend/build/
+
+# Backend build output
+backend/build/
+backend/.gradle/
+backend/out/
+*.class
+*.jar
+*.war
+
+# Gradle
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+npm-debug.log*
