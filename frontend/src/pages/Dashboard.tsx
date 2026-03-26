@@ -1,0 +1,159 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { projectsApi } from '../api'
+import type { Project, ProjectCategory } from '../types'
+
+const CATEGORY_ICONS: Record<ProjectCategory, string> = {
+  KNITTING: '🧶',
+  CROCHET: '🪡',
+  SEWING: '🧵',
+}
+const CATEGORY_LABELS: Record<ProjectCategory, string> = {
+  KNITTING: 'Knitting',
+  CROCHET: 'Crochet',
+  SEWING: 'Sewing',
+}
+
+function categoryBadgeClass(cat: ProjectCategory) {
+  if (cat === 'KNITTING') return 'badge-knitting'
+  if (cat === 'CROCHET') return 'badge-crochet'
+  return 'badge-sewing'
+}
+
+export default function Dashboard() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [filter, setFilter] = useState<ProjectCategory | 'ALL'>('ALL')
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    projectsApi.getAll().then(setProjects).finally(() => setLoading(false))
+  }, [])
+
+  const filtered = filter === 'ALL' ? projects : projects.filter(p => p.category === filter)
+  const counts = {
+    ALL: projects.length,
+    KNITTING: projects.filter(p => p.category === 'KNITTING').length,
+    CROCHET: projects.filter(p => p.category === 'CROCHET').length,
+    SEWING: projects.filter(p => p.category === 'SEWING').length,
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome */}
+      <div className="bg-gradient-to-br from-sand-green/40 to-sand-blue/40 rounded-2xl p-5">
+        <h2 className="text-lg font-semibold text-gray-800">Welcome back 👋</h2>
+        <p className="text-sm text-warm-gray mt-1">
+          {projects.length === 0 ? 'Start your first project!' : `You have ${projects.length} project${projects.length !== 1 ? 's' : ''}`}
+        </p>
+      </div>
+
+      {/* Category stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {(['KNITTING', 'CROCHET', 'SEWING'] as ProjectCategory[]).map(cat => (
+          <button
+            key={cat}
+            onClick={() => setFilter(filter === cat ? 'ALL' : cat)}
+            className={`card flex flex-col items-center gap-1.5 cursor-pointer transition-all hover:shadow-md ${
+              filter === cat ? 'ring-2 ring-sand-green-dark' : ''
+            }`}
+          >
+            <span className="text-2xl">{CATEGORY_ICONS[cat]}</span>
+            <span className="text-xl font-semibold text-gray-800">{counts[cat]}</span>
+            <span className="text-xs text-warm-gray">{CATEGORY_LABELS[cat]}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Recent projects */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-800">
+            {filter === 'ALL' ? 'Recent Projects' : CATEGORY_LABELS[filter]}
+          </h3>
+          {filter !== 'ALL' && (
+            <button onClick={() => setFilter('ALL')} className="text-xs text-warm-gray hover:text-gray-700">
+              Clear filter
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12 text-warm-gray">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="card text-center py-10">
+            <p className="text-warm-gray text-sm">No projects yet.</p>
+            <button
+              onClick={() => navigate('/projects/new')}
+              className="btn-primary mt-4 text-sm"
+            >
+              Create your first project
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(project => (
+              <ProjectCard key={project.id} project={project} onClick={() => navigate(`/projects/${project.id}`)} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+  const progress = project.rowCounter && project.rowCounter.totalRows > 0
+    ? Math.round((project.rowCounter.currentRow / project.rowCounter.totalRows) * 100)
+    : null
+
+  return (
+    <button onClick={onClick} className="card w-full text-left hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-gray-800 truncate">{project.name}</span>
+            <span className={categoryBadgeClass(project.category)}>
+              {CATEGORY_LABELS[project.category]}
+            </span>
+          </div>
+          {project.description && (
+            <p className="text-sm text-warm-gray mt-1 truncate">{project.description}</p>
+          )}
+          {project.materials.length > 0 && (
+            <div className="flex gap-1.5 mt-2 flex-wrap">
+              {project.materials.slice(0, 4).map(m => (
+                <div
+                  key={m.id}
+                  className="w-4 h-4 rounded-full border border-white shadow-sm"
+                  style={{ backgroundColor: m.colorHex }}
+                  title={`${m.color} ${m.type}`}
+                />
+              ))}
+              {project.materials.length > 4 && (
+                <span className="text-xs text-warm-gray self-center">+{project.materials.length - 4}</span>
+              )}
+            </div>
+          )}
+        </div>
+        <span className="text-2xl flex-shrink-0">
+          {CATEGORY_ICONS[project.category]}
+        </span>
+      </div>
+      {progress !== null && (
+        <div className="mt-3">
+          <div className="flex justify-between text-xs text-warm-gray mb-1">
+            <span>Row {project.rowCounter!.currentRow} / {project.rowCounter!.totalRows}</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="w-full bg-soft-brown/30 rounded-full h-1.5">
+            <div
+              className="bg-sand-green-dark h-1.5 rounded-full transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </button>
+  )
+}

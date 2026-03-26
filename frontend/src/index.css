@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream text-gray-800 font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-sand-green hover:bg-sand-green-dark text-gray-800 font-medium py-2 px-4 rounded-xl transition-colors duration-200 shadow-sm;
+  }
+  .btn-secondary {
+    @apply bg-sand-blue hover:bg-sand-blue-dark text-gray-800 font-medium py-2 px-4 rounded-xl transition-colors duration-200 shadow-sm;
+  }
+  .btn-ghost {
+    @apply text-warm-gray hover:bg-soft-brown/30 font-medium py-2 px-4 rounded-xl transition-colors duration-200;
+  }
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-sand-blue/25 p-5;
+  }
+  .input {
+    @apply w-full border border-sand-blue/35 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-blue-medium bg-white;
+  }
+  .textarea {
+    @apply w-full border border-sand-blue/35 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-blue-medium bg-white resize-none;
+  }
+  .select {
+    @apply w-full border border-sand-blue/35 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sand-blue-medium bg-white;
+  }
+  .badge {
+    @apply text-xs font-medium px-2.5 py-1 rounded-full;
+  }
+  .badge-knitting {
+    @apply badge bg-sand-green/40 text-gray-700;
+  }
+  .badge-crochet {
+    @apply badge bg-sand-blue/40 text-gray-700;
+  }
+  .badge-sewing {
+    @apply badge bg-soft-brown/40 text-gray-700;
+  }
+}
