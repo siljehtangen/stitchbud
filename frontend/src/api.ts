@@ -13,7 +13,7 @@ export const projectsApi = {
   create: (data: { name: string; description: string; category: ProjectCategory; tags: string }) =>
     api.post<Project>('/projects', data).then(r => r.data),
 
-  update: (id: number, data: Partial<{ name: string; description: string; tags: string; imageUrl: string; notes: string; recipeText: string }>) =>
+  update: (id: number, data: Partial<{ name: string; description: string; tags: string; imageUrl: string; notes: string; recipeText: string; craftDetails: string }>) =>
     api.put<Project>(`/projects/${id}`, data).then(r => r.data),
 
   delete: (id: number) =>

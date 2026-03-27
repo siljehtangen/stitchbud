@@ -1,19 +1,52 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 
-const navItems = [
-  { to: '/', label: 'Home', icon: '🏠', exact: true },
-  { to: '/projects', label: 'Projects', icon: '🧶', exact: false },
-]
+function LanguageSwitcher() {
+  const { i18n: i18nInstance } = useTranslation()
+  const current = i18nInstance.language
+
+  function setLang(lang: string) {
+    i18n.changeLanguage(lang)
+    localStorage.setItem('lang', lang)
+  }
+
+  return (
+    <div className="flex items-center bg-soft-brown/20 rounded-full p-0.5 gap-0.5">
+      {(['no', 'en'] as const).map(lang => (
+        <button
+          key={lang}
+          onClick={() => setLang(lang)}
+          className={`text-xs font-semibold px-3 py-1 rounded-full transition-all ${
+            current === lang
+              ? 'bg-white text-gray-800 shadow-sm'
+              : 'text-warm-gray hover:text-gray-700'
+          }`}
+        >
+          {lang.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export default function Layout() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
+
+  const navItems = [
+    { to: '/', label: t('nav_home'), icon: '🏠', exact: true },
+    { to: '/projects', label: t('nav_projects'), icon: '🧶', exact: false },
+  ]
+
   return (
     <div className="min-h-screen flex flex-col max-w-2xl mx-auto">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-cream/90 backdrop-blur-sm border-b border-sand-blue/40 px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-gray-800 tracking-tight">
-          <span className="text-sand-green-dark">✦</span> Stitchbook
+          <span className="text-sand-green-dark">✦</span> {t('app_name')}
         </h1>
+        <LanguageSwitcher />
       </header>
 
       {/* Main content */}
@@ -25,7 +58,7 @@ export default function Layout() {
       <button
         onClick={() => navigate('/projects/new')}
         className="fixed bottom-20 right-6 w-14 h-14 bg-sand-green hover:bg-sand-green-dark shadow-lg rounded-full flex items-center justify-center text-2xl transition-all duration-200 hover:scale-105 z-10"
-        aria-label="Add project"
+        aria-label={t('add_project_aria')}
       >
         +
       </button>

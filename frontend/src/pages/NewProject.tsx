@@ -1,32 +1,39 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { ProjectCategory } from '../types'
 
-const CATEGORIES: { value: ProjectCategory; label: string; icon: string }[] = [
-  { value: 'KNITTING', label: 'Knitting', icon: '🧶' },
-  { value: 'CROCHET', label: 'Crochet', icon: '🪡' },
-  { value: 'SEWING', label: 'Sewing', icon: '🧵' },
-]
+const CATEGORY_ICONS: Record<ProjectCategory, string> = {
+  KNITTING: '🧶',
+  CROCHET: '🪡',
+  SEWING: '🧵',
+}
 
 export default function NewProject() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<ProjectCategory>('KNITTING')
-  const [tags, setTags] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const categories: { value: ProjectCategory }[] = [
+    { value: 'KNITTING' },
+    { value: 'CROCHET' },
+    { value: 'SEWING' },
+  ]
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) { setError('Name is required'); return }
+    if (!name.trim()) { setError(t('name_required')); return }
     setSaving(true)
     try {
-      const project = await projectsApi.create({ name: name.trim(), description, category, tags })
+      const project = await projectsApi.create({ name: name.trim(), description, category, tags: '' })
       navigate(`/projects/${project.id}`)
     } catch {
-      setError('Failed to create project. Is the backend running?')
+      setError(t('failed_create_project'))
     } finally {
       setSaving(false)
     }
@@ -38,15 +45,15 @@ export default function NewProject() {
         <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2 text-warm-gray">
           ←
         </button>
-        <h2 className="text-xl font-semibold text-gray-800">New Project</h2>
+        <h2 className="text-xl font-semibold text-gray-800">{t('new_project')}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Category selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')}</label>
           <div className="grid grid-cols-3 gap-2">
-            {CATEGORIES.map(cat => (
+            {categories.map(cat => (
               <button
                 key={cat.value}
                 type="button"
@@ -57,8 +64,8 @@ export default function NewProject() {
                     : 'border-soft-brown/30 hover:border-sand-green/50'
                 }`}
               >
-                <span className="text-2xl">{cat.icon}</span>
-                <span className="text-sm font-medium">{cat.label}</span>
+                <span className="text-2xl">{CATEGORY_ICONS[cat.value]}</span>
+                <span className="text-sm font-medium">{t(`category_${cat.value.toLowerCase()}` as const)}</span>
               </button>
             ))}
           </div>
@@ -67,36 +74,25 @@ export default function NewProject() {
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Project Name <span className="text-red-400">*</span>
+            {t('project_name_label')} <span className="text-red-400">*</span>
           </label>
           <input
             className="input"
             value={name}
             onChange={e => { setName(e.target.value); setError('') }}
-            placeholder="e.g. Winter Sweater"
+            placeholder={t('project_name_placeholder')}
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('description_label')}</label>
           <textarea
             className="textarea"
             rows={3}
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="What are you making?"
-          />
-        </div>
-
-        {/* Tags */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Tags</label>
-          <input
-            className="input"
-            value={tags}
-            onChange={e => setTags(e.target.value)}
-            placeholder="winter, gift, wool (comma-separated)"
+            placeholder={t('description_placeholder')}
           />
         </div>
 
@@ -107,7 +103,7 @@ export default function NewProject() {
         )}
 
         <button type="submit" disabled={saving} className="btn-primary w-full">
-          {saving ? 'Creating...' : 'Create Project'}
+          {saving ? t('creating') : t('create_project')}
         </button>
       </form>
     </div>

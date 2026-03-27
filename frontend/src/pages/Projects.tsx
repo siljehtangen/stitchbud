@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
 
-const CATEGORY_LABELS: Record<ProjectCategory, string> = {
-  KNITTING: 'Knitting',
-  CROCHET: 'Crochet',
-  SEWING: 'Sewing',
-}
 const CATEGORY_ICONS: Record<ProjectCategory, string> = {
   KNITTING: '🧶',
   CROCHET: '🪡',
@@ -19,6 +15,7 @@ export default function Projects() {
   const [filter, setFilter] = useState<ProjectCategory | 'ALL'>('ALL')
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   useEffect(() => {
     projectsApi.getAll().then(setProjects).finally(() => setLoading(false))
@@ -26,9 +23,11 @@ export default function Projects() {
 
   const filtered = filter === 'ALL' ? projects : projects.filter(p => p.category === filter)
 
+  const categoryLabel = (cat: ProjectCategory) => t(`category_${cat.toLowerCase()}` as const)
+
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-gray-800">Projects</h2>
+      <h2 className="text-xl font-semibold text-gray-800">{t('projects_heading')}</h2>
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
@@ -42,18 +41,18 @@ export default function Projects() {
                 : 'bg-soft-brown/20 text-warm-gray hover:bg-soft-brown/40'
             }`}
           >
-            {cat === 'ALL' ? 'All' : `${CATEGORY_ICONS[cat]} ${CATEGORY_LABELS[cat]}`}
+            {cat === 'ALL' ? t('filter_all') : `${CATEGORY_ICONS[cat]} ${categoryLabel(cat)}`}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-warm-gray">Loading...</div>
+        <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
       ) : filtered.length === 0 ? (
         <div className="card text-center py-10">
-          <p className="text-warm-gray text-sm">No projects found.</p>
+          <p className="text-warm-gray text-sm">{t('no_projects_found')}</p>
           <button onClick={() => navigate('/projects/new')} className="btn-primary mt-4 text-sm">
-            Add project
+            {t('add_project')}
           </button>
         </div>
       ) : (

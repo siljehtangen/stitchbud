@@ -1,10 +1,19 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { projectsApi, fileUrl } from '../api'
 import type { Project, PatternCell, ProjectCategory, ProjectFile } from '../types'
 
-const CATEGORY_LABELS: Record<ProjectCategory, string> = {
-  KNITTING: 'Knitting', CROCHET: 'Crochet', SEWING: 'Sewing',
+const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
+  KNITTING: [
+    { key: 'needleSize', labelKey: 'needle_size' },
+    { key: 'circularNeedleLength', labelKey: 'circular_needle_length' },
+    { key: 'gauge', labelKey: 'gauge' },
+  ],
+  CROCHET: [
+    { key: 'hookSize', labelKey: 'hook_size' },
+  ],
+  SEWING: [],
 }
 
 const PALETTE = [
@@ -19,6 +28,7 @@ type Tab = 'info' | 'materials' | 'recipe' | 'knit' | 'overview'
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('info')
@@ -29,6 +39,7 @@ export default function ProjectDetail() {
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState('')
   const [recipeText, setRecipeText] = useState('')
+  const [craftDetails, setCraftDetails] = useState<Record<string, string>>({})
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -40,6 +51,7 @@ export default function ProjectDetail() {
       setNotes(p.notes)
       setTags(p.tags)
       setRecipeText(p.recipeText)
+      try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch { setCraftDetails({}) }
     }).finally(() => setLoading(false))
   }, [projectId])
 
@@ -62,22 +74,36 @@ export default function ProjectDetail() {
     autoSave(updated)
   }
 
+  function handleCraftDetailChange(key: string, value: string) {
+    const updated = { ...craftDetails, [key]: value }
+    setCraftDetails(updated)
+    autoSave({ craftDetails: JSON.stringify(updated) })
+  }
+
   async function handleDelete() {
-    if (!confirm(`Delete "${project?.name}"? This cannot be undone.`)) return
+    if (!confirm(t('delete_confirm', { name: project?.name }))) return
     await projectsApi.delete(projectId)
     navigate('/')
   }
 
-  if (loading) return <div className="text-center py-20 text-warm-gray">Loading...</div>
-  if (!project) return <div className="text-center py-20 text-warm-gray">Project not found</div>
+  if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
+  if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
+
+  const knitTabLabel = (cat: ProjectCategory) => {
+    if (cat === 'KNITTING') return t('tab_knit')
+    if (cat === 'CROCHET') return t('tab_crochet')
+    return t('tab_sew')
+  }
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'info', label: 'Info', icon: '📝' },
-    { id: 'materials', label: 'Materials', icon: '🧶' },
-    { id: 'recipe', label: 'Recipe', icon: '📖' },
-    { id: 'knit', label: 'Knit', icon: '✦' },
-    { id: 'overview', label: 'Overview', icon: '⊞' },
+    { id: 'info', label: t('tab_info'), icon: '📝' },
+    { id: 'materials', label: t('tab_materials'), icon: '🧶' },
+    { id: 'recipe', label: t('tab_recipe'), icon: '📖' },
+    { id: 'knit', label: knitTabLabel(project.category), icon: project.category === 'SEWING' ? '✂️' : '✦' },
+    { id: 'overview', label: t('tab_overview'), icon: '⊞' },
   ]
+
+  const categoryLabel = (cat: ProjectCategory) => t(`category_${cat.toLowerCase()}` as const)
 
   return (
     <div className="space-y-4">
@@ -85,46 +111,43 @@ export default function ProjectDetail() {
         <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2">←</button>
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
-          <span className="text-xs text-warm-gray">{CATEGORY_LABELS[project.category]}</span>
+          <span className="text-xs text-warm-gray">{categoryLabel(project.category)}</span>
         </div>
-        <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">Delete</button>
+        <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">{t('delete')}</button>
       </div>
 
       <div className="flex gap-1 bg-sand-blue/20 p-1 rounded-xl">
-        {tabs.map(t => (
+        {tabs.map(t_ => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={t_.id}
+            onClick={() => setTab(t_.id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 px-1 rounded-lg text-xs font-medium transition-colors ${
-              tab === t.id ? 'bg-white shadow-sm text-gray-800' : 'text-warm-gray hover:text-gray-700'
+              tab === t_.id ? 'bg-white shadow-sm text-gray-800' : 'text-warm-gray hover:text-gray-700'
             }`}
           >
-            <span>{t.icon}</span>
-            <span>{t.label}</span>
+            <span>{t_.icon}</span>
+            <span>{t_.label}</span>
           </button>
         ))}
       </div>
 
       {tab === 'info' && (
         <div className="space-y-4">
-          <Field label="Name">
+          <Field label={t('field_name')}>
             <input className="input" value={name} onChange={e => handleInfoChange('name', e.target.value)} />
           </Field>
-          <Field label="Description">
-            <textarea className="textarea" rows={2} value={description} onChange={e => handleInfoChange('description', e.target.value)} />
+          <Field label={t('field_description')}>
+            <textarea className="textarea" rows={4} value={description} onChange={e => handleInfoChange('description', e.target.value)} placeholder={t('describe_project')} />
           </Field>
-          <Field label="Notes">
-            <textarea className="textarea" rows={5} value={notes} onChange={e => handleInfoChange('notes', e.target.value)} placeholder="Any notes about your project..." />
-          </Field>
-          <Field label="Tags">
-            <input className="input" value={tags} onChange={e => handleInfoChange('tags', e.target.value)} placeholder="winter, gift (comma-separated)" />
-          </Field>
-          <p className="text-xs text-warm-gray text-right">Auto-saving...</p>
+          <p className="text-xs text-warm-gray text-right">{t('auto_saving')}</p>
         </div>
       )}
 
       {tab === 'materials' && (
-        <MaterialsTab project={project} projectId={projectId} onUpdate={setProject} />
+        <MaterialsTab
+          project={project} projectId={projectId} onUpdate={setProject}
+          craftDetails={craftDetails} onCraftDetailChange={handleCraftDetailChange}
+        />
       )}
 
       {tab === 'recipe' && (
@@ -144,9 +167,9 @@ export default function ProjectDetail() {
       {tab === 'overview' && (
         <OverviewTab
           project={project}
-          name={name} description={description} notes={notes} tags={tags} recipeText={recipeText}
+          name={name} description={description} recipeText={recipeText}
+          craftDetails={craftDetails}
           projectId={projectId}
-          onUpdate={setProject}
         />
       )}
     </div>
@@ -154,9 +177,11 @@ export default function ProjectDetail() {
 }
 
 // ── Materials Tab ──────────────────────────────────────────────
-function MaterialsTab({ project, projectId, onUpdate }: {
+function MaterialsTab({ project, projectId, onUpdate, craftDetails, onCraftDetailChange }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
+  craftDetails: Record<string, string>; onCraftDetailChange: (key: string, val: string) => void
 }) {
+  const { t } = useTranslation()
   const [matType, setMatType] = useState('')
   const [matColor, setMatColor] = useState('')
   const [matColorHex, setMatColorHex] = useState('#C6D8B8')
@@ -179,10 +204,28 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     } finally { setSaving(false) }
   }
 
+  const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
+
   return (
     <div className="space-y-3">
+      <div className="card space-y-3">
+        <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('details_heading')}</h4>
+        <div className="grid grid-cols-2 gap-3">
+          {craftFields.map(({ key, labelKey }) => (
+            <Field key={key} label={t(labelKey as Parameters<typeof t>[0])}>
+              <input
+                className="input text-sm py-2"
+                value={craftDetails[key] ?? ''}
+                onChange={e => onCraftDetailChange(key, e.target.value)}
+                placeholder={t(labelKey as Parameters<typeof t>[0])}
+              />
+            </Field>
+          ))}
+        </div>
+      </div>
+
       {project.materials.length === 0 && !adding && (
-        <p className="text-sm text-warm-gray text-center py-4">No materials added yet.</p>
+        <p className="text-sm text-warm-gray text-center py-4">{t('no_materials_yet')}</p>
       )}
       {project.materials.map(m => (
         <div key={m.id} className="card flex items-center gap-3">
@@ -201,27 +244,27 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       ))}
       {adding ? (
         <form onSubmit={handleAdd} className="card space-y-3">
-          <h4 className="font-medium text-sm text-gray-800">Add Material</h4>
+          <h4 className="font-medium text-sm text-gray-800">{t('add_material_heading')}</h4>
           <div className="grid grid-cols-2 gap-2">
-            <Field label="Type *">
-              <input className="input text-sm py-2" value={matType} onChange={e => setMatType(e.target.value)} placeholder="Yarn, Fabric..." />
+            <Field label={t('type_label')}>
+              <input className="input text-sm py-2" value={matType} onChange={e => setMatType(e.target.value)} placeholder={t('type_placeholder')} />
             </Field>
-            <Field label="Color name">
-              <input className="input text-sm py-2" value={matColor} onChange={e => setMatColor(e.target.value)} placeholder="Sage green" />
+            <Field label={t('color_name_label')}>
+              <input className="input text-sm py-2" value={matColor} onChange={e => setMatColor(e.target.value)} placeholder={t('color_name_placeholder')} />
             </Field>
-            <Field label="Amount">
+            <Field label={t('amount_label')}>
               <input className="input text-sm py-2" value={matAmount} onChange={e => setMatAmount(e.target.value)} placeholder="100" />
             </Field>
-            <Field label="Unit">
+            <Field label={t('unit_label')}>
               <select className="select text-sm py-2" value={matUnit} onChange={e => setMatUnit(e.target.value)}>
-                <option value="g">g</option>
-                <option value="m">m</option>
-                <option value="yards">yards</option>
-                <option value="skeins">skeins</option>
+                <option value="g">{t('unit_g')}</option>
+                <option value="m">{t('unit_m')}</option>
+                <option value="yards">{t('unit_yards')}</option>
+                <option value="skeins">{t('unit_skeins')}</option>
               </select>
             </Field>
           </div>
-          <Field label="Color">
+          <Field label={t('color_label')}>
             <div className="flex gap-1.5 flex-wrap pt-1">
               {PALETTE.map(c => (
                 <button key={c} type="button" onClick={() => setMatColorHex(c)}
@@ -232,12 +275,12 @@ function MaterialsTab({ project, projectId, onUpdate }: {
             </div>
           </Field>
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="btn-primary text-sm flex-1">{saving ? 'Adding...' : 'Add'}</button>
-            <button type="button" onClick={() => setAdding(false)} className="btn-ghost text-sm">Cancel</button>
+            <button type="submit" disabled={saving} className="btn-primary text-sm flex-1">{saving ? t('adding') : t('add')}</button>
+            <button type="button" onClick={() => setAdding(false)} className="btn-ghost text-sm">{t('cancel')}</button>
           </div>
         </form>
       ) : (
-        <button onClick={() => setAdding(true)} className="btn-secondary w-full text-sm">+ Add Material</button>
+        <button onClick={() => setAdding(true)} className="btn-secondary w-full text-sm">{t('add_material_btn')}</button>
       )}
     </div>
   )
@@ -248,6 +291,7 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
   recipeText: string; files: ProjectFile[]; projectId: number
   onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void
 }) {
+  const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -269,26 +313,26 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
 
   return (
     <div className="space-y-4">
-      <Field label="Recipe / Pattern Instructions">
+      <Field label={t('recipe_label')}>
         <textarea
           className="textarea"
           rows={10}
           value={recipeText}
           onChange={e => onRecipeChange(e.target.value)}
-          placeholder="Write your recipe, pattern instructions, or notes here..."
+          placeholder={t('recipe_placeholder')}
         />
       </Field>
-      <p className="text-xs text-warm-gray text-right -mt-2">Auto-saving...</p>
+      <p className="text-xs text-warm-gray text-right -mt-2">{t('auto_saving')}</p>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Attachments</span>
+          <span className="text-sm font-medium text-gray-700">{t('attachments_label')}</span>
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
             className="btn-secondary text-xs py-1.5 px-3"
           >
-            {uploading ? 'Uploading...' : '+ Upload file'}
+            {uploading ? t('uploading') : t('upload_file')}
           </button>
           <input
             ref={fileRef}
@@ -301,7 +345,7 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
 
         {files.length === 0 ? (
           <div className="text-center py-6 border-2 border-dashed border-soft-brown/30 rounded-xl">
-            <p className="text-sm text-warm-gray">No files yet. Upload a PDF, Word doc, or image.</p>
+            <p className="text-sm text-warm-gray">{t('no_files_yet')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -343,9 +387,13 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
 function KnitTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
+  const { t } = useTranslation()
   const hasCounter = !!project.rowCounter
   const hasGrid = project.category !== 'SEWING' && !!project.patternGrid
   const sideBySide = hasCounter && hasGrid
+
+  const counterLabel = project.category === 'SEWING' ? t('progress_counter') : t('stitch_counter')
+  const gridLabel = t('pattern_grid')
 
   const counterWidget = hasCounter && (
     <StitchCounterWidget
@@ -375,12 +423,12 @@ function KnitTab({ project, projectId, onUpdate }: {
     return (
       <div className="flex gap-0 items-start min-h-0">
         <div className="flex-1 min-w-0 overflow-x-auto pr-3">
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">Stitch Counter</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{counterLabel}</h3>
           {counterWidget}
         </div>
         <div className="w-px self-stretch bg-sand-blue/30 flex-shrink-0" />
         <div className="flex-1 min-w-0 overflow-x-auto pl-3">
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">Pattern Grid</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{gridLabel}</h3>
           {gridWidget}
         </div>
       </div>
@@ -391,13 +439,13 @@ function KnitTab({ project, projectId, onUpdate }: {
     <div className="space-y-6">
       {hasCounter && (
         <div>
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">Stitch Counter</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{counterLabel}</h3>
           {counterWidget}
         </div>
       )}
       {hasGrid && (
         <div>
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">Pattern Grid</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{gridLabel}</h3>
           {gridWidget}
         </div>
       )}
@@ -406,19 +454,27 @@ function KnitTab({ project, projectId, onUpdate }: {
 }
 
 // ── Overview Tab ───────────────────────────────────────────────
-function OverviewTab({ project, name, description, notes, tags, recipeText, projectId, onUpdate }: {
-  project: Project; name: string; description: string; notes: string; tags: string; recipeText: string
-  projectId: number; onUpdate: (p: Project) => void
+function OverviewTab({ project, name, description, recipeText, craftDetails, projectId }: {
+  project: Project; name: string; description: string; recipeText: string
+  craftDetails: Record<string, string>; projectId: number
 }) {
+  const { t, i18n } = useTranslation()
   const fileIcon = (ft: string) =>
     ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
   function downloadOverview() {
     const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-    const materialsHtml = project.materials.length > 0 ? `
+    const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
+    const filledCraftFields = craftFields.filter(f => craftDetails[f.key]?.trim())
+    const craftDetailsHtml = filledCraftFields.map(({ key, labelKey }) =>
+      `<div class="craft-field"><span class="field-label">${esc(t(labelKey as Parameters<typeof t>[0]))}:</span> ${esc(craftDetails[key])}</div>`
+    ).join('')
+    const hasMaterialSection = filledCraftFields.length > 0 || project.materials.length > 0
+    const materialsHtml = hasMaterialSection ? `
       <section>
-        <h2>Materials</h2>
+        <h2>${esc(t('section_materials'))}</h2>
+        ${craftDetailsHtml ? `<div class="craft-details">${craftDetailsHtml}</div>` : ''}
         ${project.materials.map(m => `
           <div class="material">
             <span class="swatch" style="background:${m.colorHex}"></span>
@@ -435,10 +491,12 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
 
     const recipeHtml = (recipeText || project.files.length > 0) ? `
       <section>
-        <h2>Recipe</h2>
+        <h2>${esc(t('section_recipe'))}</h2>
         ${filesHtml ? `<div class="attachments">${filesHtml}</div>` : ''}
         ${recipeText ? `<p class="pretext">${esc(recipeText)}</p>` : ''}
       </section>` : ''
+
+    const categoryLabel = t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])
 
     const counterHtml = (() => {
       if (!project.rowCounter) return ''
@@ -460,8 +518,8 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
       }).join('')
       return `
       <section>
-        <h2>Stitch Counter</h2>
-        <p class="counter-stats">${completedRounds} / ${rounds} rounds &middot; ${done} / ${total} stitches &middot; ${pct}%</p>
+        <h2>${esc(t('section_stitch_counter'))}</h2>
+        <p class="counter-stats">${completedRounds} / ${rounds} · ${done} / ${total} · ${pct}%</p>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
         <table class="stitch-grid"><tbody>${rows}</tbody></table>
       </section>`
@@ -479,16 +537,13 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
       ).join('')
       return `
       <section>
-        <h2>Pattern Grid</h2>
+        <h2>${esc(t('section_pattern_grid'))}</h2>
         <table class="pattern-grid"><tbody>${tableRows}</tbody></table>
       </section>`
     })()
 
-    const tagList = tags ? tags.split(',').filter(Boolean).map(t =>
-      `<span class="tag">${esc(t.trim())}</span>`).join('') : ''
-
     const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="${i18n.language}">
 <head>
   <meta charset="UTF-8">
   <title>${esc(name)} — Stitchbook</title>
@@ -500,7 +555,8 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
     h2{font-size:.8em;text-transform:uppercase;letter-spacing:.1em;color:#6FA8BC;border-bottom:1px solid #d6ebf2;padding-bottom:6px;margin-bottom:14px}
     p{line-height:1.7;margin:0 0 10px}
     .pretext{white-space:pre-wrap}
-    .tag{display:inline-block;background:#e8f5f8;border-radius:12px;padding:2px 10px;font-size:.78em;margin:2px;color:#555}
+    .craft-details{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:12px;font-size:.9em}
+    .craft-field{color:#555}.field-label{color:#888;font-size:.85em}
     .material{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:.95em}
     .swatch{width:16px;height:16px;border-radius:50%;border:1px solid #ccc;flex-shrink:0;display:inline-block}
     .attachments{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
@@ -521,12 +577,8 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
 </head>
 <body>
   <h1>${esc(name)}</h1>
-  <p class="meta">${esc(CATEGORY_LABELS[project.category])}${tagList ? ' &nbsp;·&nbsp; ' + tagList : ''}</p>
-  ${description || notes ? `<section>
-    <h2>Info</h2>
-    ${description ? `<p>${esc(description)}</p>` : ''}
-    ${notes ? `<p class="pretext">${esc(notes)}</p>` : ''}
-  </section>` : ''}
+  <p class="meta">${esc(categoryLabel)}</p>
+  ${description ? `<section><h2>${esc(t('section_info'))}</h2><p class="pretext">${esc(description)}</p></section>` : ''}
   ${materialsHtml}
   ${recipeHtml}
   ${counterHtml}
@@ -544,43 +596,51 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
     URL.revokeObjectURL(url)
   }
 
+  const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
+  const filledCraftFields = craftFields.filter(f => craftDetails[f.key]?.trim())
+  const hasMaterials = project.materials.length > 0
+
   return (
     <div className="space-y-5">
       <div className="flex justify-end">
         <button onClick={downloadOverview} className="btn-secondary text-sm flex items-center gap-2">
-          <span>↓</span> Download overview
+          <span>↓</span> {t('download_overview')}
         </button>
       </div>
-      <Section title="Info">
+      <Section title={t('section_info')}>
         <h3 className="font-semibold text-gray-800 text-base">{name}</h3>
-        {description && <p className="text-sm text-warm-gray">{description}</p>}
-        {notes && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{notes}</p>}
-        {tags && (
-          <div className="flex gap-1.5 flex-wrap pt-1">
-            {tags.split(',').filter(Boolean).map(t => (
-              <span key={t} className="text-xs bg-soft-brown/20 text-warm-gray px-2 py-0.5 rounded-full">{t.trim()}</span>
-            ))}
-          </div>
-        )}
+        {description && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{description}</p>}
       </Section>
 
-      {project.materials.length > 0 && (
-        <Section title="Materials">
-          <div className="space-y-2">
-            {project.materials.map(m => (
-              <div key={m.id} className="flex items-center gap-2.5">
-                <div className="w-5 h-5 rounded-full shadow-sm border border-white flex-shrink-0" style={{ backgroundColor: m.colorHex }} />
-                <span className="text-sm text-gray-700">
-                  {m.type}{m.color ? ` — ${m.color}` : ''}{m.amount ? ` (${m.amount} ${m.unit})` : ''}
-                </span>
-              </div>
-            ))}
-          </div>
+      {(filledCraftFields.length > 0 || hasMaterials) && (
+        <Section title={t('section_materials')}>
+          {filledCraftFields.length > 0 && (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-3">
+              {filledCraftFields.map(({ key, labelKey }) => (
+                <div key={key}>
+                  <span className="text-xs text-warm-gray">{t(labelKey as Parameters<typeof t>[0])}: </span>
+                  <span className="text-sm text-gray-700">{craftDetails[key]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {hasMaterials && (
+            <div className="space-y-2">
+              {project.materials.map(m => (
+                <div key={m.id} className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full shadow-sm border border-white flex-shrink-0" style={{ backgroundColor: m.colorHex }} />
+                  <span className="text-sm text-gray-700">
+                    {m.type}{m.color ? ` — ${m.color}` : ''}{m.amount ? ` (${m.amount} ${m.unit})` : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
       )}
 
       {(recipeText || project.files.length > 0) && (
-        <Section title="Recipe">
+        <Section title={t('section_recipe')}>
           {project.files.length > 0 && (
             <div className="flex gap-2 flex-wrap">
               {project.files.map(f => {
@@ -604,13 +664,13 @@ function OverviewTab({ project, name, description, notes, tags, recipeText, proj
       )}
 
       {project.rowCounter && (
-        <Section title="Stitch Counter">
+        <Section title={t('section_stitch_counter')}>
           <StitchCounterReadOnly counter={project.rowCounter} />
         </Section>
       )}
 
       {project.category !== 'SEWING' && project.patternGrid && (
-        <Section title="Pattern Grid">
+        <Section title={t('section_pattern_grid')}>
           <PatternGridReadOnly
             rows={project.patternGrid.rows}
             cols={project.patternGrid.cols}
@@ -627,6 +687,7 @@ function StitchCounterWidget({ counter, onSave }: {
   counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
   onSave: (stitchesPerRound: number, totalRounds: number, checked: number[]) => void
 }) {
+  const { t } = useTranslation()
   const [spr, setSpr] = useState(counter.stitchesPerRound)
   const [rounds, setRounds] = useState(counter.totalRounds)
   const [checked, setChecked] = useState<Set<number>>(() => {
@@ -671,18 +732,18 @@ function StitchCounterWidget({ counter, onSave }: {
   if (!configured) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-warm-gray">Set up your stitch counter to start tracking:</p>
+        <p className="text-sm text-warm-gray">{t('setup_counter')}</p>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Stitches per round">
+          <Field label={t('stitches_per_round')}>
             <input type="number" className="input" min={1} max={500}
               value={editSpr} onChange={e => setEditSpr(parseInt(e.target.value) || 1)} />
           </Field>
-          <Field label="Total rounds">
+          <Field label={t('total_rounds')}>
             <input type="number" className="input" min={1} max={1000}
               value={editRounds} onChange={e => setEditRounds(parseInt(e.target.value) || 1)} />
           </Field>
         </div>
-        <button onClick={handleConfigure} className="btn-primary w-full">Start counting</button>
+        <button onClick={handleConfigure} className="btn-primary w-full">{t('start_counting')}</button>
       </div>
     )
   }
@@ -697,7 +758,7 @@ function StitchCounterWidget({ counter, onSave }: {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm flex-wrap gap-1">
-        <span className="text-warm-gray">{completedRounds} / {rounds} rounds · {doneCount} / {totalStitches} stitches</span>
+        <span className="text-warm-gray">{t('rounds_stitches', { completedRounds, rounds, done: doneCount, total: totalStitches })}</span>
         <span className="text-warm-gray text-xs">{progress}%</span>
       </div>
       <div className="w-full bg-soft-brown/30 rounded-full h-1.5">
@@ -738,10 +799,10 @@ function StitchCounterWidget({ counter, onSave }: {
 
       <div className="flex gap-2 pt-1">
         <button onClick={handleReset} className="btn-ghost text-xs border border-soft-brown/30 rounded-lg py-1.5 px-3">
-          Reset all
+          {t('reset_all')}
         </button>
         <button onClick={() => setConfigured(false)} className="btn-ghost text-xs border border-soft-brown/30 rounded-lg py-1.5 px-3">
-          Change setup
+          {t('change_setup')}
         </button>
       </div>
     </div>
@@ -753,6 +814,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
   rows: number; cols: number; cellDataJson: string
   onSave: (cells: PatternCell[], rows: number, cols: number) => void
 }) {
+  const { t } = useTranslation()
   const [rows, setRows] = useState(initRows)
   const [cols, setCols] = useState(initCols)
   const [cells, setCells] = useState<PatternCell[]>(() => {
@@ -793,11 +855,11 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
         <button
           onClick={() => setMode('color')}
           className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'color' ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
-        >Paint</button>
+        >{t('paint')}</button>
         <button
           onClick={() => setMode('erase')}
           className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'erase' ? 'bg-soft-brown text-white' : 'bg-soft-brown/20 text-warm-gray'}`}
-        >Erase</button>
+        >{t('erase')}</button>
         <div className="flex gap-1 flex-wrap ml-1">
           {PALETTE.map(c => (
             <button key={c} onClick={() => { setSelectedColor(c); setMode('color') }}
@@ -810,13 +872,13 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
       </div>
 
       <div className="flex gap-2 items-center text-xs flex-wrap">
-        <span className="text-warm-gray">Rows</span>
+        <span className="text-warm-gray">{t('rows_label')}</span>
         <input type="number" value={rows} min={1} max={50} onChange={e => setRows(parseInt(e.target.value) || 1)}
           className="input py-1 px-2 text-xs w-14" />
-        <span className="text-warm-gray">Cols</span>
+        <span className="text-warm-gray">{t('cols_label')}</span>
         <input type="number" value={cols} min={1} max={50} onChange={e => setCols(parseInt(e.target.value) || 1)}
           className="input py-1 px-2 text-xs w-14" />
-        <button onClick={applyResize} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">Apply</button>
+        <button onClick={applyResize} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">{t('apply')}</button>
       </div>
 
       <div className="overflow-auto">
@@ -836,7 +898,8 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
           )}
         </div>
       </div>
-      <p className="text-xs text-warm-gray">Auto-saving grid...</p>
+
+      <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>
     </div>
   )
 }
@@ -845,6 +908,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
 function StitchCounterReadOnly({ counter }: {
   counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
 }) {
+  const { t } = useTranslation()
   const spr = counter.stitchesPerRound
   const rounds = counter.totalRounds
   const checked: Set<number> = (() => {
@@ -860,7 +924,7 @@ function StitchCounterReadOnly({ counter }: {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-warm-gray">{completedRounds} / {rounds} rounds · {doneCount} / {totalStitches} stitches</span>
+        <span className="text-warm-gray">{t('rounds_stitches', { completedRounds, rounds, done: doneCount, total: totalStitches })}</span>
         <span className="text-warm-gray text-xs">{progress}%</span>
       </div>
       <div className="w-full bg-soft-brown/30 rounded-full h-1.5">

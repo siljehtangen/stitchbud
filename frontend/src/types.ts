@@ -42,6 +42,7 @@ export interface Project {
   imageUrl?: string
   notes: string
   recipeText: string
+  craftDetails: string
   materials: Material[]
   files: ProjectFile[]
   rowCounter?: RowCounter
