@@ -34,7 +34,7 @@ class ProjectService(
         val project = Project(name = req.name, description = req.description, category = req.category, tags = req.tags)
         val saved = projectRepository.save(project)
         saved.rowCounter = RowCounter(project = saved)
-        saved.patternGrid = PatternGrid(project = saved)
+        saved.patternGrids.add(PatternGrid(project = saved))
         return projectRepository.save(saved).toDto()
     }
 
@@ -91,15 +91,26 @@ class ProjectService(
         return projectRepository.save(project).toDto()
     }
 
-    fun updatePatternGrid(projectId: Long, req: UpdatePatternGridRequest): ProjectDto {
+    fun createPatternGrid(projectId: Long): ProjectDto {
         val project = projectRepository.findById(projectId).orElseThrow { RuntimeException("Project not found") }
-        project.patternGrid?.let {
-            it.rows = req.rows
-            it.cols = req.cols
-            it.cellData = req.cellData
-        } ?: run {
-            project.patternGrid = PatternGrid(rows = req.rows, cols = req.cols, cellData = req.cellData, project = project)
-        }
+        project.patternGrids.add(PatternGrid(project = project))
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun updatePatternGrid(projectId: Long, gridId: Long, req: UpdatePatternGridRequest): ProjectDto {
+        val project = projectRepository.findById(projectId).orElseThrow { RuntimeException("Project not found") }
+        val grid = project.patternGrids.find { it.id == gridId } ?: throw RuntimeException("Grid not found")
+        grid.rows = req.rows
+        grid.cols = req.cols
+        grid.cellData = req.cellData
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun deletePatternGrid(projectId: Long, gridId: Long): ProjectDto {
+        val project = projectRepository.findById(projectId).orElseThrow { RuntimeException("Project not found") }
+        project.patternGrids.removeIf { it.id == gridId }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -151,7 +162,7 @@ class ProjectService(
         materials = materials.map { MaterialDto(it.id, it.type, it.color, it.colorHex, it.amount, it.unit) },
         files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
         rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
-        patternGrid = patternGrid?.let { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
+        patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
         createdAt = createdAt, updatedAt = updatedAt
     )
 }

@@ -48,9 +48,17 @@ class ProjectController(private val projectService: ProjectService) {
     fun updateRowCounter(@PathVariable id: Long, @RequestBody req: UpdateRowCounterRequest) =
         projectService.updateRowCounter(id, req)
 
-    @PutMapping("/{id}/pattern-grid")
-    fun updatePatternGrid(@PathVariable id: Long, @RequestBody req: UpdatePatternGridRequest) =
-        projectService.updatePatternGrid(id, req)
+    @PostMapping("/{id}/pattern-grids")
+    fun createPatternGrid(@PathVariable id: Long) =
+        projectService.createPatternGrid(id)
+
+    @PutMapping("/{id}/pattern-grids/{gridId}")
+    fun updatePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long, @RequestBody req: UpdatePatternGridRequest) =
+        projectService.updatePatternGrid(id, gridId, req)
+
+    @DeleteMapping("/{id}/pattern-grids/{gridId}")
+    fun deletePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long) =
+        projectService.deletePatternGrid(id, gridId)
 
     @PostMapping("/{id}/files", consumes = ["multipart/form-data"])
     fun uploadFile(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =

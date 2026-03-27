@@ -23,8 +23,8 @@ data class Project(
     var files: MutableList<ProjectFile> = mutableListOf(),
     @OneToOne(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     var rowCounter: RowCounter? = null,
-    @OneToOne(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    var patternGrid: PatternGrid? = null,
+    @OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    var patternGrids: MutableList<PatternGrid> = mutableListOf(),
     var createdAt: Long = System.currentTimeMillis(),
     var updatedAt: Long = System.currentTimeMillis()
 )
