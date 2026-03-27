@@ -1,14 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { projectsApi, fileUrl } from '../api'
-import type { Project, PatternCell, ProjectCategory, ProjectFile } from '../types'
+import { projectsApi, libraryApi } from '../api'
+import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem } from '../types'
 
+// Gauge removed; only needle/hook sizes remain per category
 const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
   KNITTING: [
     { key: 'needleSize', labelKey: 'needle_size' },
     { key: 'circularNeedleLength', labelKey: 'circular_needle_length' },
-    { key: 'gauge', labelKey: 'gauge' },
   ],
   CROCHET: [
     { key: 'hookSize', labelKey: 'hook_size' },
@@ -21,6 +21,16 @@ const PALETTE = [
   '#8B7355', '#A8C49A', '#9DC4CF', '#E8D5B0',
   '#F28B82', '#FBBC04', '#34A853', '#4285F4',
   '#000000', '#FFFFFF', '#888888', '#CC6699',
+]
+
+const GRID_PRESETS = [
+  { label: '5×5', rows: 5, cols: 5 },
+  { label: '10×10', rows: 10, cols: 10 },
+  { label: '10×20', rows: 10, cols: 20 },
+  { label: '20×20', rows: 20, cols: 20 },
+  { label: '20×40', rows: 20, cols: 40 },
+  { label: '30×30', rows: 30, cols: 30 },
+  { label: '40×50', rows: 40, cols: 50 },
 ]
 
 type Tab = 'info' | 'materials' | 'recipe' | 'knit' | 'overview'
@@ -89,17 +99,13 @@ export default function ProjectDetail() {
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
 
-  const knitTabLabel = (cat: ProjectCategory) => {
-    if (cat === 'KNITTING') return t('tab_knit')
-    if (cat === 'CROCHET') return t('tab_crochet')
-    return t('tab_sew')
-  }
+  const isSewing = project.category === 'SEWING'
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: 'info', label: t('tab_info'), icon: '📝' },
     { id: 'materials', label: t('tab_materials'), icon: '🧶' },
     { id: 'recipe', label: t('tab_recipe'), icon: '📖' },
-    { id: 'knit', label: knitTabLabel(project.category), icon: project.category === 'SEWING' ? '✂️' : '✦' },
+    ...(!isSewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: '✦' }] : []),
     { id: 'overview', label: t('tab_overview'), icon: '⊞' },
   ]
 
@@ -160,7 +166,7 @@ export default function ProjectDetail() {
         />
       )}
 
-      {tab === 'knit' && (
+      {tab === 'knit' && !isSewing && (
         <KnitTab project={project} projectId={projectId} onUpdate={setProject} />
       )}
 
@@ -188,7 +194,39 @@ function MaterialsTab({ project, projectId, onUpdate, craftDetails, onCraftDetai
   const [matAmount, setMatAmount] = useState('')
   const [matUnit, setMatUnit] = useState('g')
   const [adding, setAdding] = useState(false)
+  const [showLibrary, setShowLibrary] = useState(false)
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (showLibrary) {
+      libraryApi.getAll().then(setLibraryItems)
+    }
+  }, [showLibrary])
+
+  function prefillFromLibrary(item: LibraryItem) {
+    if (item.itemType === 'YARN') {
+      const type = [item.yarnBrand, item.yarnMaterial].filter(Boolean).join(' ') || item.name
+      setMatType(type)
+      setMatAmount(item.yarnAmountG?.toString() ?? '')
+      setMatUnit('g')
+    } else if (item.itemType === 'FABRIC') {
+      setMatType(item.name || 'Stoff')
+      const dims = [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`].filter(Boolean).join(' × ')
+      setMatAmount(dims)
+      setMatUnit('')
+    } else if (item.itemType === 'KNITTING_NEEDLE') {
+      setMatType(`${item.needleSizeMm} mm strikkepinne${item.circularLengthCm ? ` (${item.circularLengthCm} cm)` : ''}`)
+      setMatAmount('')
+      setMatUnit('')
+    } else if (item.itemType === 'CROCHET_HOOK') {
+      setMatType(`${item.hookSizeMm} mm heklenål`)
+      setMatAmount('')
+      setMatUnit('')
+    }
+    setShowLibrary(false)
+    setAdding(true)
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -206,25 +244,53 @@ function MaterialsTab({ project, projectId, onUpdate, craftDetails, onCraftDetai
 
   const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
 
+  const libTypeLabel = (type: string) => {
+    if (type === 'YARN') return t('lib_yarn')
+    if (type === 'FABRIC') return t('lib_fabric')
+    if (type === 'KNITTING_NEEDLE') return t('lib_knitting_needle')
+    if (type === 'CROCHET_HOOK') return t('lib_crochet_hook')
+    return type
+  }
+
+  const libItemSummary = (item: LibraryItem) => {
+    if (item.itemType === 'YARN') {
+      const parts = [item.yarnBrand, item.yarnMaterial].filter(Boolean).join(', ')
+      const amounts = [item.yarnAmountG && `${item.yarnAmountG}g`, item.yarnAmountM && `${item.yarnAmountM}m`].filter(Boolean).join(' / ')
+      return [parts, amounts].filter(Boolean).join(' · ')
+    }
+    if (item.itemType === 'FABRIC') {
+      return [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`].filter(Boolean).join(' × ')
+    }
+    if (item.itemType === 'KNITTING_NEEDLE') {
+      return [item.needleSizeMm && `${item.needleSizeMm} mm`, item.circularLengthCm && `${item.circularLengthCm} cm`].filter(Boolean).join(', ')
+    }
+    if (item.itemType === 'CROCHET_HOOK') {
+      return item.hookSizeMm ? `${item.hookSizeMm} mm` : ''
+    }
+    return ''
+  }
+
   return (
     <div className="space-y-3">
-      <div className="card space-y-3">
-        <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('details_heading')}</h4>
-        <div className="grid grid-cols-2 gap-3">
-          {craftFields.map(({ key, labelKey }) => (
-            <Field key={key} label={t(labelKey as Parameters<typeof t>[0])}>
-              <input
-                className="input text-sm py-2"
-                value={craftDetails[key] ?? ''}
-                onChange={e => onCraftDetailChange(key, e.target.value)}
-                placeholder={t(labelKey as Parameters<typeof t>[0])}
-              />
-            </Field>
-          ))}
+      {craftFields.length > 0 && (
+        <div className="card space-y-3">
+          <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('details_heading')}</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {craftFields.map(({ key, labelKey }) => (
+              <Field key={key} label={t(labelKey as Parameters<typeof t>[0])}>
+                <input
+                  className="input text-sm py-2"
+                  value={craftDetails[key] ?? ''}
+                  onChange={e => onCraftDetailChange(key, e.target.value)}
+                  placeholder={t(labelKey as Parameters<typeof t>[0])}
+                />
+              </Field>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {project.materials.length === 0 && !adding && (
+      {project.materials.length === 0 && !adding && !showLibrary && (
         <p className="text-sm text-warm-gray text-center py-4">{t('no_materials_yet')}</p>
       )}
       {project.materials.map(m => (
@@ -233,7 +299,7 @@ function MaterialsTab({ project, projectId, onUpdate, craftDetails, onCraftDetai
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm text-gray-800">{m.type}</p>
             <p className="text-xs text-warm-gray">
-              {m.color}{m.color && m.amount ? ' · ' : ''}{m.amount}{m.amount ? ` ${m.unit}` : ''}
+              {m.color}{m.color && m.amount ? ' · ' : ''}{m.amount}{m.amount && m.unit ? ` ${m.unit}` : ''}
             </p>
           </div>
           <button
@@ -242,6 +308,41 @@ function MaterialsTab({ project, projectId, onUpdate, craftDetails, onCraftDetai
           >×</button>
         </div>
       ))}
+
+      {showLibrary && (
+        <div className="card space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-sm text-gray-800">{t('add_from_library')}</h4>
+            <button onClick={() => setShowLibrary(false)} className="text-warm-gray hover:text-gray-700 text-xl leading-none px-1">×</button>
+          </div>
+          {libraryItems.length === 0 ? (
+            <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+              {libraryItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => prefillFromLibrary(item)}
+                  className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-sand-blue/20 transition-colors text-left"
+                >
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-lg">
+                      {item.itemType === 'YARN' ? '🧶' : item.itemType === 'FABRIC' ? '🧵' : item.itemType === 'KNITTING_NEEDLE' ? '🪡' : '🪝'}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
+                    <p className="text-xs text-warm-gray truncate">{libTypeLabel(item.itemType)}{libItemSummary(item) ? ` · ${libItemSummary(item)}` : ''}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {adding ? (
         <form onSubmit={handleAdd} className="card space-y-3">
           <h4 className="font-medium text-sm text-gray-800">{t('add_material_heading')}</h4>
@@ -280,7 +381,14 @@ function MaterialsTab({ project, projectId, onUpdate, craftDetails, onCraftDetai
           </div>
         </form>
       ) : (
-        <button onClick={() => setAdding(true)} className="btn-secondary w-full text-sm">{t('add_material_btn')}</button>
+        <div className="flex gap-2">
+          <button onClick={() => { setShowLibrary(v => !v); setAdding(false) }} className="btn-ghost text-sm flex-1">
+            📚 {t('add_from_library')}
+          </button>
+          <button onClick={() => { setAdding(true); setShowLibrary(false) }} className="btn-secondary text-sm flex-1">
+            {t('add_material_btn')}
+          </button>
+        </div>
       )}
     </div>
   )
@@ -350,7 +458,7 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
         ) : (
           <div className="space-y-2">
             {files.map(f => {
-              const url = fileUrl(projectId, f.storedName)
+              const url = `/api/files/${projectId}/${f.storedName}`
               return (
                 <div key={f.id} className="card flex items-center gap-3">
                   {f.fileType === 'image' ? (
@@ -389,14 +497,11 @@ function KnitTab({ project, projectId, onUpdate }: {
 }) {
   const { t } = useTranslation()
   const hasCounter = !!project.rowCounter
-  const hasGrid = project.category !== 'SEWING' && !!project.patternGrid
+  const hasGrid = !!project.patternGrid
   const sideBySide = hasCounter && hasGrid
 
-  const counterLabel = project.category === 'SEWING' ? t('progress_counter') : t('stitch_counter')
-  const gridLabel = t('pattern_grid')
-
   const counterWidget = hasCounter && (
-    <StitchCounterWidget
+    <RoundCounterWidget
       counter={project.rowCounter!}
       onSave={async (spr, tr, cs) =>
         onUpdate(await projectsApi.updateRowCounter(projectId, {
@@ -423,12 +528,12 @@ function KnitTab({ project, projectId, onUpdate }: {
     return (
       <div className="flex gap-0 items-start min-h-0">
         <div className="flex-1 min-w-0 overflow-x-auto pr-3">
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{counterLabel}</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{t('round_counter')}</h3>
           {counterWidget}
         </div>
         <div className="w-px self-stretch bg-sand-blue/30 flex-shrink-0" />
         <div className="flex-1 min-w-0 overflow-x-auto pl-3">
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{gridLabel}</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{t('pattern_grid')}</h3>
           {gridWidget}
         </div>
       </div>
@@ -439,13 +544,13 @@ function KnitTab({ project, projectId, onUpdate }: {
     <div className="space-y-6">
       {hasCounter && (
         <div>
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{counterLabel}</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{t('round_counter')}</h3>
           {counterWidget}
         </div>
       )}
       {hasGrid && (
         <div>
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{gridLabel}</h3>
+          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{t('pattern_grid')}</h3>
           {gridWidget}
         </div>
       )}
@@ -487,7 +592,6 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
           info: t('section_info'),
           materials: t('section_materials'),
           recipe: t('section_recipe'),
-          stitchCounter: t('section_stitch_counter'),
           patternGrid: t('section_pattern_grid'),
         }}
       />
@@ -536,7 +640,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
                 <div key={m.id} className="flex items-center gap-2.5">
                   <div className="w-5 h-5 rounded-full shadow-sm border border-white flex-shrink-0" style={{ backgroundColor: m.colorHex }} />
                   <span className="text-sm text-gray-700">
-                    {m.type}{m.color ? ` — ${m.color}` : ''}{m.amount ? ` (${m.amount} ${m.unit})` : ''}
+                    {m.type}{m.color ? ` — ${m.color}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                   </span>
                 </div>
               ))}
@@ -550,7 +654,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
           {project.files.length > 0 && (
             <div className="flex gap-2 flex-wrap">
               {project.files.map(f => {
-                const url = fileUrl(projectId, f.storedName)
+                const url = `/api/files/${projectId}/${f.storedName}`
                 return f.fileType === 'image' ? (
                   <a key={f.id} href={url} target="_blank" rel="noopener noreferrer">
                     <img src={url} alt={f.originalName} className="w-20 h-20 object-cover rounded-xl shadow-sm" />
@@ -569,12 +673,6 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
         </Section>
       )}
 
-      {project.rowCounter && (
-        <Section title={t('section_stitch_counter')}>
-          <StitchCounterReadOnly counter={project.rowCounter} />
-        </Section>
-      )}
-
       {project.category !== 'SEWING' && project.patternGrid && (
         <Section title={t('section_pattern_grid')}>
           <PatternGridReadOnly
@@ -588,8 +686,8 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
   )
 }
 
-// ── Stitch Counter Widget ──────────────────────────────────────
-function StitchCounterWidget({ counter, onSave }: {
+// ── Round Counter Widget ───────────────────────────────────────
+function RoundCounterWidget({ counter, onSave }: {
   counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
   onSave: (stitchesPerRound: number, totalRounds: number, checked: number[]) => void
 }) {
@@ -640,7 +738,7 @@ function StitchCounterWidget({ counter, onSave }: {
       <div className="space-y-4">
         <p className="text-sm text-warm-gray">{t('setup_counter')}</p>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t('stitches_per_round')}>
+          <Field label={t('repetitions_per_round')}>
             <input type="number" className="input" min={1} max={500}
               value={editSpr} onChange={e => setEditSpr(parseInt(e.target.value) || 1)} />
           </Field>
@@ -664,7 +762,7 @@ function StitchCounterWidget({ counter, onSave }: {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm flex-wrap gap-1">
-        <span className="text-warm-gray">{t('rounds_stitches', { completedRounds, rounds, done: doneCount, total: totalStitches })}</span>
+        <span className="text-warm-gray">{t('rounds_repetitions', { completedRounds, rounds, done: doneCount, total: totalStitches })}</span>
         <span className="text-warm-gray text-xs">{progress}%</span>
       </div>
       <div className="w-full bg-soft-brown/30 rounded-full h-1.5">
@@ -749,10 +847,12 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
     autoSave(next, rows, cols)
   }
 
-  function applyResize() {
-    const trimmed = cells.filter(c => c.row < rows && c.col < cols)
+  function applyResize(newRows: number, newCols: number) {
+    const trimmed = cells.filter(c => c.row < newRows && c.col < newCols)
+    setRows(newRows)
+    setCols(newCols)
     setCells(trimmed)
-    onSave(trimmed, rows, cols)
+    onSave(trimmed, newRows, newCols)
   }
 
   return (
@@ -779,12 +879,23 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
 
       <div className="flex gap-2 items-center text-xs flex-wrap">
         <span className="text-warm-gray">{t('rows_label')}</span>
-        <input type="number" value={rows} min={1} max={50} onChange={e => setRows(parseInt(e.target.value) || 1)}
+        <input type="number" value={rows} min={1} max={100} onChange={e => setRows(parseInt(e.target.value) || 1)}
           className="input py-1 px-2 text-xs w-14" />
         <span className="text-warm-gray">{t('cols_label')}</span>
-        <input type="number" value={cols} min={1} max={50} onChange={e => setCols(parseInt(e.target.value) || 1)}
+        <input type="number" value={cols} min={1} max={100} onChange={e => setCols(parseInt(e.target.value) || 1)}
           className="input py-1 px-2 text-xs w-14" />
-        <button onClick={applyResize} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">{t('apply')}</button>
+        <button onClick={() => applyResize(rows, cols)} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">{t('apply')}</button>
+      </div>
+
+      <div className="flex gap-1.5 items-center flex-wrap">
+        <span className="text-xs text-warm-gray">{t('preset_label')}:</span>
+        {GRID_PRESETS.map(p => (
+          <button
+            key={p.label}
+            onClick={() => applyResize(p.rows, p.cols)}
+            className="px-2 py-0.5 rounded text-xs bg-soft-brown/20 hover:bg-sand-blue/30 text-warm-gray transition-colors"
+          >{p.label}</button>
+        ))}
       </div>
 
       <div className="overflow-auto">
@@ -810,66 +921,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
   )
 }
 
-// ── Read-only Overview Widgets ─────────────────────────────────
-function StitchCounterReadOnly({ counter }: {
-  counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
-}) {
-  const { t } = useTranslation()
-  const spr = counter.stitchesPerRound
-  const rounds = counter.totalRounds
-  const checked: Set<number> = (() => {
-    try { return new Set(JSON.parse(counter.checkedStitches) as number[]) } catch { return new Set() }
-  })()
-  const totalStitches = spr * rounds
-  const doneCount = checked.size
-  const completedRounds = Array.from({ length: rounds }, (_, r) =>
-    Array.from({ length: spr }, (_, s) => r * spr + s).every(i => checked.has(i))
-  ).filter(Boolean).length
-  const progress = totalStitches > 0 ? Math.round((doneCount / totalStitches) * 100) : 0
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-warm-gray">{t('rounds_stitches', { completedRounds, rounds, done: doneCount, total: totalStitches })}</span>
-        <span className="text-warm-gray text-xs">{progress}%</span>
-      </div>
-      <div className="w-full bg-soft-brown/30 rounded-full h-1.5">
-        <div className="bg-sand-blue-medium h-1.5 rounded-full" style={{ width: `${progress}%` }} />
-      </div>
-      <div className="overflow-x-auto">
-        <div className="inline-block">
-          {Array.from({ length: rounds }, (_, r) => {
-            const rowComplete = Array.from({ length: spr }, (_, s) => checked.has(r * spr + s)).every(Boolean)
-            return (
-              <div key={r} className="flex items-center gap-1 mb-1">
-                <span className={`text-xs w-7 text-right flex-shrink-0 font-mono ${rowComplete ? 'text-sand-blue-deep font-bold' : 'text-warm-gray'}`}>
-                  {r + 1}
-                </span>
-                <div className="flex gap-0.5">
-                  {Array.from({ length: spr }, (_, s) => {
-                    const idx = r * spr + s
-                    const done = checked.has(idx)
-                    return (
-                      <div
-                        key={s}
-                        className={`w-7 h-7 rounded border text-xs font-bold flex items-center justify-center ${
-                          done
-                            ? 'bg-sand-blue border-sand-blue-medium text-gray-700'
-                            : 'bg-white border-soft-brown/40 text-transparent'
-                        }`}
-                      >{done ? '✓' : ''}</div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
+// ── Read-only Pattern Grid ─────────────────────────────────────
 function PatternGridReadOnly({ rows, cols, cellDataJson }: {
   rows: number; cols: number; cellDataJson: string
 }) {

@@ -1,6 +1,7 @@
 {
   "nav_home": "Home",
   "nav_projects": "Projects",
+  "nav_library": "Library",
   "app_name": "Stitchbud",
   "add_project_aria": "Add project",
 
@@ -14,6 +15,8 @@
   "add": "Add",
   "adding": "Adding...",
   "apply": "Apply",
+  "save": "Save",
+  "saving": "Saving...",
 
   "welcome_back": "Welcome back 👋",
   "start_first_project": "Start your first project!",
@@ -23,7 +26,7 @@
   "clear_filter": "Clear filter",
   "no_projects_yet": "No projects yet.",
   "create_first_project": "Create your first project",
-  "row_counter": "Row {{current}} / {{total}}",
+  "row_counter": "Round {{current}} / {{total}}",
 
   "projects_heading": "Projects",
   "filter_all": "All",
@@ -48,7 +51,6 @@
   "tab_recipe": "Recipe",
   "tab_knit": "Knit",
   "tab_crochet": "Crochet",
-  "tab_sew": "Sew",
   "tab_overview": "Overview",
 
   "auto_saving": "Auto-saving...",
@@ -58,6 +60,7 @@
   "details_heading": "Details",
   "no_materials_yet": "No materials added yet.",
   "add_material_heading": "Add Material",
+  "add_from_library": "Pick from library",
   "type_label": "Type *",
   "type_placeholder": "Yarn, Fabric...",
   "color_name_label": "Color name",
@@ -78,27 +81,26 @@
   "upload_file": "+ Upload file",
   "no_files_yet": "No files yet. Upload a PDF, Word doc, or image.",
 
-  "stitch_counter": "Stitch Counter",
-  "progress_counter": "Progress Counter",
+  "round_counter": "Round Counter",
   "pattern_grid": "Pattern Grid",
-  "setup_counter": "Set up your stitch counter to start tracking:",
-  "stitches_per_round": "Stitches per round",
+  "setup_counter": "Set up your round counter to start tracking:",
+  "repetitions_per_round": "Pattern repetitions per round",
   "total_rounds": "Total rounds",
   "start_counting": "Start counting",
   "reset_all": "Reset all",
   "change_setup": "Change setup",
-  "rounds_stitches": "{{completedRounds}} / {{rounds}} rounds · {{done}} / {{total}} stitches",
+  "rounds_repetitions": "{{completedRounds}} / {{rounds}} rounds · {{done}} / {{total}} repetitions",
 
   "paint": "Paint",
   "erase": "Erase",
   "rows_label": "Rows",
   "cols_label": "Cols",
+  "preset_label": "Preset",
 
   "download_overview": "Download overview",
   "section_info": "Info",
   "section_materials": "Materials",
   "section_recipe": "Recipe",
-  "section_stitch_counter": "Stitch Counter",
   "section_pattern_grid": "Pattern Grid",
 
   "field_name": "Name",
@@ -106,9 +108,32 @@
 
   "needle_size": "Needle size",
   "circular_needle_length": "Circular needle length",
-  "gauge": "Gauge",
   "hook_size": "Hook size",
 
   "project_not_found": "Project not found",
-  "delete_confirm": "Delete \"{{name}}\"? This cannot be undone."
+  "delete_confirm": "Delete \"{{name}}\"? This cannot be undone.",
+
+  "library_heading": "Library",
+  "library_empty": "Library is empty. Add yarn, fabric, knitting needles or crochet hooks.",
+  "library_add": "Add",
+  "lib_yarn": "Yarn",
+  "lib_fabric": "Fabric",
+  "lib_knitting_needle": "Knitting Needle",
+  "lib_crochet_hook": "Crochet Hook",
+  "lib_item_type": "Type",
+  "lib_name": "Name",
+  "lib_yarn_material": "Material (wool, cotton...)",
+  "lib_yarn_brand": "Brand",
+  "lib_yarn_amount_g": "Amount (g)",
+  "lib_yarn_amount_m": "Length (m)",
+  "lib_fabric_width": "Width (cm)",
+  "lib_fabric_length": "Length (cm)",
+  "lib_needle_size": "Needle size (mm)",
+  "lib_circular_length": "Circular length (cm)",
+  "lib_hook_size": "Hook size (mm)",
+  "lib_image": "Image",
+  "lib_upload_image": "Upload image",
+  "lib_add_item": "Add to library",
+  "lib_delete_confirm": "Delete this item?",
+  "lib_select_for_project": "Add to project"
 }

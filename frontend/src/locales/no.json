@@ -1,6 +1,7 @@
 {
   "nav_home": "Hjem",
   "nav_projects": "Prosjekter",
+  "nav_library": "Bibliotek",
   "app_name": "Stitchbud",
   "add_project_aria": "Legg til prosjekt",
 
@@ -14,6 +15,8 @@
   "add": "Legg til",
   "adding": "Legger til...",
   "apply": "Bruk",
+  "save": "Lagre",
+  "saving": "Lagrer...",
 
   "welcome_back": "Velkommen tilbake 👋",
   "start_first_project": "Start ditt første prosjekt!",
@@ -23,7 +26,7 @@
   "clear_filter": "Fjern filter",
   "no_projects_yet": "Ingen prosjekter ennå.",
   "create_first_project": "Opprett ditt første prosjekt",
-  "row_counter": "Rad {{current}} / {{total}}",
+  "row_counter": "Runde {{current}} / {{total}}",
 
   "projects_heading": "Prosjekter",
   "filter_all": "Alle",
@@ -48,7 +51,6 @@
   "tab_recipe": "Oppskrift",
   "tab_knit": "Strikk",
   "tab_crochet": "Hekl",
-  "tab_sew": "Sy",
   "tab_overview": "Oversikt",
 
   "auto_saving": "Lagrer automatisk...",
@@ -58,6 +60,7 @@
   "details_heading": "Detaljer",
   "no_materials_yet": "Ingen materialer lagt til ennå.",
   "add_material_heading": "Legg til materiale",
+  "add_from_library": "Velg fra bibliotek",
   "type_label": "Type *",
   "type_placeholder": "Garn, Stoff...",
   "color_name_label": "Fargenavn",
@@ -78,27 +81,26 @@
   "upload_file": "+ Last opp fil",
   "no_files_yet": "Ingen filer ennå. Last opp en PDF, Word-fil eller bilde.",
 
-  "stitch_counter": "Masketeller",
-  "progress_counter": "Fremdriftsteller",
+  "round_counter": "Rundeteller",
   "pattern_grid": "Mønsterrutenett",
-  "setup_counter": "Sett opp masketelleren for å begynne å telle:",
-  "stitches_per_round": "Masker per runde",
+  "setup_counter": "Sett opp rundetelleren for å begynne å telle:",
+  "repetitions_per_round": "Mønsterrepetisjoner per runde",
   "total_rounds": "Antall runder",
   "start_counting": "Start telling",
   "reset_all": "Nullstill alle",
   "change_setup": "Endre oppsett",
-  "rounds_stitches": "{{completedRounds}} / {{rounds}} runder · {{done}} / {{total}} masker",
+  "rounds_repetitions": "{{completedRounds}} / {{rounds}} runder · {{done}} / {{total}} repetisjoner",
 
   "paint": "Maler",
   "erase": "Viskelær",
   "rows_label": "Rader",
   "cols_label": "Kolonner",
+  "preset_label": "Forhåndsvalg",
 
   "download_overview": "Last ned oversikt",
   "section_info": "Info",
   "section_materials": "Materialer",
   "section_recipe": "Oppskrift",
-  "section_stitch_counter": "Masketeller",
   "section_pattern_grid": "Mønsterrutenett",
 
   "field_name": "Navn",
@@ -106,9 +108,32 @@
 
   "needle_size": "Pinnestørrelse",
   "circular_needle_length": "Lengde på rundpinne",
-  "gauge": "Strikkefasthet",
   "hook_size": "Heklenålstørrelse",
 
   "project_not_found": "Prosjekt ikke funnet",
-  "delete_confirm": "Slett \"{{name}}\"? Dette kan ikke angres."
+  "delete_confirm": "Slett \"{{name}}\"? Dette kan ikke angres.",
+
+  "library_heading": "Bibliotek",
+  "library_empty": "Biblioteket er tomt. Legg til garn, stoff, strikkepinner eller heklenåler.",
+  "library_add": "Legg til",
+  "lib_yarn": "Garn",
+  "lib_fabric": "Stoff",
+  "lib_knitting_needle": "Strikkepinne",
+  "lib_crochet_hook": "Heklenål",
+  "lib_item_type": "Type",
+  "lib_name": "Navn",
+  "lib_yarn_material": "Materiale (ull, bomull...)",
+  "lib_yarn_brand": "Merke",
+  "lib_yarn_amount_g": "Mengde (g)",
+  "lib_yarn_amount_m": "Lengde (m)",
+  "lib_fabric_width": "Bredde (cm)",
+  "lib_fabric_length": "Lengde (cm)",
+  "lib_needle_size": "Pinnestørrelse (mm)",
+  "lib_circular_length": "Rundpinnelengde (cm)",
+  "lib_hook_size": "Heklenålstørrelse (mm)",
+  "lib_image": "Bilde",
+  "lib_upload_image": "Last opp bilde",
+  "lib_add_item": "Legg til i bibliotek",
+  "lib_delete_confirm": "Slett dette elementet?",
+  "lib_select_for_project": "Legg til i prosjekt"
 }
