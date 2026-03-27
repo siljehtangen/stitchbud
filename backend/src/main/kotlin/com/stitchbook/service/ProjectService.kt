@@ -46,6 +46,7 @@ class ProjectService(
         req.imageUrl?.let { project.imageUrl = it }
         req.notes?.let { project.notes = it }
         req.recipeText?.let { project.recipeText = it }
+        req.craftDetails?.let { project.craftDetails = it }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -146,7 +147,7 @@ class ProjectService(
 
     private fun Project.toDto() = ProjectDto(
         id = id, name = name, description = description, category = category,
-        tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText,
+        tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
         materials = materials.map { MaterialDto(it.id, it.type, it.color, it.colorHex, it.amount, it.unit) },
         files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
         rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },

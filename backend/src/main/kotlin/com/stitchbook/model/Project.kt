@@ -15,6 +15,8 @@ data class Project(
     var imageUrl: String? = null,
     var notes: String = "",
     var recipeText: String = "",
+    @Column(columnDefinition = "TEXT")
+    var craftDetails: String = "{}",
     @OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     var materials: MutableList<Material> = mutableListOf(),
     @OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)

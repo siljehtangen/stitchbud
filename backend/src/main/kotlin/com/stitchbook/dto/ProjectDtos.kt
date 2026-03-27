@@ -44,6 +44,7 @@ data class ProjectDto(
     val imageUrl: String? = null,
     val notes: String = "",
     val recipeText: String = "",
+    val craftDetails: String = "{}",
     val materials: List<MaterialDto> = emptyList(),
     val files: List<ProjectFileDto> = emptyList(),
     val rowCounter: RowCounterDto? = null,
@@ -65,7 +66,8 @@ data class UpdateProjectRequest(
     val tags: String? = null,
     val imageUrl: String? = null,
     val notes: String? = null,
-    val recipeText: String? = null
+    val recipeText: String? = null,
+    val craftDetails: String? = null
 )
 
 data class UpdateRowCounterRequest(
