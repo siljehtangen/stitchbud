@@ -1,7 +1,7 @@
-package com.stitchbook.repository
+package com.stitchbud.repository
 
-import com.stitchbook.model.Project
-import com.stitchbook.model.ProjectCategory
+import com.stitchbud.model.Project
+import com.stitchbud.model.ProjectCategory
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ProjectRepository : JpaRepository<Project, Long> {

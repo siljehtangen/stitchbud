@@ -5,7 +5,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.22"
     kotlin("plugin.jpa") version "1.9.22"
 }
-group = "com.stitchbook"
+group = "com.stitchbud"
 version = "0.0.1-SNAPSHOT"
 java { sourceCompatibility = JavaVersion.VERSION_21 }
 repositories { mavenCentral() }

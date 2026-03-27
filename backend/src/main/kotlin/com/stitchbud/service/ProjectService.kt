@@ -1,10 +1,10 @@
-package com.stitchbook.service
+package com.stitchbud.service
 
-import com.stitchbook.dto.*
-import com.stitchbook.model.*
-import com.stitchbook.repository.MaterialRepository
-import com.stitchbook.repository.ProjectRepository
-import com.stitchbook.repository.ProjectFileRepository
+import com.stitchbud.dto.*
+import com.stitchbud.model.*
+import com.stitchbud.repository.MaterialRepository
+import com.stitchbud.repository.ProjectRepository
+import com.stitchbud.repository.ProjectFileRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

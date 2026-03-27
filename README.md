@@ -1,4 +1,4 @@
-# Stitchbook
+# Stitchbud
 
 A mobile-first web app for tracking knitting, crochet, and sewing projects. Features include project management, materials tracking with color pickers, a row counter, and an interactive pattern grid.
 
@@ -42,7 +42,7 @@ gradlew.bat bootRun      # Windows
 The API will be available at `http://localhost:8080`.
 
 H2 console (in-browser DB viewer): `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:stitchbook`
+- JDBC URL: `jdbc:h2:mem:stitchbud`
 - Username: `sa`, Password: (empty)
 
 ---
@@ -69,12 +69,12 @@ The Vite dev server proxies `/api` requests to the backend at `http://localhost:
 ## Project Structure
 
 ```
-stitchbook/
+stitchbud/
 ├── backend/
 │   ├── build.gradle.kts
 │   ├── settings.gradle.kts
-│   └── src/main/kotlin/com/stitchbook/
-│       ├── StitchbookApplication.kt
+│   └── src/main/kotlin/com/stitchbud/
+│       ├── StitchbudApplication.kt
 │       ├── controller/ProjectController.kt
 │       ├── dto/ProjectDtos.kt
 │       ├── model/

@@ -218,7 +218,7 @@ export function ProjectOverviewPdf({
           </View>
         ) : null}
 
-        <Text style={S.footer}>Exported from Stitchbook</Text>
+        <Text style={S.footer}>Exported from Stitchbud</Text>
       </Page>
     </Document>
   )

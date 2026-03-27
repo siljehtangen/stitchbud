@@ -1,4 +1,4 @@
-package com.stitchbook.model
+package com.stitchbud.model
 
 import jakarta.persistence.*
 

@@ -497,7 +497,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${name.replace(/[^a-z0-9æøåÆØÅ]/gi, '_')}_stitchbook.pdf`
+    a.download = `${name.replace(/[^a-z0-9æøåÆØÅ]/gi, '_')}_stitchbud.pdf`
     a.click()
     URL.revokeObjectURL(url)
   }

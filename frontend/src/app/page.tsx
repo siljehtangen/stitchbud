@@ -8,7 +8,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-5 bg-sand-50/80 backdrop-blur-sm border-b border-sand-200 sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <span className="font-serif text-2xl font-medium text-sage-800 tracking-tight">stitchbook</span>
+          <span className="font-serif text-2xl font-medium text-sage-800 tracking-tight">stitchbud</span>
           <span className="hidden sm:block text-sand-300 text-lg">·</span>
           <span className="hidden sm:block text-sand-400 text-sm">din kreative prosjektjournal</span>
         </div>
@@ -150,7 +150,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-sand-200 border-t border-sand-300 py-8 px-8 text-center">
         <p className="text-sand-500 text-sm">
-          © 2025 stitchbook · laget med kjærlighet for håndverkere 🌿
+          © 2025 stitchbud · laget med kjærlighet for håndverkere 🌿
         </p>
       </footer>
     </div>

@@ -1,6 +1,6 @@
-package com.stitchbook.dto
+package com.stitchbud.dto
 
-import com.stitchbook.model.ProjectCategory
+import com.stitchbud.model.ProjectCategory
 
 data class MaterialDto(
     val id: Long = 0,

@@ -1,8 +1,8 @@
-package com.stitchbook.controller
+package com.stitchbud.controller
 
-import com.stitchbook.dto.*
-import com.stitchbook.model.ProjectCategory
-import com.stitchbook.service.ProjectService
+import com.stitchbud.dto.*
+import com.stitchbud.model.ProjectCategory
+import com.stitchbud.service.ProjectService
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
