@@ -1,5 +1,28 @@
 export type ProjectCategory = 'KNITTING' | 'CROCHET' | 'SEWING'
 
+export type LibraryItemType = 'YARN' | 'FABRIC' | 'KNITTING_NEEDLE' | 'CROCHET_HOOK'
+
+export interface LibraryItem {
+  id: number
+  itemType: LibraryItemType
+  name: string
+  imageUrl?: string
+  // Yarn
+  yarnMaterial?: string
+  yarnBrand?: string
+  yarnAmountG?: number
+  yarnAmountM?: number
+  // Fabric
+  fabricWidthCm?: number
+  fabricLengthCm?: number
+  // Knitting needle
+  needleSizeMm?: string
+  circularLengthCm?: number
+  // Crochet hook
+  hookSizeMm?: string
+  createdAt: number
+}
+
 export interface Material {
   id: number
   type: string

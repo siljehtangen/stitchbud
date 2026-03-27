@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Project, ProjectCategory } from './types'
+import type { Project, ProjectCategory, LibraryItem } from './types'
 
 const api = axios.create({ baseURL: '/api' })
 
@@ -41,6 +41,31 @@ export const projectsApi = {
 
   deleteFile: (id: number, fileId: number) =>
     api.delete<Project>(`/projects/${id}/files/${fileId}`).then(r => r.data),
+}
+
+export const libraryApi = {
+  getAll: () =>
+    api.get<LibraryItem[]>('/library').then(r => r.data),
+
+  create: (data: {
+    itemType: string; name: string
+    yarnMaterial?: string; yarnBrand?: string; yarnAmountG?: number; yarnAmountM?: number
+    fabricWidthCm?: number; fabricLengthCm?: number
+    needleSizeMm?: string; circularLengthCm?: number
+    hookSizeMm?: string
+  }) =>
+    api.post<LibraryItem>('/library', data).then(r => r.data),
+
+  uploadImage: (id: number, file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post<LibraryItem>(`/library/${id}/image`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(r => r.data)
+  },
+
+  delete: (id: number) =>
+    api.delete(`/library/${id}`),
 }
 
 export const fileUrl = (projectId: number, storedName: string) =>

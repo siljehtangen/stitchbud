@@ -37,6 +37,7 @@ export default function Layout() {
   const navItems = [
     { to: '/', label: t('nav_home'), icon: '🏠', exact: true },
     { to: '/projects', label: t('nav_projects'), icon: '🧶', exact: false },
+    { to: '/library', label: t('nav_library'), icon: '📚', exact: false },
   ]
 
   return (
