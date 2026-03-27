@@ -9,6 +9,7 @@ frontend/build/
 
 # Backend build output
 backend/build/
+backend/target/
 backend/.gradle/
 backend/out/
 *.class
@@ -18,6 +19,15 @@ backend/out/
 # Gradle
 .gradle/
 gradle/wrapper/gradle-wrapper.jar
+
+# Rust
+backend/Cargo.lock
+
+# Frontend - Next.js
+frontend/.next/
+
+# Frontend - Prisma generated client
+frontend/prisma/client/
 
 # Environment & secrets
 .env
