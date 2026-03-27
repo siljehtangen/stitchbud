@@ -50,7 +50,7 @@
   "tab_materials": "Materialer",
   "tab_recipe": "Oppskrift",
   "tab_knit": "Strikk",
-  "tab_crochet": "Hekl",
+  "tab_crochet": "Hekle",
   "tab_overview": "Oversikt",
 
   "auto_saving": "Lagrer automatisk...",
@@ -84,12 +84,15 @@
   "round_counter": "Rundeteller",
   "pattern_grid": "Mønsterrutenett",
   "setup_counter": "Sett opp rundetelleren for å begynne å telle:",
-  "repetitions_per_round": "Mønsterrepetisjoner per runde",
+  "repetitions_per_round": "Mønsterrepetisjoner",
   "total_rounds": "Antall runder",
   "start_counting": "Start telling",
   "reset_all": "Nullstill alle",
   "change_setup": "Endre oppsett",
   "rounds_repetitions": "{{completedRounds}} / {{rounds}} runder · {{done}} / {{total}} repetisjoner",
+
+  "add_grid": "Legg til rutenett",
+  "delete_grid": "Slett dette rutenettet",
 
   "paint": "Maler",
   "erase": "Viskelær",

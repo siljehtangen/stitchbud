@@ -586,9 +586,59 @@ function KnitTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
   const { t } = useTranslation()
+  const [activeGridIndex, setActiveGridIndex] = useState(0)
+
   const hasCounter = !!project.rowCounter
-  const hasGrid = !!project.patternGrid
-  const sideBySide = hasCounter && hasGrid
+  const grids = project.patternGrids ?? []
+  const clampedIndex = Math.min(activeGridIndex, Math.max(0, grids.length - 1))
+  const activeGrid = grids[clampedIndex]
+  const sideBySide = hasCounter && grids.length > 0
+
+  async function handleAddGrid() {
+    const updated = await projectsApi.createPatternGrid(projectId)
+    onUpdate(updated)
+    setActiveGridIndex(updated.patternGrids.length - 1)
+  }
+
+  async function handleDeleteGrid() {
+    if (!activeGrid || grids.length <= 1) return
+    const updated = await projectsApi.deletePatternGrid(projectId, activeGrid.id)
+    onUpdate(updated)
+    setActiveGridIndex(i => Math.min(i, Math.max(0, updated.patternGrids.length - 1)))
+  }
+
+  const gridHeader = (
+    <div className="flex items-center gap-1 mb-2">
+      <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide">{t('pattern_grid')}</h3>
+      {grids.length > 1 && (
+        <>
+          <button
+            onClick={() => setActiveGridIndex(i => Math.max(0, i - 1))}
+            disabled={clampedIndex === 0}
+            className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 disabled:opacity-30 text-warm-gray text-base leading-none"
+          >‹</button>
+          <span className="text-xs text-warm-gray tabular-nums">{clampedIndex + 1}/{grids.length}</span>
+          <button
+            onClick={() => setActiveGridIndex(i => Math.min(grids.length - 1, i + 1))}
+            disabled={clampedIndex === grids.length - 1}
+            className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 disabled:opacity-30 text-warm-gray text-base leading-none"
+          >›</button>
+        </>
+      )}
+      <button
+        onClick={handleAddGrid}
+        className="w-5 h-5 flex items-center justify-center rounded-full bg-sand-green hover:opacity-80 text-gray-700 text-xs font-bold ml-1"
+        title={t('add_grid')}
+      >+</button>
+      {grids.length > 1 && activeGrid && (
+        <button
+          onClick={handleDeleteGrid}
+          className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 text-warm-gray text-sm leading-none"
+          title={t('delete_grid')}
+        >×</button>
+      )}
+    </div>
+  )
 
   const counterWidget = hasCounter && (
     <RoundCounterWidget
@@ -601,13 +651,14 @@ function KnitTab({ project, projectId, onUpdate }: {
     />
   )
 
-  const gridWidget = hasGrid && (
+  const gridWidget = activeGrid && (
     <PatternGridWidget
-      rows={project.patternGrid!.rows}
-      cols={project.patternGrid!.cols}
-      cellDataJson={project.patternGrid!.cellData}
+      key={activeGrid.id}
+      rows={activeGrid.rows}
+      cols={activeGrid.cols}
+      cellDataJson={activeGrid.cellData}
       onSave={async (cells, r, c) =>
-        onUpdate(await projectsApi.updatePatternGrid(projectId, {
+        onUpdate(await projectsApi.updatePatternGrid(projectId, activeGrid.id, {
           rows: r, cols: c, cellData: JSON.stringify(cells)
         }))
       }
@@ -623,7 +674,7 @@ function KnitTab({ project, projectId, onUpdate }: {
         </div>
         <div className="w-px self-stretch bg-sand-blue/30 flex-shrink-0" />
         <div className="flex-1 min-w-0 overflow-x-auto pl-3">
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{t('pattern_grid')}</h3>
+          {gridHeader}
           {gridWidget}
         </div>
       </div>
@@ -638,12 +689,10 @@ function KnitTab({ project, projectId, onUpdate }: {
           {counterWidget}
         </div>
       )}
-      {hasGrid && (
-        <div>
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{t('pattern_grid')}</h3>
-          {gridWidget}
-        </div>
-      )}
+      <div>
+        {gridHeader}
+        {gridWidget}
+      </div>
     </div>
   )
 }
@@ -763,13 +812,16 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
         </Section>
       )}
 
-      {project.category !== 'SEWING' && project.patternGrid && (
+      {project.category !== 'SEWING' && project.patternGrids?.length > 0 && (
         <Section title={t('section_pattern_grid')}>
-          <PatternGridReadOnly
-            rows={project.patternGrid.rows}
-            cols={project.patternGrid.cols}
-            cellDataJson={project.patternGrid.cellData}
-          />
+          {project.patternGrids.map((grid, i) => (
+            <div key={grid.id} className={i > 0 ? 'mt-4' : ''}>
+              {project.patternGrids.length > 1 && (
+                <p className="text-xs text-warm-gray mb-1">{i + 1}/{project.patternGrids.length}</p>
+              )}
+              <PatternGridReadOnly rows={grid.rows} cols={grid.cols} cellDataJson={grid.cellData} />
+            </div>
+          ))}
         </Section>
       )}
     </div>

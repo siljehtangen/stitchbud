@@ -48,7 +48,7 @@ data class ProjectDto(
     val materials: List<MaterialDto> = emptyList(),
     val files: List<ProjectFileDto> = emptyList(),
     val rowCounter: RowCounterDto? = null,
-    val patternGrid: PatternGridDto? = null,
+    val patternGrids: List<PatternGridDto> = emptyList(),
     val createdAt: Long = 0,
     val updatedAt: Long = 0
 )

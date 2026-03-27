@@ -62,19 +62,20 @@ export function ProjectOverviewPdf({
   const otherFiles = project.files.filter(f => f.fileType !== 'image')
   const hasRecipe = !!recipeText || project.files.length > 0
 
-  const gridData = (() => {
-    if (project.category === 'SEWING' || !project.patternGrid) return null
-    const { rows, cols, cellData } = project.patternGrid
-    const cells: PatternCell[] = (() => { try { return JSON.parse(cellData) } catch { return [] } })()
-    const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c.color]))
-    const clippedRows = rows > MAX_PATTERN_ROWS
-    const clippedCols = cols > MAX_PATTERN_COLS
-    return {
-      rows: Math.min(rows, MAX_PATTERN_ROWS),
-      cols: Math.min(cols, MAX_PATTERN_COLS),
-      cellMap,
-      clipped: clippedRows || clippedCols,
-    }
+  const gridDatas = (() => {
+    if (project.category === 'SEWING' || !project.patternGrids?.length) return []
+    return project.patternGrids.map(pg => {
+      const cells: PatternCell[] = (() => { try { return JSON.parse(pg.cellData) } catch { return [] } })()
+      const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c.color]))
+      const clippedRows = pg.rows > MAX_PATTERN_ROWS
+      const clippedCols = pg.cols > MAX_PATTERN_COLS
+      return {
+        rows: Math.min(pg.rows, MAX_PATTERN_ROWS),
+        cols: Math.min(pg.cols, MAX_PATTERN_COLS),
+        cellMap,
+        clipped: clippedRows || clippedCols,
+      }
+    })
   })()
 
   const imgBase = `${window.location.origin}/api/files/${projectId}/`
@@ -133,22 +134,29 @@ export function ProjectOverviewPdf({
           </View>
         ) : null}
 
-        {gridData ? (
+        {gridDatas.length > 0 ? (
           <View style={S.section}>
             <Text style={S.sectionTitle}>{labels.patternGrid.toUpperCase()}</Text>
-            {Array.from({ length: gridData.rows }, (_, r) => (
-              <View key={r} style={S.gridRow}>
-                {Array.from({ length: gridData.cols }, (_, c) => (
-                  <View
-                    key={c}
-                    style={[S.pCell, { backgroundColor: gridData.cellMap.get(`${r},${c}`) ?? '#F5F0E8' }]}
-                  />
+            {gridDatas.map((gridData, i) => (
+              <View key={i} style={i > 0 ? { marginTop: 8 } : undefined}>
+                {gridDatas.length > 1 && (
+                  <Text style={S.clipNote}>Grid {i + 1}</Text>
+                )}
+                {Array.from({ length: gridData.rows }, (_, r) => (
+                  <View key={r} style={S.gridRow}>
+                    {Array.from({ length: gridData.cols }, (_, c) => (
+                      <View
+                        key={c}
+                        style={[S.pCell, { backgroundColor: gridData.cellMap.get(`${r},${c}`) ?? '#F5F0E8' }]}
+                      />
+                    ))}
+                  </View>
                 ))}
+                {gridData.clipped && (
+                  <Text style={S.clipNote}>Grid clipped to {MAX_PATTERN_ROWS}×{MAX_PATTERN_COLS} for PDF.</Text>
+                )}
               </View>
             ))}
-            {gridData.clipped && (
-              <Text style={S.clipNote}>Grid clipped to {MAX_PATTERN_ROWS}×{MAX_PATTERN_COLS} for PDF.</Text>
-            )}
           </View>
         ) : null}
 

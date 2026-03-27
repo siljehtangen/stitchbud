@@ -69,7 +69,7 @@ export interface Project {
   materials: Material[]
   files: ProjectFile[]
   rowCounter?: RowCounter
-  patternGrid?: PatternGrid
+  patternGrids: PatternGrid[]
   createdAt: number
   updatedAt: number
 }

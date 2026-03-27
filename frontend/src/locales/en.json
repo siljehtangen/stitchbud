@@ -84,12 +84,15 @@
   "round_counter": "Round Counter",
   "pattern_grid": "Pattern Grid",
   "setup_counter": "Set up your round counter to start tracking:",
-  "repetitions_per_round": "Pattern repetitions per round",
+  "repetitions_per_round": "Pattern repetitions",
   "total_rounds": "Total rounds",
   "start_counting": "Start counting",
   "reset_all": "Reset all",
   "change_setup": "Change setup",
   "rounds_repetitions": "{{completedRounds}} / {{rounds}} rounds · {{done}} / {{total}} repetitions",
+
+  "add_grid": "Add grid",
+  "delete_grid": "Delete this grid",
 
   "paint": "Paint",
   "erase": "Erase",

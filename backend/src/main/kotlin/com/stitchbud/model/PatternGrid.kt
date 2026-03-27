@@ -11,7 +11,7 @@ data class PatternGrid(
     var cols: Int = 10,
     @Column(columnDefinition = "TEXT")
     var cellData: String = "[]", // JSON array of {row, col, color, symbol}
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     var project: Project? = null
 )

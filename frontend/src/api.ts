@@ -28,8 +28,14 @@ export const projectsApi = {
   updateRowCounter: (id: number, data: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }) =>
     api.put<Project>(`/projects/${id}/row-counter`, data).then(r => r.data),
 
-  updatePatternGrid: (id: number, data: { rows: number; cols: number; cellData: string }) =>
-    api.put<Project>(`/projects/${id}/pattern-grid`, data).then(r => r.data),
+  createPatternGrid: (id: number) =>
+    api.post<Project>(`/projects/${id}/pattern-grids`).then(r => r.data),
+
+  updatePatternGrid: (id: number, gridId: number, data: { rows: number; cols: number; cellData: string }) =>
+    api.put<Project>(`/projects/${id}/pattern-grids/${gridId}`, data).then(r => r.data),
+
+  deletePatternGrid: (id: number, gridId: number) =>
+    api.delete<Project>(`/projects/${id}/pattern-grids/${gridId}`).then(r => r.data),
 
   uploadFile: (id: number, file: File) => {
     const form = new FormData()
