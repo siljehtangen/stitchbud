@@ -135,5 +135,9 @@
   "lib_upload_image": "Upload image",
   "lib_add_item": "Add to library",
   "lib_delete_confirm": "Delete this item?",
-  "lib_select_for_project": "Add to project"
+  "lib_select_for_project": "Add to project",
+  "lib_all": "All",
+  "lib_search_placeholder": "Search library...",
+  "lib_create_new": "Create new in library",
+  "lib_not_found_hint": "Can't find what you're looking for?"
 }

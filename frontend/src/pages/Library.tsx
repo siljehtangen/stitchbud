@@ -18,23 +18,32 @@ export default function Library() {
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
+  const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     libraryApi.getAll().then(setItems).finally(() => setLoading(false))
   }, [])
 
+  const q = search.toLowerCase()
+  const filtered = items.filter(i => {
+    if (filterType && i.itemType !== filterType) return false
+    if (!q) return true
+    return [
+      i.name,
+      i.yarnBrand,
+      i.yarnMaterial,
+      i.needleSizeMm,
+      i.hookSizeMm,
+      i.fabricLengthCm != null ? String(i.fabricLengthCm) : null,
+      i.fabricWidthCm != null ? String(i.fabricWidthCm) : null,
+    ].some(v => v?.toLowerCase().includes(q))
+  })
+
   const grouped = ITEM_TYPES.map(type => ({
     type,
-    items: items.filter(i => i.itemType === type),
+    items: filtered.filter(i => i.itemType === type),
   })).filter(g => g.items.length > 0)
-
-  const typeLabel = (type: LibraryItemType) => {
-    if (type === 'YARN') return t('lib_yarn')
-    if (type === 'FABRIC') return t('lib_fabric')
-    if (type === 'KNITTING_NEEDLE') return t('lib_knitting_needle')
-    if (type === 'CROCHET_HOOK') return t('lib_crochet_hook')
-    return type
-  }
 
   function itemSubtitle(item: LibraryItem) {
     if (item.itemType === 'YARN') {
@@ -75,6 +84,14 @@ export default function Library() {
     setAdding(false)
   }
 
+  const typeLabel = (type: LibraryItemType) => {
+    if (type === 'YARN') return t('lib_yarn')
+    if (type === 'FABRIC') return t('lib_fabric')
+    if (type === 'KNITTING_NEEDLE') return t('lib_knitting_needle')
+    if (type === 'CROCHET_HOOK') return t('lib_crochet_hook')
+    return type
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -82,6 +99,41 @@ export default function Library() {
         <button onClick={() => setAdding(v => !v)} className="btn-secondary text-sm">
           {adding ? t('cancel') : `+ ${t('library_add')}`}
         </button>
+      </div>
+
+      {/* Filter bar */}
+      <div className="space-y-2">
+        <div className="flex gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setFilterType(null)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filterType === null ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+            }`}
+          >
+            {t('lib_all')}
+          </button>
+          {ITEM_TYPES.map(type => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setFilterType(filterType === type ? null : type)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+              }`}
+            >
+              <span>{TYPE_ICONS[type]}</span>
+              <span>{typeLabel(type)}</span>
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          className="input text-sm py-2 w-full"
+          placeholder={t('lib_search_placeholder')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
 
       {adding && (
@@ -95,7 +147,7 @@ export default function Library() {
 
       {loading ? (
         <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
-      ) : items.length === 0 && !adding ? (
+      ) : filtered.length === 0 && !adding ? (
         <div className="card text-center py-10">
           <p className="text-warm-gray text-sm">{t('library_empty')}</p>
         </div>

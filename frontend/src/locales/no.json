@@ -135,5 +135,9 @@
   "lib_upload_image": "Last opp bilde",
   "lib_add_item": "Legg til i bibliotek",
   "lib_delete_confirm": "Slett dette elementet?",
-  "lib_select_for_project": "Legg til i prosjekt"
+  "lib_select_for_project": "Legg til i prosjekt",
+  "lib_all": "Alle",
+  "lib_search_placeholder": "Søk i bibliotek...",
+  "lib_create_new": "Opprett ny i biblioteket",
+  "lib_not_found_hint": "Finner du ikke det du leter etter?"
 }
