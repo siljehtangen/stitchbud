@@ -458,140 +458,46 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
   project: Project; name: string; description: string; recipeText: string
   craftDetails: Record<string, string>; projectId: number
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const fileIcon = (ft: string) =>
     ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
-  function downloadOverview() {
-    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  async function downloadOverview() {
+    const [{ pdf }, { ProjectOverviewPdf }] = await Promise.all([
+      import('@react-pdf/renderer'),
+      import('./ProjectPdf'),
+    ])
 
     const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
-    const filledCraftFields = craftFields.filter(f => craftDetails[f.key]?.trim())
-    const craftDetailsHtml = filledCraftFields.map(({ key, labelKey }) =>
-      `<div class="craft-field"><span class="field-label">${esc(t(labelKey as Parameters<typeof t>[0]))}:</span> ${esc(craftDetails[key])}</div>`
-    ).join('')
-    const hasMaterialSection = filledCraftFields.length > 0 || project.materials.length > 0
-    const materialsHtml = hasMaterialSection ? `
-      <section>
-        <h2>${esc(t('section_materials'))}</h2>
-        ${craftDetailsHtml ? `<div class="craft-details">${craftDetailsHtml}</div>` : ''}
-        ${project.materials.map(m => `
-          <div class="material">
-            <span class="swatch" style="background:${m.colorHex}"></span>
-            <span>${esc(m.type)}${m.color ? ` — ${esc(m.color)}` : ''}${m.amount ? ` (${esc(m.amount)} ${esc(m.unit)})` : ''}</span>
-          </div>`).join('')}
-      </section>` : ''
+    const filledCraftFields = craftFields
+      .filter(f => craftDetails[f.key]?.trim())
+      .map(f => ({ key: f.key, label: t(f.labelKey as Parameters<typeof t>[0]) }))
 
-    const filesHtml = project.files.map(f => {
-      const url = fileUrl(projectId, f.storedName)
-      return f.fileType === 'image'
-        ? `<img src="${url}" alt="${esc(f.originalName)}" class="attachment-img">`
-        : `<a href="${url}" class="attachment-link">${esc(f.originalName)}</a>`
-    }).join('')
+    const doc = (
+      <ProjectOverviewPdf
+        project={project}
+        name={name}
+        description={description}
+        recipeText={recipeText}
+        filledCraftFields={filledCraftFields}
+        craftDetails={craftDetails}
+        projectId={projectId}
+        categoryLabel={t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])}
+        labels={{
+          info: t('section_info'),
+          materials: t('section_materials'),
+          recipe: t('section_recipe'),
+          stitchCounter: t('section_stitch_counter'),
+          patternGrid: t('section_pattern_grid'),
+        }}
+      />
+    )
 
-    const recipeHtml = (recipeText || project.files.length > 0) ? `
-      <section>
-        <h2>${esc(t('section_recipe'))}</h2>
-        ${filesHtml ? `<div class="attachments">${filesHtml}</div>` : ''}
-        ${recipeText ? `<p class="pretext">${esc(recipeText)}</p>` : ''}
-      </section>` : ''
-
-    const categoryLabel = t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])
-
-    const counterHtml = (() => {
-      if (!project.rowCounter) return ''
-      const { stitchesPerRound: spr, totalRounds: rounds, checkedStitches } = project.rowCounter
-      const checked: Set<number> = (() => { try { return new Set(JSON.parse(checkedStitches) as number[]) } catch { return new Set() } })()
-      const total = spr * rounds
-      const done = checked.size
-      const completedRounds = Array.from({ length: rounds }, (_, r) =>
-        Array.from({ length: spr }, (_, s) => r * spr + s).every(i => checked.has(i))
-      ).filter(Boolean).length
-      const pct = total > 0 ? Math.round((done / total) * 100) : 0
-      const rows = Array.from({ length: rounds }, (_, r) => {
-        const rowDone = Array.from({ length: spr }, (_, s) => checked.has(r * spr + s)).every(Boolean)
-        const cells = Array.from({ length: spr }, (_, s) => {
-          const idx = r * spr + s
-          return `<td class="${checked.has(idx) ? 'done' : ''}">${checked.has(idx) ? '✓' : ''}</td>`
-        }).join('')
-        return `<tr><td class="rnum${rowDone ? ' rowdone' : ''}">${r + 1}</td>${cells}</tr>`
-      }).join('')
-      return `
-      <section>
-        <h2>${esc(t('section_stitch_counter'))}</h2>
-        <p class="counter-stats">${completedRounds} / ${rounds} · ${done} / ${total} · ${pct}%</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-        <table class="stitch-grid"><tbody>${rows}</tbody></table>
-      </section>`
-    })()
-
-    const gridHtml = (() => {
-      if (project.category === 'SEWING' || !project.patternGrid) return ''
-      const { rows, cols, cellData } = project.patternGrid
-      const cells: PatternCell[] = (() => { try { return JSON.parse(cellData) } catch { return [] } })()
-      const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c.color]))
-      const tableRows = Array.from({ length: rows }, (_, r) =>
-        `<tr>${Array.from({ length: cols }, (_, c) =>
-          `<td style="background:${cellMap.get(`${r},${c}`) ?? '#F5F0E8'}"></td>`
-        ).join('')}</tr>`
-      ).join('')
-      return `
-      <section>
-        <h2>${esc(t('section_pattern_grid'))}</h2>
-        <table class="pattern-grid"><tbody>${tableRows}</tbody></table>
-      </section>`
-    })()
-
-    const html = `<!DOCTYPE html>
-<html lang="${i18n.language}">
-<head>
-  <meta charset="UTF-8">
-  <title>${esc(name)} — Stitchbook</title>
-  <style>
-    body{font-family:Georgia,serif;max-width:820px;margin:48px auto;padding:0 24px;color:#333;background:#fff}
-    h1{font-size:2em;margin:0 0 4px}
-    .meta{color:#888;font-size:.9em;margin-bottom:28px}
-    section{margin-bottom:36px}
-    h2{font-size:.8em;text-transform:uppercase;letter-spacing:.1em;color:#6FA8BC;border-bottom:1px solid #d6ebf2;padding-bottom:6px;margin-bottom:14px}
-    p{line-height:1.7;margin:0 0 10px}
-    .pretext{white-space:pre-wrap}
-    .craft-details{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:12px;font-size:.9em}
-    .craft-field{color:#555}.field-label{color:#888;font-size:.85em}
-    .material{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:.95em}
-    .swatch{width:16px;height:16px;border-radius:50%;border:1px solid #ccc;flex-shrink:0;display:inline-block}
-    .attachments{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
-    .attachment-img{max-width:180px;max-height:180px;object-fit:cover;border-radius:8px;border:1px solid #e0e0e0}
-    .attachment-link{display:inline-block;padding:6px 14px;background:#f0f6f8;border:1px solid #c8e0ea;border-radius:6px;text-decoration:none;color:#3a6e80;font-size:.9em}
-    .counter-stats{font-size:.9em;color:#666;margin-bottom:8px}
-    .progress-bar{width:100%;background:#e8e8e8;border-radius:4px;height:8px;margin-bottom:14px}
-    .progress-fill{background:#A8CEDA;height:8px;border-radius:4px}
-    table.stitch-grid{border-collapse:collapse;font-size:.75em}
-    table.stitch-grid td{width:22px;height:22px;text-align:center;border:1px solid #ddd;color:#999}
-    table.stitch-grid td.done{background:#BFD8E0;color:#3a6e80;font-weight:bold}
-    table.stitch-grid td.rnum{background:none;border:none;text-align:right;padding-right:6px;color:#aaa;width:24px}
-    table.stitch-grid td.rnum.rowdone{color:#6FA8BC;font-weight:bold}
-    table.pattern-grid{border-collapse:collapse}
-    table.pattern-grid td{width:20px;height:20px;border:1px solid rgba(0,0,0,.06)}
-    @media print{body{margin:24px}}
-  </style>
-</head>
-<body>
-  <h1>${esc(name)}</h1>
-  <p class="meta">${esc(categoryLabel)}</p>
-  ${description ? `<section><h2>${esc(t('section_info'))}</h2><p class="pretext">${esc(description)}</p></section>` : ''}
-  ${materialsHtml}
-  ${recipeHtml}
-  ${counterHtml}
-  ${gridHtml}
-  <p style="font-size:.75em;color:#bbb;margin-top:48px;border-top:1px solid #eee;padding-top:12px">Exported from Stitchbook</p>
-</body>
-</html>`
-
-    const blob = new Blob([html], { type: 'text/html' })
+    const blob = await pdf(doc).toBlob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${name.replace(/[^a-z0-9æøåÆØÅ]/gi, '_')}_stitchbook.html`
+    a.download = `${name.replace(/[^a-z0-9æøåÆØÅ]/gi, '_')}_stitchbook.pdf`
     a.click()
     URL.revokeObjectURL(url)
   }
