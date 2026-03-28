@@ -48,7 +48,7 @@ export default function Layout() {
   const { theme, setTheme } = useTheme()
 
   const navItems = [
-    { to: '/', label: t('nav_home'), icon: <FaHome />, exact: true },
+    { to: '/home', label: t('nav_home'), icon: <FaHome />, exact: true },
     { to: '/projects', label: t('nav_projects'), icon: <GrProjects />, exact: false },
     { to: '/library', label: t('nav_library'), icon: <ImBooks />, exact: false },
   ]

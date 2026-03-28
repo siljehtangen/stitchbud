@@ -161,5 +161,16 @@
   "start_date_label": "Start date",
   "end_date_label": "End date",
   "optional": "optional",
-  "edit": "Edit"
+  "edit": "Edit",
+
+  "landing_headline": "Your crafting companion",
+  "landing_subtitle": "Track every knitting, crochet and sewing project with ease",
+  "landing_login": "Log in",
+  "landing_feat_knitting": "Rounds, patterns & yarn",
+  "landing_feat_crochet": "Stitch counts & hooks",
+  "landing_feat_sewing": "Patterns, fabric & more",
+  "landing_feat_yarn_label": "Materials",
+  "landing_feat_yarn": "Track yarn, fabric & tools in your library",
+  "landing_tagline": "From cast-on to bind-off — keep every project close, every detail remembered.",
+  "landing_footer": "Made for makers · Stitchbud"
 }

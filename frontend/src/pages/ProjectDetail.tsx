@@ -141,7 +141,7 @@ export default function ProjectDetail() {
   async function handleDelete() {
     if (!confirm(t('delete_confirm', { name: project?.name }))) return
     await projectsApi.delete(projectId)
-    navigate('/')
+    navigate('/home')
   }
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
