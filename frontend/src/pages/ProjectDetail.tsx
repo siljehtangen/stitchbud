@@ -592,7 +592,6 @@ function KnitTab({ project, projectId, onUpdate }: {
   const grids = project.patternGrids ?? []
   const clampedIndex = Math.min(activeGridIndex, Math.max(0, grids.length - 1))
   const activeGrid = grids[clampedIndex]
-  const sideBySide = hasCounter && grids.length > 0
 
   async function handleAddGrid() {
     const updated = await projectsApi.createPatternGrid(projectId)
@@ -664,22 +663,6 @@ function KnitTab({ project, projectId, onUpdate }: {
       }
     />
   )
-
-  if (sideBySide) {
-    return (
-      <div className="flex gap-0 items-start min-h-0">
-        <div className="flex-1 min-w-0 overflow-x-auto pr-3">
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2 sticky left-0">{t('round_counter')}</h3>
-          {counterWidget}
-        </div>
-        <div className="w-px self-stretch bg-sand-blue/30 flex-shrink-0" />
-        <div className="flex-1 min-w-0 overflow-x-auto pl-3">
-          {gridHeader}
-          {gridWidget}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -961,6 +944,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
   onSave: (cells: PatternCell[], rows: number, cols: number) => void
 }) {
   const { t } = useTranslation()
+  const [editing, setEditing] = useState(false)
   const [rows, setRows] = useState(initRows)
   const [cols, setCols] = useState(initCols)
   const [cells, setCells] = useState<PatternCell[]>(() => {
@@ -978,6 +962,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
   }
 
   function handleCell(row: number, col: number) {
+    if (!editing) return
     let next: PatternCell[]
     if (mode === 'erase') {
       next = cells.filter(c => !(c.row === row && c.col === col))
@@ -999,46 +984,58 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-1.5 items-center flex-wrap">
+      <div className="flex items-center gap-2">
         <button
-          onClick={() => setMode('color')}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'color' ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
-        >{t('paint')}</button>
-        <button
-          onClick={() => setMode('erase')}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'erase' ? 'bg-soft-brown text-white' : 'bg-soft-brown/20 text-warm-gray'}`}
-        >{t('erase')}</button>
-        <div className="flex gap-1 flex-wrap ml-1">
-          {PALETTE.map(c => (
-            <button key={c} onClick={() => { setSelectedColor(c); setMode('color') }}
-              className={`w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform ${selectedColor === c && mode === 'color' ? 'border-gray-700 scale-110' : 'border-white shadow-sm'}`}
-              style={{ backgroundColor: c }} />
-          ))}
-          <input type="color" value={selectedColor} onChange={e => { setSelectedColor(e.target.value); setMode('color') }}
-            className="w-5 h-5 rounded-full cursor-pointer border-0" />
-        </div>
+          onClick={() => setEditing(e => !e)}
+          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
+        >{editing ? t('done_editing_grid') : t('edit_grid')}</button>
+        {editing && <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>}
       </div>
 
-      <div className="flex gap-2 items-center text-xs flex-wrap">
-        <span className="text-warm-gray">{t('rows_label')}</span>
-        <input type="number" value={rows} min={1} max={100} onChange={e => setRows(parseInt(e.target.value) || 1)}
-          className="input py-1 px-2 text-xs w-14" />
-        <span className="text-warm-gray">{t('cols_label')}</span>
-        <input type="number" value={cols} min={1} max={100} onChange={e => setCols(parseInt(e.target.value) || 1)}
-          className="input py-1 px-2 text-xs w-14" />
-        <button onClick={() => applyResize(rows, cols)} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">{t('apply')}</button>
-      </div>
+      {editing && (
+        <>
+          <div className="flex gap-1.5 items-center flex-wrap">
+            <button
+              onClick={() => setMode('color')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'color' ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
+            >{t('paint')}</button>
+            <button
+              onClick={() => setMode('erase')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'erase' ? 'bg-soft-brown text-white' : 'bg-soft-brown/20 text-warm-gray'}`}
+            >{t('erase')}</button>
+            <div className="flex gap-1 flex-wrap ml-1">
+              {PALETTE.map(c => (
+                <button key={c} onClick={() => { setSelectedColor(c); setMode('color') }}
+                  className={`w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform ${selectedColor === c && mode === 'color' ? 'border-gray-700 scale-110' : 'border-white shadow-sm'}`}
+                  style={{ backgroundColor: c }} />
+              ))}
+              <input type="color" value={selectedColor} onChange={e => { setSelectedColor(e.target.value); setMode('color') }}
+                className="w-5 h-5 rounded-full cursor-pointer border-0" />
+            </div>
+          </div>
 
-      <div className="flex gap-1.5 items-center flex-wrap">
-        <span className="text-xs text-warm-gray">{t('preset_label')}:</span>
-        {GRID_PRESETS.map(p => (
-          <button
-            key={p.label}
-            onClick={() => applyResize(p.rows, p.cols)}
-            className="px-2 py-0.5 rounded text-xs bg-soft-brown/20 hover:bg-sand-blue/30 text-warm-gray transition-colors"
-          >{p.label}</button>
-        ))}
-      </div>
+          <div className="flex gap-2 items-center text-xs flex-wrap">
+            <span className="text-warm-gray">{t('rows_label')}</span>
+            <input type="number" value={rows} min={1} max={100} onChange={e => setRows(parseInt(e.target.value) || 1)}
+              className="input py-1 px-2 text-xs w-14" />
+            <span className="text-warm-gray">{t('cols_label')}</span>
+            <input type="number" value={cols} min={1} max={100} onChange={e => setCols(parseInt(e.target.value) || 1)}
+              className="input py-1 px-2 text-xs w-14" />
+            <button onClick={() => applyResize(rows, cols)} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">{t('apply')}</button>
+          </div>
+
+          <div className="flex gap-1.5 items-center flex-wrap">
+            <span className="text-xs text-warm-gray">{t('preset_label')}:</span>
+            {GRID_PRESETS.map(p => (
+              <button
+                key={p.label}
+                onClick={() => applyResize(p.rows, p.cols)}
+                className="px-2 py-0.5 rounded text-xs bg-soft-brown/20 hover:bg-sand-blue/30 text-warm-gray transition-colors"
+              >{p.label}</button>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="overflow-auto">
         <div
@@ -1048,17 +1045,18 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
           {Array.from({ length: rows }, (_, r) =>
             Array.from({ length: cols }, (_, c) => {
               const cell = cellMap.get(`${r},${c}`)
-              return (
+              return editing ? (
                 <button key={`${r}-${c}`} onClick={() => handleCell(r, c)}
                   className="w-7 h-7 hover:opacity-75 transition-opacity"
+                  style={{ backgroundColor: cell?.color ?? '#F5F0E8' }} />
+              ) : (
+                <div key={`${r}-${c}`} className="w-7 h-7"
                   style={{ backgroundColor: cell?.color ?? '#F5F0E8' }} />
               )
             })
           )}
         </div>
       </div>
-
-      <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>
     </div>
   )
 }

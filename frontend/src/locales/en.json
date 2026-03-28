@@ -93,6 +93,8 @@
 
   "add_grid": "Add grid",
   "delete_grid": "Delete this grid",
+  "edit_grid": "Edit",
+  "done_editing_grid": "Done",
 
   "paint": "Paint",
   "erase": "Erase",

@@ -93,6 +93,8 @@
 
   "add_grid": "Legg til rutenett",
   "delete_grid": "Slett dette rutenettet",
+  "edit_grid": "Rediger",
+  "done_editing_grid": "Ferdig",
 
   "paint": "Maler",
   "erase": "Viskelær",
