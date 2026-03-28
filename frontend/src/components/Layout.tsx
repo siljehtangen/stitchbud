@@ -1,6 +1,9 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
+import { FaHome } from 'react-icons/fa'
+import { ImBooks } from 'react-icons/im'
+import { LiaUserFriendsSolid } from 'react-icons/lia'
 
 function LanguageSwitcher() {
   const { i18n: i18nInstance } = useTranslation()
@@ -35,17 +38,17 @@ export default function Layout() {
   const { t } = useTranslation()
 
   const navItems = [
-    { to: '/', label: t('nav_home'), icon: '🏠', exact: true },
+    { to: '/', label: t('nav_home'), icon: <FaHome />, exact: true },
     { to: '/projects', label: t('nav_projects'), icon: '🧶', exact: false },
-    { to: '/library', label: t('nav_library'), icon: '📚', exact: false },
+    { to: '/library', label: t('nav_library'), icon: <ImBooks />, exact: false },
   ]
 
   return (
     <div className="min-h-screen flex flex-col max-w-2xl mx-auto">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-cream/90 backdrop-blur-sm border-b border-sand-blue/40 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 tracking-tight">
-          <span className="text-sand-green-dark">✦</span> {t('app_name')}
+        <h1 className="text-xl font-semibold text-gray-800 tracking-tight flex items-center gap-1.5">
+          <LiaUserFriendsSolid className="text-sand-green-dark text-2xl" /> {t('app_name')}
         </h1>
         <LanguageSwitcher />
       </header>
@@ -77,7 +80,7 @@ export default function Layout() {
               }`
             }
           >
-            <span className="text-xl">{item.icon}</span>
+            <span className="text-xl flex items-center justify-center">{item.icon}</span>
             <span className="text-xs font-medium">{item.label}</span>
           </NavLink>
         ))}

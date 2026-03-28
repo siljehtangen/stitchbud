@@ -2,14 +2,16 @@ import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
+import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
+import { PiYarnFill } from 'react-icons/pi'
 
 const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
 
-const TYPE_ICONS: Record<LibraryItemType, string> = {
-  YARN: '🧶',
-  FABRIC: '🧵',
-  KNITTING_NEEDLE: '🪡',
-  CROCHET_HOOK: '🪝',
+const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
+  YARN: <PiYarnFill />,
+  FABRIC: <GiRolledCloth />,
+  KNITTING_NEEDLE: <GiChopsticks />,
+  CROCHET_HOOK: <GiPirateHook />,
 }
 
 export default function Library() {

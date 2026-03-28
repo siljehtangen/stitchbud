@@ -3,10 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi, libraryApi } from '../api'
 import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType } from '../types'
+import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
+import { PiYarnFill, PiToolboxFill } from 'react-icons/pi'
+import { FaCircleInfo } from 'react-icons/fa6'
+import { MdOutlineMenuBook } from 'react-icons/md'
+import { BsStars, BsListStars } from 'react-icons/bs'
 
 const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
-const TYPE_ICONS: Record<LibraryItemType, string> = {
-  YARN: '🧶', FABRIC: '🧵', KNITTING_NEEDLE: '🪡', CROCHET_HOOK: '🪝',
+const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
+  YARN: <PiYarnFill />, FABRIC: <GiRolledCloth />, KNITTING_NEEDLE: <GiChopsticks />, CROCHET_HOOK: <GiPirateHook />,
 }
 
 // Gauge removed; only needle/hook sizes remain per category
@@ -144,12 +149,12 @@ export default function ProjectDetail() {
 
   const isSewing = project.category === 'SEWING'
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'info', label: t('tab_info'), icon: '📝' },
-    { id: 'materials', label: t('tab_materials'), icon: '🧶' },
-    { id: 'recipe', label: t('tab_recipe'), icon: '📖' },
-    ...(!isSewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: '✦' }] : []),
-    { id: 'overview', label: t('tab_overview'), icon: '⊞' },
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: 'info', label: t('tab_info'), icon: <FaCircleInfo /> },
+    { id: 'materials', label: t('tab_materials'), icon: <PiToolboxFill /> },
+    { id: 'recipe', label: t('tab_recipe'), icon: <MdOutlineMenuBook /> },
+    ...(!isSewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: <BsStars /> }] : []),
+    { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
   ]
 
   const categoryLabel = (cat: ProjectCategory) => t(`category_${cat.toLowerCase()}` as const)

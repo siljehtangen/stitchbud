@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { ProjectCategory } from '../types'
+import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 
-const CATEGORY_ICONS: Record<ProjectCategory, string> = {
-  KNITTING: '🧶',
-  CROCHET: '🪡',
-  SEWING: '🧵',
+const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
+  KNITTING: <GiChopsticks />,
+  CROCHET: <GiPirateHook />,
+  SEWING: <GiSewingMachine />,
 }
 
 export default function NewProject() {

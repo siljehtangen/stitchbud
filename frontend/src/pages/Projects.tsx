@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
+import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 
-const CATEGORY_ICONS: Record<ProjectCategory, string> = {
-  KNITTING: '🧶',
-  CROCHET: '🪡',
-  SEWING: '🧵',
+const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
+  KNITTING: <GiChopsticks />,
+  CROCHET: <GiPirateHook />,
+  SEWING: <GiSewingMachine />,
 }
 
 export default function Projects() {
@@ -55,7 +56,7 @@ export default function Projects() {
                 : 'bg-soft-brown/20 text-warm-gray hover:bg-soft-brown/40'
             }`}
           >
-            {cat === 'ALL' ? t('filter_all') : `${CATEGORY_ICONS[cat]} ${categoryLabel(cat)}`}
+            {cat === 'ALL' ? t('filter_all') : <>{CATEGORY_ICONS[cat]} {categoryLabel(cat)}</>}
           </button>
         ))}
       </div>
