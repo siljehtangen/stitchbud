@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
-import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
+import { GiChopsticks, GiPirateHook, GiSewingMachine, GiButterfly } from 'react-icons/gi'
 
 const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks />,
-  CROCHET: <GiPirateHook />,
-  SEWING: <GiSewingMachine />,
+  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
+  CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
+  SEWING: <GiSewingMachine className="text-warm-gray" />,
 }
 
 function categoryBadgeClass(cat: ProjectCategory) {
@@ -42,7 +42,9 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Welcome */}
       <div className="bg-gradient-to-br from-sand-green/40 to-sand-blue/40 rounded-2xl p-5">
-        <h2 className="text-lg font-semibold text-gray-800">{t('welcome_back')}</h2>
+        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          {t('welcome_back')} <GiButterfly className="text-sand-green-dark text-xl" />
+        </h2>
         <p className="text-sm text-warm-gray mt-1">
           {projects.length === 0
             ? t('start_first_project')

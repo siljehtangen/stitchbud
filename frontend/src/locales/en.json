@@ -18,7 +18,7 @@
   "save": "Save",
   "saving": "Saving...",
 
-  "welcome_back": "Welcome back 👋",
+  "welcome_back": "Welcome back",
   "start_first_project": "Start your first project!",
   "you_have_projects_one": "You have 1 project",
   "you_have_projects_other": "You have {{count}} projects",

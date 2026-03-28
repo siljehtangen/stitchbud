@@ -11,7 +11,7 @@ import { BsStars, BsListStars } from 'react-icons/bs'
 
 const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
 const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
-  YARN: <PiYarnFill />, FABRIC: <GiRolledCloth />, KNITTING_NEEDLE: <GiChopsticks />, CROCHET_HOOK: <GiPirateHook />,
+  YARN: <PiYarnFill className="text-sand-green-dark" />, FABRIC: <GiRolledCloth className="text-warm-gray" />, KNITTING_NEEDLE: <GiChopsticks className="text-sand-green-dark" />, CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
 }
 
 // Gauge removed; only needle/hook sizes remain per category

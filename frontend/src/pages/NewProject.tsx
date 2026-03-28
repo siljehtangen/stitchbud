@@ -6,9 +6,9 @@ import type { ProjectCategory } from '../types'
 import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 
 const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks />,
-  CROCHET: <GiPirateHook />,
-  SEWING: <GiSewingMachine />,
+  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
+  CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
+  SEWING: <GiSewingMachine className="text-warm-gray" />,
 }
 
 export default function NewProject() {

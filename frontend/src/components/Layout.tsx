@@ -4,6 +4,15 @@ import i18n from '../i18n'
 import { FaHome } from 'react-icons/fa'
 import { ImBooks } from 'react-icons/im'
 import { LiaUserFriendsSolid } from 'react-icons/lia'
+import { GrProjects } from 'react-icons/gr'
+import { useTheme, type Theme } from '../context/ThemeContext'
+
+const THEMES: { id: Theme; color: string }[] = [
+  { id: 'beige',    color: '#C8A87A' },
+  { id: 'blue',     color: '#6AA8C4' },
+  { id: 'green',    color: '#78A073' },
+  { id: 'lavender', color: '#9A87CA' },
+]
 
 function LanguageSwitcher() {
   const { i18n: i18nInstance } = useTranslation()
@@ -36,10 +45,11 @@ function LanguageSwitcher() {
 export default function Layout() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { theme, setTheme } = useTheme()
 
   const navItems = [
     { to: '/', label: t('nav_home'), icon: <FaHome />, exact: true },
-    { to: '/projects', label: t('nav_projects'), icon: '🧶', exact: false },
+    { to: '/projects', label: t('nav_projects'), icon: <GrProjects />, exact: false },
     { to: '/library', label: t('nav_library'), icon: <ImBooks />, exact: false },
   ]
 
@@ -50,7 +60,22 @@ export default function Layout() {
         <h1 className="text-xl font-semibold text-gray-800 tracking-tight flex items-center gap-1.5">
           <LiaUserFriendsSolid className="text-sand-green-dark text-2xl" /> {t('app_name')}
         </h1>
-        <LanguageSwitcher />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            {THEMES.map(th => (
+              <button
+                key={th.id}
+                onClick={() => setTheme(th.id)}
+                className={`w-4 h-4 rounded-full transition-all hover:scale-110 ${
+                  theme === th.id ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : 'opacity-60 hover:opacity-100'
+                }`}
+                style={{ backgroundColor: th.color }}
+                aria-label={th.id}
+              />
+            ))}
+          </div>
+          <LanguageSwitcher />
+        </div>
       </header>
 
       {/* Main content */}

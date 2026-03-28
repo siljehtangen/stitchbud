@@ -4,15 +4,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        'sand-green': '#C6D8B8',
-        'sand-green-dark': '#A8C49A',
-        'sand-blue': '#BFD8E0',
-        'sand-blue-medium': '#A8CEDA',
-        'sand-blue-dark': '#9DC4CF',
-        'sand-blue-deep': '#6FA8BC',
-        'cream': '#F5F0E8',
-        'warm-gray': '#8B7355',
-        'soft-brown': '#D4C4A8',
+        'sand-green':       'rgb(var(--accent-light) / <alpha-value>)',
+        'sand-green-dark':  'rgb(var(--accent) / <alpha-value>)',
+        'sand-blue':        'rgb(var(--secondary-light) / <alpha-value>)',
+        'sand-blue-medium': 'rgb(var(--secondary-medium) / <alpha-value>)',
+        'sand-blue-dark':   'rgb(var(--secondary-dark) / <alpha-value>)',
+        'sand-blue-deep':   'rgb(var(--secondary-deep) / <alpha-value>)',
+        'cream':            'rgb(var(--bg) / <alpha-value>)',
+        'warm-gray':        'rgb(var(--warm-gray) / <alpha-value>)',
+        'soft-brown':       'rgb(var(--soft) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

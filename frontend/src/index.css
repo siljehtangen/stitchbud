@@ -2,11 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme palettes ───────────────────────────────────────────────────────── */
+/* All values are R G B components (no commas) so Tailwind opacity works.      */
+
+:root,
+[data-theme="beige"] {
+  --bg:               245 240 232;  /* #F5F0E8  cream            */
+  --accent-light:     224 201 168;  /* #E0C9A8  warm sand        */
+  --accent:           200 168 122;  /* #C8A87A  medium sand      */
+  --secondary-light:  221 208 187;  /* #DDD0BB  light beige      */
+  --secondary-medium: 205 191 160;  /* #CDBFA0  medium beige     */
+  --secondary-dark:   188 168 136;  /* #BCA888  darker beige     */
+  --secondary-deep:   154 126  90;  /* #9A7E5A  deep sand        */
+  --warm-gray:        139 115  85;  /* #8B7355                   */
+  --soft:             212 196 168;  /* #D4C4A8  soft-brown       */
+}
+
+[data-theme="blue"] {
+  --bg:               235 243 247;  /* #EBF3F7 */
+  --accent-light:     165 200 220;  /* #A5C8DC */
+  --accent:           106 168 196;  /* #6AA8C4 */
+  --secondary-light:  189 217 232;  /* #BDD9E8 */
+  --secondary-medium: 165 200 220;  /* #A5C8DC */
+  --secondary-dark:   140 185 206;  /* #8CB9CE */
+  --secondary-deep:    77 142 171;  /* #4D8EAB */
+  --warm-gray:        109 142 158;  /* #6D8E9E */
+  --soft:             181 207 224;  /* #B5CFE0 */
+}
+
+[data-theme="green"] {
+  --bg:               238 243 236;  /* #EEF3EC  lys salvie       */
+  --accent-light:     168 196 164;  /* #A8C4A4  støvet salvie    */
+  --accent:           120 160 115;  /* #78A073  medium salvie    */
+  --secondary-light:  189 212 185;  /* #BDD4B9                   */
+  --secondary-medium: 168 196 164;  /* #A8C4A4                   */
+  --secondary-dark:   141 175 137;  /* #8DAF89                   */
+  --secondary-deep:    82 122  78;  /* #527A4E  dyp salvie       */
+  --warm-gray:        100 130  97;  /* #648261                   */
+  --soft:             186 208 182;  /* #BAD0B6                   */
+}
+
+[data-theme="lavender"] {
+  --bg:               240 237 247;  /* #F0EDF7 */
+  --accent-light:     192 176 220;  /* #C0B0DC */
+  --accent:           154 135 202;  /* #9A87CA */
+  --secondary-light:  213 206 234;  /* #D5CEEA */
+  --secondary-medium: 192 176 220;  /* #C0B0DC */
+  --secondary-dark:   171 153 206;  /* #AB99CE */
+  --secondary-deep:   114  85 170;  /* #7255AA */
+  --warm-gray:        138 122 174;  /* #8A7AAE */
+  --soft:             203 189 224;  /* #CBBDE0 */
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+
 @layer base {
   body {
     @apply bg-cream text-gray-800 font-sans;
   }
 }
+
+/* ── Components ───────────────────────────────────────────────────────────── */
 
 @layer components {
   .btn-primary {
