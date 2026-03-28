@@ -1,6 +1,7 @@
 package com.stitchbud.service
 
 import com.stitchbud.dto.CreateLibraryItemRequest
+import com.stitchbud.dto.UpdateLibraryItemRequest
 import com.stitchbud.dto.LibraryItemDto
 import com.stitchbud.model.LibraryItem
 import com.stitchbud.repository.LibraryItemRepository
@@ -35,6 +36,21 @@ class LibraryService(
             circularLengthCm = req.circularLengthCm,
             hookSizeMm = req.hookSizeMm
         )
+        return libraryItemRepository.save(item).toDto()
+    }
+
+    fun update(id: Long, req: UpdateLibraryItemRequest): LibraryItemDto {
+        val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
+        req.name?.let { item.name = it }
+        req.yarnMaterial?.let { item.yarnMaterial = it }
+        req.yarnBrand?.let { item.yarnBrand = it }
+        req.yarnAmountG?.let { item.yarnAmountG = it }
+        req.yarnAmountM?.let { item.yarnAmountM = it }
+        req.fabricWidthCm?.let { item.fabricWidthCm = it }
+        req.fabricLengthCm?.let { item.fabricLengthCm = it }
+        req.needleSizeMm?.let { item.needleSizeMm = it }
+        req.circularLengthCm?.let { item.circularLengthCm = it }
+        req.hookSizeMm?.let { item.hookSizeMm = it }
         return libraryItemRepository.save(item).toDto()
     }
 

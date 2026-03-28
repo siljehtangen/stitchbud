@@ -66,6 +66,10 @@ export default function ProjectDetail() {
   const [tags, setTags] = useState('')
   const [recipeText, setRecipeText] = useState('')
   const [craftDetails, setCraftDetails] = useState<Record<string, string>>({})
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const coverImageRef = useRef<HTMLInputElement>(null)
+  const [uploadingCover, setUploadingCover] = useState(false)
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -78,6 +82,8 @@ export default function ProjectDetail() {
       setTags(p.tags)
       setRecipeText(p.recipeText)
       try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch { setCraftDetails({}) }
+      setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
+      setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
     }).finally(() => setLoading(false))
   }, [projectId])
 
@@ -90,14 +96,35 @@ export default function ProjectDetail() {
   }, [projectId])
 
   function handleInfoChange(field: string, value: string) {
-    const current = { name, description, notes, tags, recipeText }
-    const updated = { ...current, [field]: value }
     if (field === 'name') setName(value)
     if (field === 'description') setDescription(value)
     if (field === 'notes') setNotes(value)
     if (field === 'tags') setTags(value)
     if (field === 'recipeText') setRecipeText(value)
-    autoSave(updated)
+    if (field === 'startDate') {
+      setStartDate(value)
+      autoSave({ startDate: value ? new Date(value).getTime() : undefined })
+      return
+    }
+    if (field === 'endDate') {
+      setEndDate(value)
+      autoSave(value ? { endDate: new Date(value).getTime() } : { clearEndDate: true })
+      return
+    }
+    autoSave({ name, description, notes, tags, recipeText, [field]: value })
+  }
+
+  async function handleCoverImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingCover(true)
+    try {
+      const updated = await projectsApi.uploadCoverImage(projectId, file)
+      setProject(updated)
+    } finally {
+      setUploadingCover(false)
+      if (coverImageRef.current) coverImageRef.current.value = ''
+    }
   }
 
   function handleCraftDetailChange(key: string, value: string) {
@@ -155,12 +182,37 @@ export default function ProjectDetail() {
 
       {tab === 'info' && (
         <div className="space-y-4">
+          {/* Cover image */}
+          <div>
+            <button
+              onClick={() => coverImageRef.current?.click()}
+              disabled={uploadingCover}
+              className="w-full h-36 rounded-xl overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors relative bg-soft-brown/10 flex items-center justify-center"
+              title={t('upload_cover_image')}
+            >
+              {project.imageUrl ? (
+                <img src={project.imageUrl} alt={name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-warm-gray text-sm">{uploadingCover ? t('uploading') : t('upload_cover_image')}</span>
+              )}
+            </button>
+            <input ref={coverImageRef} type="file" accept="image/*" onChange={handleCoverImageUpload} className="hidden" />
+          </div>
+
           <Field label={t('field_name')}>
             <input className="input" value={name} onChange={e => handleInfoChange('name', e.target.value)} />
           </Field>
           <Field label={t('field_description')}>
             <textarea className="textarea" rows={4} value={description} onChange={e => handleInfoChange('description', e.target.value)} placeholder={t('describe_project')} />
           </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('start_date_label')}>
+              <input type="date" className="input" value={startDate} onChange={e => handleInfoChange('startDate', e.target.value)} />
+            </Field>
+            <Field label={`${t('end_date_label')} (${t('optional')})`}>
+              <input type="date" className="input" value={endDate} onChange={e => handleInfoChange('endDate', e.target.value)} />
+            </Field>
+          </div>
           <p className="text-xs text-warm-gray text-right">{t('auto_saving')}</p>
         </div>
       )}
@@ -180,7 +232,7 @@ export default function ProjectDetail() {
       )}
 
       {tab === 'knit' && !isSewing && (
-        <KnitTab project={project} projectId={projectId} onUpdate={setProject} />
+        <KnitTab project={project} projectId={projectId} onUpdate={setProject} category={project.category} />
       )}
 
       {tab === 'overview' && (
@@ -593,8 +645,8 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
 }
 
 // ── Knit Tab (Pattern + Counter together) ─────────────────────
-function KnitTab({ project, projectId, onUpdate }: {
-  project: Project; projectId: number; onUpdate: (p: Project) => void
+function KnitTab({ project, projectId, onUpdate, category }: {
+  project: Project; projectId: number; onUpdate: (p: Project) => void; category: ProjectCategory
 }) {
   const { t } = useTranslation()
   const [activeGridIndex, setActiveGridIndex] = useState(0)
@@ -667,6 +719,7 @@ function KnitTab({ project, projectId, onUpdate }: {
       rows={activeGrid.rows}
       cols={activeGrid.cols}
       cellDataJson={activeGrid.cellData}
+      showSymbols={category === 'KNITTING'}
       onSave={async (cells, r, c) =>
         onUpdate(await projectsApi.updatePatternGrid(projectId, activeGrid.id, {
           rows: r, cols: c, cellData: JSON.stringify(cells)
@@ -950,8 +1003,8 @@ function RoundCounterWidget({ counter, onSave }: {
 }
 
 // ── Pattern Grid Widget ────────────────────────────────────────
-function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSave }: {
-  rows: number; cols: number; cellDataJson: string
+function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showSymbols = true, onSave }: {
+  rows: number; cols: number; cellDataJson: string; showSymbols?: boolean
   onSave: (cells: PatternCell[], rows: number, cols: number) => void
 }) {
   const { t } = useTranslation()
@@ -1032,20 +1085,22 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
             </div>
           </div>
 
-          <div className="flex gap-1 flex-wrap items-center">
-            <span className="text-xs text-warm-gray mr-1">{t('stitch_symbols')}:</span>
-            {STITCH_SYMBOLS.map(s => (
-              <button
-                key={s.symbol}
-                onClick={() => { setSelectedSymbol(s.symbol); setMode('symbol') }}
-                title={t(s.labelKey as Parameters<typeof t>[0])}
-                className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold transition-colors
-                  ${mode === 'symbol' && selectedSymbol === s.symbol
-                    ? 'border-gray-700 bg-sand-green text-gray-800'
-                    : 'border-soft-brown/30 bg-soft-brown/10 text-gray-700 hover:bg-sand-blue/20'}`}
-              >{s.symbol}</button>
-            ))}
-          </div>
+          {showSymbols && (
+            <div className="flex gap-1 flex-wrap items-center">
+              <span className="text-xs text-warm-gray mr-1">{t('stitch_symbols')}:</span>
+              {STITCH_SYMBOLS.map(s => (
+                <button
+                  key={s.symbol}
+                  onClick={() => { setSelectedSymbol(s.symbol); setMode('symbol') }}
+                  title={t(s.labelKey as Parameters<typeof t>[0])}
+                  className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold transition-colors
+                    ${mode === 'symbol' && selectedSymbol === s.symbol
+                      ? 'border-gray-700 bg-sand-green text-gray-800'
+                      : 'border-soft-brown/30 bg-soft-brown/10 text-gray-700 hover:bg-sand-blue/20'}`}
+                >{s.symbol}</button>
+              ))}
+            </div>
+          )}
 
           <div className="flex gap-2 items-center text-xs flex-wrap">
             <span className="text-warm-gray">{t('rows_label')}</span>
@@ -1070,47 +1125,65 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
         </>
       )}
 
-      <div className="flex gap-4 items-start">
-        <div className="overflow-auto">
-          <div
-            className="inline-grid gap-px bg-soft-brown/20 border border-soft-brown/20 rounded-lg p-px"
-            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-          >
-            {Array.from({ length: rows }, (_, r) =>
-              Array.from({ length: cols }, (_, c) => {
-                const cell = cellMap.get(`${r},${c}`)
-                const inner = cell?.symbol
-                  ? <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>
-                  : null
-                return editing ? (
-                  <button key={`${r}-${c}`} onClick={() => handleCell(r, c)}
-                    className="w-7 h-7 flex items-center justify-center hover:opacity-75 transition-opacity"
-                    style={{ backgroundColor: cell?.color ?? '#F5F0E8' }}
-                  >{inner}</button>
-                ) : (
-                  <div key={`${r}-${c}`} className="w-7 h-7 flex items-center justify-center"
-                    style={{ backgroundColor: cell?.color ?? '#F5F0E8' }}
-                  >{inner}</div>
-                )
-              })
-            )}
-          </div>
-        </div>
+      <GridCanvas
+        rows={rows} cols={cols} cells={cells} cellMap={cellMap}
+        editing={editing} onCell={handleCell}
+        showSymbols={showSymbols} usedSymbols={usedSymbols}
+        t={t}
+      />
+    </div>
+  )
+}
 
+function GridCanvas({ rows, cols, cells: _cells, cellMap, editing, onCell, showSymbols, usedSymbols, t }: {
+  rows: number; cols: number; cells: PatternCell[]; cellMap: Map<string, PatternCell>
+  editing: boolean; onCell: (r: number, c: number) => void
+  showSymbols: boolean; usedSymbols: Set<string>
+  t: (k: Parameters<ReturnType<typeof useTranslation>['t']>[0]) => string
+}) {
+  const cellPx = cols <= 20 ? 28 : cols <= 35 ? 20 : 14
+  return (
+    <div className="flex gap-4 items-start">
+      <div className="overflow-auto">
+        <div
+          className="inline-grid gap-px bg-soft-brown/20 border border-soft-brown/20 rounded-lg p-px"
+          style={{ gridTemplateColumns: `repeat(${cols}, ${cellPx}px)` }}
+        >
+          {Array.from({ length: rows }, (_, r) =>
+            Array.from({ length: cols }, (_, c) => {
+              const cell = cellMap.get(`${r},${c}`)
+              const inner = cell?.symbol && cellPx >= 20
+                ? <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>
+                : null
+              return editing ? (
+                <button key={`${r}-${c}`} onClick={() => onCell(r, c)}
+                  className="flex items-center justify-center hover:opacity-75 transition-opacity"
+                  style={{ backgroundColor: cell?.color ?? '#F5F0E8', width: cellPx, height: cellPx }}
+                >{inner}</button>
+              ) : (
+                <div key={`${r}-${c}`} className="flex items-center justify-center"
+                  style={{ backgroundColor: cell?.color ?? '#F5F0E8', width: cellPx, height: cellPx }}
+                >{inner}</div>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      {showSymbols && usedSymbols.size > 0 && (
         <div className="flex-shrink-0 space-y-1.5 pt-1">
           <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
-          {STITCH_SYMBOLS.filter(s => !editing || usedSymbols.size === 0 || usedSymbols.has(s.symbol) || true).map(s => (
+          {STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol)).map(s => (
             <div key={s.symbol} className="flex items-center gap-1.5">
-              <span className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0
-                ${usedSymbols.has(s.symbol) ? 'border-gray-400 bg-soft-brown/20 text-gray-800' : 'border-soft-brown/20 bg-soft-brown/10 text-gray-400'}`}
+              <span className="w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0 border-gray-400 bg-soft-brown/20 text-gray-800"
               >{s.symbol}</span>
-              <span className={`text-xs ${usedSymbols.has(s.symbol) ? 'text-gray-700' : 'text-gray-400'}`}>
+              <span className="text-xs text-gray-700">
                 {t(s.labelKey as Parameters<typeof t>[0])}
               </span>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   )
 }

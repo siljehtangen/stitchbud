@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
@@ -16,8 +16,12 @@ export default function NewProject() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<ProjectCategory>('KNITTING')
+  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10))
+  const [coverImage, setCoverImage] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const coverRef = useRef<HTMLInputElement>(null)
 
   const categories: { value: ProjectCategory }[] = [
     { value: 'KNITTING' },
@@ -25,12 +29,25 @@ export default function NewProject() {
     { value: 'SEWING' },
   ]
 
+  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCoverImage(file)
+    setCoverPreview(URL.createObjectURL(file))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) { setError(t('name_required')); return }
     setSaving(true)
     try {
-      const project = await projectsApi.create({ name: name.trim(), description, category, tags: '' })
+      const project = await projectsApi.create({
+        name: name.trim(), description, category, tags: '',
+        startDate: startDate ? new Date(startDate).getTime() : Date.now(),
+      })
+      if (coverImage) {
+        await projectsApi.uploadCoverImage(project.id, coverImage)
+      }
       navigate(`/projects/${project.id}`)
     } catch {
       setError(t('failed_create_project'))
@@ -49,6 +66,22 @@ export default function NewProject() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Cover image */}
+        <div>
+          <button
+            type="button"
+            onClick={() => coverRef.current?.click()}
+            className="w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex items-center justify-center"
+          >
+            {coverPreview ? (
+              <img src={coverPreview} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-warm-gray text-sm">{t('upload_cover_image')}</span>
+            )}
+          </button>
+          <input ref={coverRef} type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
+        </div>
+
         {/* Category selector */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')}</label>
@@ -93,6 +126,17 @@ export default function NewProject() {
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder={t('description_placeholder')}
+          />
+        </div>
+
+        {/* Start date */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('start_date_label')}</label>
+          <input
+            type="date"
+            className="input"
+            value={startDate}
+            onChange={e => setStartDate(e.target.value)}
           />
         </div>
 

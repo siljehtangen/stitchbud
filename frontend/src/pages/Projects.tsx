@@ -13,6 +13,7 @@ const CATEGORY_ICONS: Record<ProjectCategory, string> = {
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([])
   const [filter, setFilter] = useState<ProjectCategory | 'ALL'>('ALL')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -21,13 +22,26 @@ export default function Projects() {
     projectsApi.getAll().then(setProjects).finally(() => setLoading(false))
   }, [])
 
-  const filtered = filter === 'ALL' ? projects : projects.filter(p => p.category === filter)
+  const q = search.toLowerCase()
+  const filtered = projects.filter(p => {
+    if (filter !== 'ALL' && p.category !== filter) return false
+    if (!q) return true
+    return [p.name, p.description, p.tags].some(v => v?.toLowerCase().includes(q))
+  })
 
   const categoryLabel = (cat: ProjectCategory) => t(`category_${cat.toLowerCase()}` as const)
 
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">{t('projects_heading')}</h2>
+
+      <input
+        type="search"
+        className="input text-sm py-2 w-full"
+        placeholder={t('projects_search_placeholder')}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">

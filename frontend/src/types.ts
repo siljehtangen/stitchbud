@@ -70,6 +70,8 @@ export interface Project {
   files: ProjectFile[]
   rowCounter?: RowCounter
   patternGrids: PatternGrid[]
+  startDate?: number
+  endDate?: number
   createdAt: number
   updatedAt: number
 }

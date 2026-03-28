@@ -1,6 +1,7 @@
 package com.stitchbud.controller
 
 import com.stitchbud.dto.CreateLibraryItemRequest
+import com.stitchbud.dto.UpdateLibraryItemRequest
 import com.stitchbud.service.LibraryService
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
@@ -19,6 +20,9 @@ class LibraryController(private val libraryService: LibraryService) {
 
     @PostMapping
     fun create(@RequestBody req: CreateLibraryItemRequest) = libraryService.create(req)
+
+    @PutMapping("/{id}")
+    fun update(@PathVariable id: Long, @RequestBody req: UpdateLibraryItemRequest) = libraryService.update(id, req)
 
     @PostMapping("/{id}/image", consumes = ["multipart/form-data"])
     fun uploadImage(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =

@@ -17,6 +17,19 @@ data class LibraryItemDto(
     val createdAt: Long = 0
 )
 
+data class UpdateLibraryItemRequest(
+    val name: String? = null,
+    val yarnMaterial: String? = null,
+    val yarnBrand: String? = null,
+    val yarnAmountG: Int? = null,
+    val yarnAmountM: Int? = null,
+    val fabricWidthCm: Int? = null,
+    val fabricLengthCm: Int? = null,
+    val needleSizeMm: String? = null,
+    val circularLengthCm: Int? = null,
+    val hookSizeMm: String? = null
+)
+
 data class CreateLibraryItemRequest(
     val itemType: String,
     val name: String,

@@ -84,6 +84,10 @@ export default function Library() {
     setAdding(false)
   }
 
+  function handleUpdated(item: LibraryItem) {
+    setItems(prev => prev.map(i => i.id === item.id ? item : i))
+  }
+
   const typeLabel = (type: LibraryItemType) => {
     if (type === 'YARN') return t('lib_yarn')
     if (type === 'FABRIC') return t('lib_fabric')
@@ -167,6 +171,7 @@ export default function Library() {
                     subtitle={itemSubtitle(item)}
                     onDelete={() => handleDelete(item.id)}
                     onImageUploaded={updated => setItems(prev => prev.map(i => i.id === updated.id ? updated : i))}
+                    onUpdated={handleUpdated}
                   />
                 ))}
               </div>
@@ -179,15 +184,30 @@ export default function Library() {
 }
 
 // ── Library Card ───────────────────────────────────────────────
-function LibraryCard({ item, subtitle, onDelete, onImageUploaded }: {
+function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   item: LibraryItem
   subtitle: string
   onDelete: () => void
   onImageUploaded: (updated: LibraryItem) => void
+  onUpdated: (updated: LibraryItem) => void
 }) {
   const { t } = useTranslation()
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // Edit fields
+  const [name, setName] = useState(item.name)
+  const [yarnBrand, setYarnBrand] = useState(item.yarnBrand ?? '')
+  const [yarnMaterial, setYarnMaterial] = useState(item.yarnMaterial ?? '')
+  const [yarnAmountG, setYarnAmountG] = useState(item.yarnAmountG?.toString() ?? '')
+  const [yarnAmountM, setYarnAmountM] = useState(item.yarnAmountM?.toString() ?? '')
+  const [fabricLength, setFabricLength] = useState(item.fabricLengthCm?.toString() ?? '')
+  const [fabricWidth, setFabricWidth] = useState(item.fabricWidthCm?.toString() ?? '')
+  const [needleSize, setNeedleSize] = useState(item.needleSizeMm ?? '')
+  const [circularLength, setCircularLength] = useState(item.circularLengthCm?.toString() ?? '')
+  const [hookSize, setHookSize] = useState(item.hookSizeMm ?? '')
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -200,6 +220,87 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded }: {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
     }
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const updated = await libraryApi.update(item.id, {
+        name: name.trim() || item.name,
+        yarnBrand: item.itemType === 'YARN' ? yarnBrand || undefined : undefined,
+        yarnMaterial: item.itemType === 'YARN' ? yarnMaterial || undefined : undefined,
+        yarnAmountG: item.itemType === 'YARN' && yarnAmountG ? parseInt(yarnAmountG) : undefined,
+        yarnAmountM: item.itemType === 'YARN' && yarnAmountM ? parseInt(yarnAmountM) : undefined,
+        fabricLengthCm: item.itemType === 'FABRIC' && fabricLength ? parseInt(fabricLength) : undefined,
+        fabricWidthCm: item.itemType === 'FABRIC' && fabricWidth ? parseInt(fabricWidth) : undefined,
+        needleSizeMm: item.itemType === 'KNITTING_NEEDLE' ? needleSize || undefined : undefined,
+        circularLengthCm: item.itemType === 'KNITTING_NEEDLE' && circularLength ? parseInt(circularLength) : undefined,
+        hookSizeMm: item.itemType === 'CROCHET_HOOK' ? hookSize || undefined : undefined,
+      })
+      onUpdated(updated)
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="card space-y-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
+            title={t('lib_upload_image')}
+          >
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="flex items-center justify-center w-full h-full text-xl text-soft-brown/40">
+                {uploading ? '⏳' : '📷'}
+              </span>
+            )}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          <input
+            className="input text-sm py-1.5 flex-1"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder={t('lib_name')}
+          />
+        </div>
+        {item.itemType === 'YARN' && (
+          <div className="grid grid-cols-2 gap-2">
+            <input className="input text-sm py-1.5" value={yarnBrand} onChange={e => setYarnBrand(e.target.value)} placeholder={t('lib_yarn_brand')} />
+            <input className="input text-sm py-1.5" value={yarnMaterial} onChange={e => setYarnMaterial(e.target.value)} placeholder={t('lib_yarn_material')} />
+            <input type="number" className="input text-sm py-1.5" value={yarnAmountG} onChange={e => setYarnAmountG(e.target.value)} placeholder={t('lib_yarn_amount_g')} />
+            <input type="number" className="input text-sm py-1.5" value={yarnAmountM} onChange={e => setYarnAmountM(e.target.value)} placeholder={t('lib_yarn_amount_m')} />
+          </div>
+        )}
+        {item.itemType === 'FABRIC' && (
+          <div className="grid grid-cols-2 gap-2">
+            <input type="number" className="input text-sm py-1.5" value={fabricLength} onChange={e => setFabricLength(e.target.value)} placeholder={t('lib_fabric_length')} />
+            <input type="number" className="input text-sm py-1.5" value={fabricWidth} onChange={e => setFabricWidth(e.target.value)} placeholder={t('lib_fabric_width')} />
+          </div>
+        )}
+        {item.itemType === 'KNITTING_NEEDLE' && (
+          <div className="grid grid-cols-2 gap-2">
+            <input className="input text-sm py-1.5" value={needleSize} onChange={e => setNeedleSize(e.target.value)} placeholder={t('lib_needle_size')} />
+            <input type="number" className="input text-sm py-1.5" value={circularLength} onChange={e => setCircularLength(e.target.value)} placeholder={t('lib_circular_length')} />
+          </div>
+        )}
+        {item.itemType === 'CROCHET_HOOK' && (
+          <input className="input text-sm py-1.5 w-1/2" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder={t('lib_hook_size')} />
+        )}
+        <div className="flex gap-2">
+          <button onClick={handleSave} disabled={saving} className="btn-primary text-sm flex-1">
+            {saving ? t('saving') : t('save')}
+          </button>
+          <button onClick={() => setEditing(false)} className="btn-ghost text-sm">{t('cancel')}</button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -229,6 +330,11 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded }: {
         <p className="font-medium text-sm text-gray-800">{item.name}</p>
         {subtitle && <p className="text-xs text-warm-gray">{subtitle}</p>}
       </div>
+      <button
+        onClick={() => setEditing(true)}
+        className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
+        title={t('edit')}
+      >✎</button>
       <button
         onClick={onDelete}
         className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
