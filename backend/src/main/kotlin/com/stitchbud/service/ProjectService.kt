@@ -31,7 +31,8 @@ class ProjectService(
         projectRepository.findById(id).orElseThrow { RuntimeException("Project not found") }.toDto()
 
     fun createProject(req: CreateProjectRequest): ProjectDto {
-        val project = Project(name = req.name, description = req.description, category = req.category, tags = req.tags)
+        val project = Project(name = req.name, description = req.description, category = req.category, tags = req.tags,
+            startDate = req.startDate ?: System.currentTimeMillis())
         val saved = projectRepository.save(project)
         saved.rowCounter = RowCounter(project = saved)
         saved.patternGrids.add(PatternGrid(project = saved))
@@ -47,6 +48,9 @@ class ProjectService(
         req.notes?.let { project.notes = it }
         req.recipeText?.let { project.recipeText = it }
         req.craftDetails?.let { project.craftDetails = it }
+        req.startDate?.let { project.startDate = it }
+        req.endDate?.let { project.endDate = it }
+        if (req.clearEndDate) project.endDate = null
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -115,6 +119,18 @@ class ProjectService(
         return projectRepository.save(project).toDto()
     }
 
+    fun uploadCoverImage(projectId: Long, file: MultipartFile): ProjectDto {
+        val project = projectRepository.findById(projectId).orElseThrow { RuntimeException("Project not found") }
+        val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
+        val storedName = "cover_${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
+        val dir = Paths.get(uploadDir, projectId.toString())
+        Files.createDirectories(dir)
+        file.transferTo(dir.resolve(storedName).toFile())
+        project.imageUrl = "/api/files/$projectId/$storedName"
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
     fun uploadFile(projectId: Long, file: MultipartFile): ProjectDto {
         val project = projectRepository.findById(projectId).orElseThrow { RuntimeException("Project not found") }
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
@@ -163,6 +179,7 @@ class ProjectService(
         files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
         rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
         patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
+        startDate = startDate, endDate = endDate,
         createdAt = createdAt, updatedAt = updatedAt
     )
 }

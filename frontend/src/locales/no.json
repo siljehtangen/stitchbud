@@ -154,5 +154,12 @@
   "lib_all": "Alle",
   "lib_search_placeholder": "Søk i bibliotek...",
   "lib_create_new": "Opprett ny i biblioteket",
-  "lib_not_found_hint": "Finner du ikke det du leter etter?"
+  "lib_not_found_hint": "Finner du ikke det du leter etter?",
+
+  "projects_search_placeholder": "Søk i prosjekter...",
+  "upload_cover_image": "Last opp forsidebilde",
+  "start_date_label": "Startdato",
+  "end_date_label": "Sluttdato",
+  "optional": "valgfritt",
+  "edit": "Rediger"
 }

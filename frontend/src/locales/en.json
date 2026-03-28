@@ -154,5 +154,12 @@
   "lib_all": "All",
   "lib_search_placeholder": "Search library...",
   "lib_create_new": "Create new in library",
-  "lib_not_found_hint": "Can't find what you're looking for?"
+  "lib_not_found_hint": "Can't find what you're looking for?",
+
+  "projects_search_placeholder": "Search projects...",
+  "upload_cover_image": "Upload cover image",
+  "start_date_label": "Start date",
+  "end_date_label": "End date",
+  "optional": "optional",
+  "edit": "Edit"
 }

@@ -49,6 +49,8 @@ data class ProjectDto(
     val files: List<ProjectFileDto> = emptyList(),
     val rowCounter: RowCounterDto? = null,
     val patternGrids: List<PatternGridDto> = emptyList(),
+    val startDate: Long? = null,
+    val endDate: Long? = null,
     val createdAt: Long = 0,
     val updatedAt: Long = 0
 )
@@ -57,7 +59,8 @@ data class CreateProjectRequest(
     val name: String,
     val description: String = "",
     val category: ProjectCategory,
-    val tags: String = ""
+    val tags: String = "",
+    val startDate: Long? = null
 )
 
 data class UpdateProjectRequest(
@@ -67,7 +70,10 @@ data class UpdateProjectRequest(
     val imageUrl: String? = null,
     val notes: String? = null,
     val recipeText: String? = null,
-    val craftDetails: String? = null
+    val craftDetails: String? = null,
+    val startDate: Long? = null,
+    val endDate: Long? = null,
+    val clearEndDate: Boolean = false
 )
 
 data class UpdateRowCounterRequest(
