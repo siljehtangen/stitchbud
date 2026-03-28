@@ -28,6 +28,17 @@ const PALETTE = [
   '#000000', '#FFFFFF', '#888888', '#CC6699',
 ]
 
+const STITCH_SYMBOLS = [
+  { symbol: 'O',  labelKey: 'stitch_kast' },
+  { symbol: '/',  labelKey: 'stitch_fell_hoyre' },
+  { symbol: 'Λ',  labelKey: 'stitch_dobbel_felling' },
+  { symbol: '\\', labelKey: 'stitch_fell_venstre' },
+  { symbol: '□',  labelKey: 'stitch_rett' },
+  { symbol: '–',  labelKey: 'stitch_vrang' },
+  { symbol: '↪',  labelKey: 'stitch_vridd_okning_hoyre' },
+  { symbol: '↩',  labelKey: 'stitch_vridd_okning_venstre' },
+]
+
 const GRID_PRESETS = [
   { label: '5×5', rows: 5, cols: 5 },
   { label: '10×10', rows: 10, cols: 10 },
@@ -951,7 +962,8 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
     try { return JSON.parse(cellDataJson) } catch { return [] }
   })
   const [selectedColor, setSelectedColor] = useState('#C6D8B8')
-  const [mode, setMode] = useState<'color' | 'erase'>('color')
+  const [selectedSymbol, setSelectedSymbol] = useState('O')
+  const [mode, setMode] = useState<'color' | 'symbol' | 'erase'>('color')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
@@ -963,12 +975,16 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
 
   function handleCell(row: number, col: number) {
     if (!editing) return
+    const existing = cellMap.get(`${row},${col}`)
     let next: PatternCell[]
     if (mode === 'erase') {
       next = cells.filter(c => !(c.row === row && c.col === col))
+    } else if (mode === 'symbol') {
+      next = cells.filter(c => !(c.row === row && c.col === col))
+      next.push({ row, col, color: existing?.color ?? '#F5F0E8', symbol: selectedSymbol })
     } else {
       next = cells.filter(c => !(c.row === row && c.col === col))
-      next.push({ row, col, color: selectedColor, symbol: '' })
+      next.push({ row, col, color: selectedColor, symbol: existing?.symbol ?? '' })
     }
     setCells(next)
     autoSave(next, rows, cols)
@@ -981,6 +997,8 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
     setCells(trimmed)
     onSave(trimmed, newRows, newCols)
   }
+
+  const usedSymbols = new Set(cells.map(c => c.symbol).filter(Boolean))
 
   return (
     <div className="space-y-3">
@@ -1014,6 +1032,21 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
             </div>
           </div>
 
+          <div className="flex gap-1 flex-wrap items-center">
+            <span className="text-xs text-warm-gray mr-1">{t('stitch_symbols')}:</span>
+            {STITCH_SYMBOLS.map(s => (
+              <button
+                key={s.symbol}
+                onClick={() => { setSelectedSymbol(s.symbol); setMode('symbol') }}
+                title={t(s.labelKey as Parameters<typeof t>[0])}
+                className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold transition-colors
+                  ${mode === 'symbol' && selectedSymbol === s.symbol
+                    ? 'border-gray-700 bg-sand-green text-gray-800'
+                    : 'border-soft-brown/30 bg-soft-brown/10 text-gray-700 hover:bg-sand-blue/20'}`}
+              >{s.symbol}</button>
+            ))}
+          </div>
+
           <div className="flex gap-2 items-center text-xs flex-wrap">
             <span className="text-warm-gray">{t('rows_label')}</span>
             <input type="number" value={rows} min={1} max={100} onChange={e => setRows(parseInt(e.target.value) || 1)}
@@ -1037,24 +1070,45 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
         </>
       )}
 
-      <div className="overflow-auto">
-        <div
-          className="inline-grid gap-px bg-soft-brown/20 border border-soft-brown/20 rounded-lg p-px"
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-        >
-          {Array.from({ length: rows }, (_, r) =>
-            Array.from({ length: cols }, (_, c) => {
-              const cell = cellMap.get(`${r},${c}`)
-              return editing ? (
-                <button key={`${r}-${c}`} onClick={() => handleCell(r, c)}
-                  className="w-7 h-7 hover:opacity-75 transition-opacity"
-                  style={{ backgroundColor: cell?.color ?? '#F5F0E8' }} />
-              ) : (
-                <div key={`${r}-${c}`} className="w-7 h-7"
-                  style={{ backgroundColor: cell?.color ?? '#F5F0E8' }} />
-              )
-            })
-          )}
+      <div className="flex gap-4 items-start">
+        <div className="overflow-auto">
+          <div
+            className="inline-grid gap-px bg-soft-brown/20 border border-soft-brown/20 rounded-lg p-px"
+            style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+          >
+            {Array.from({ length: rows }, (_, r) =>
+              Array.from({ length: cols }, (_, c) => {
+                const cell = cellMap.get(`${r},${c}`)
+                const inner = cell?.symbol
+                  ? <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>
+                  : null
+                return editing ? (
+                  <button key={`${r}-${c}`} onClick={() => handleCell(r, c)}
+                    className="w-7 h-7 flex items-center justify-center hover:opacity-75 transition-opacity"
+                    style={{ backgroundColor: cell?.color ?? '#F5F0E8' }}
+                  >{inner}</button>
+                ) : (
+                  <div key={`${r}-${c}`} className="w-7 h-7 flex items-center justify-center"
+                    style={{ backgroundColor: cell?.color ?? '#F5F0E8' }}
+                  >{inner}</div>
+                )
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="flex-shrink-0 space-y-1.5 pt-1">
+          <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
+          {STITCH_SYMBOLS.filter(s => !editing || usedSymbols.size === 0 || usedSymbols.has(s.symbol) || true).map(s => (
+            <div key={s.symbol} className="flex items-center gap-1.5">
+              <span className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0
+                ${usedSymbols.has(s.symbol) ? 'border-gray-400 bg-soft-brown/20 text-gray-800' : 'border-soft-brown/20 bg-soft-brown/10 text-gray-400'}`}
+              >{s.symbol}</span>
+              <span className={`text-xs ${usedSymbols.has(s.symbol) ? 'text-gray-700' : 'text-gray-400'}`}>
+                {t(s.labelKey as Parameters<typeof t>[0])}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -1065,22 +1119,47 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, onSav
 function PatternGridReadOnly({ rows, cols, cellDataJson }: {
   rows: number; cols: number; cellDataJson: string
 }) {
+  const { t } = useTranslation()
   const cells: PatternCell[] = (() => { try { return JSON.parse(cellDataJson) } catch { return [] } })()
   const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
+  const usedSymbols = new Set(cells.map(c => c.symbol).filter(Boolean))
+  const legendSymbols = STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol))
 
   return (
-    <div className="overflow-auto">
-      <div
-        className="inline-grid gap-px bg-soft-brown/20 border border-sand-blue/20 rounded-lg p-px"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-      >
-        {Array.from({ length: rows }, (_, r) =>
-          Array.from({ length: cols }, (_, c) => {
-            const cell = cellMap.get(`${r},${c}`)
-            return <div key={`${r}-${c}`} className="w-7 h-7" style={{ backgroundColor: cell?.color ?? '#F5F0E8' }} />
-          })
-        )}
+    <div className="flex gap-4 items-start">
+      <div className="overflow-auto">
+        <div
+          className="inline-grid gap-px bg-soft-brown/20 border border-sand-blue/20 rounded-lg p-px"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: rows }, (_, r) =>
+            Array.from({ length: cols }, (_, c) => {
+              const cell = cellMap.get(`${r},${c}`)
+              return (
+                <div key={`${r}-${c}`} className="w-7 h-7 flex items-center justify-center"
+                  style={{ backgroundColor: cell?.color ?? '#F5F0E8' }}
+                >
+                  {cell?.symbol && <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>}
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
+
+      {legendSymbols.length > 0 && (
+        <div className="flex-shrink-0 space-y-1.5 pt-1">
+          <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
+          {legendSymbols.map(s => (
+            <div key={s.symbol} className="flex items-center gap-1.5">
+              <span className="w-6 h-6 flex items-center justify-center rounded border border-gray-400 bg-soft-brown/20 text-xs font-bold flex-shrink-0 text-gray-800">
+                {s.symbol}
+              </span>
+              <span className="text-xs text-gray-700">{t(s.labelKey as Parameters<typeof t>[0])}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
