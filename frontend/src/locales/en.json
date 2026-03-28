@@ -166,11 +166,11 @@
   "landing_headline": "Your crafting companion",
   "landing_subtitle": "Track every knitting, crochet and sewing project with ease",
   "landing_login": "Log in",
-  "landing_feat_knitting": "Rounds, patterns & yarn",
-  "landing_feat_crochet": "Stitch counts & hooks",
-  "landing_feat_sewing": "Patterns, fabric & more",
+  "landing_feat_knitting": "Time to get knitting",
+  "landing_feat_crochet": "New day, new masks",
+  "landing_feat_sewing": "Let the sewing machine sing",
   "landing_feat_yarn_label": "Materials",
-  "landing_feat_yarn": "Track yarn, fabric & tools in your library",
+  "landing_feat_yarn": "Track yarn, fabric & tools",
   "landing_tagline": "From cast-on to bind-off — keep every project close, every detail remembered.",
   "landing_footer": "Made for makers · Stitchbud"
 }
