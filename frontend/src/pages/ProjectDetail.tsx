@@ -871,7 +871,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
               {project.patternGrids.length > 1 && (
                 <p className="text-xs text-warm-gray mb-1">{i + 1}/{project.patternGrids.length}</p>
               )}
-              <PatternGridReadOnly rows={grid.rows} cols={grid.cols} cellDataJson={grid.cellData} />
+              <PatternGridReadOnly rows={grid.rows} cols={grid.cols} cellDataJson={grid.cellData} showSymbols={project.category === 'KNITTING'} />
             </div>
           ))}
         </Section>
@@ -1175,10 +1175,10 @@ function GridCanvas({ rows, cols, cells: _cells, cellMap, editing, onCell, showS
         </div>
       </div>
 
-      {showSymbols && usedSymbols.size > 0 && (
+      {showSymbols && (editing || usedSymbols.size > 0) && (
         <div className="flex-shrink-0 space-y-1.5 pt-1">
           <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
-          {STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol)).map(s => (
+          {(editing ? STITCH_SYMBOLS : STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol))).map(s => (
             <div key={s.symbol} className="flex items-center gap-1.5">
               <span className="w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0 border-gray-400 bg-soft-brown/20 text-gray-800"
               >{s.symbol}</span>
@@ -1194,8 +1194,8 @@ function GridCanvas({ rows, cols, cells: _cells, cellMap, editing, onCell, showS
 }
 
 // ── Read-only Pattern Grid ─────────────────────────────────────
-function PatternGridReadOnly({ rows, cols, cellDataJson }: {
-  rows: number; cols: number; cellDataJson: string
+function PatternGridReadOnly({ rows, cols, cellDataJson, showSymbols = true }: {
+  rows: number; cols: number; cellDataJson: string; showSymbols?: boolean
 }) {
   const { t } = useTranslation()
   const cells: PatternCell[] = (() => { try { return JSON.parse(cellDataJson) } catch { return [] } })()
@@ -1217,7 +1217,7 @@ function PatternGridReadOnly({ rows, cols, cellDataJson }: {
                 <div key={`${r}-${c}`} className="w-7 h-7 flex items-center justify-center"
                   style={{ backgroundColor: cell?.color ?? '#F5F0E8' }}
                 >
-                  {cell?.symbol && <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>}
+                  {showSymbols && cell?.symbol && <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>}
                 </div>
               )
             })
@@ -1225,7 +1225,7 @@ function PatternGridReadOnly({ rows, cols, cellDataJson }: {
         </div>
       </div>
 
-      {legendSymbols.length > 0 && (
+      {showSymbols && legendSymbols.length > 0 && (
         <div className="flex-shrink-0 space-y-1.5 pt-1">
           <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
           {legendSymbols.map(s => (
