@@ -124,12 +124,12 @@ export default function Library() {
               key={type}
               type="button"
               onClick={() => setFilterType(filterType === type ? null : type)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
               }`}
             >
-              <span>{TYPE_ICONS[type]}</span>
-              <span>{typeLabel(type)}</span>
+              <span className="text-sm leading-none flex-shrink-0">{TYPE_ICONS[type]}</span>
+              <span className="whitespace-nowrap">{typeLabel(type)}</span>
             </button>
           ))}
         </div>
@@ -265,35 +265,57 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
             )}
           </button>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-          <input
-            className="input text-sm py-1.5 flex-1"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder={t('lib_name')}
-          />
+          <Field label={t('lib_name')} className="flex-1">
+            <input
+              className="input text-sm py-1.5 w-full"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder={t('lib_name')}
+            />
+          </Field>
         </div>
         {item.itemType === 'YARN' && (
           <div className="grid grid-cols-2 gap-2">
-            <input className="input text-sm py-1.5" value={yarnBrand} onChange={e => setYarnBrand(e.target.value)} placeholder={t('lib_yarn_brand')} />
-            <input className="input text-sm py-1.5" value={yarnMaterial} onChange={e => setYarnMaterial(e.target.value)} placeholder={t('lib_yarn_material')} />
-            <input type="number" className="input text-sm py-1.5" value={yarnAmountG} onChange={e => setYarnAmountG(e.target.value)} placeholder={t('lib_yarn_amount_g')} />
-            <input type="number" className="input text-sm py-1.5" value={yarnAmountM} onChange={e => setYarnAmountM(e.target.value)} placeholder={t('lib_yarn_amount_m')} />
+            <Field label={t('lib_yarn_brand')}>
+              <input className="input text-sm py-1.5 w-full" value={yarnBrand} onChange={e => setYarnBrand(e.target.value)} placeholder={t('lib_yarn_brand')} />
+            </Field>
+            <Field label={t('lib_yarn_material')}>
+              <input className="input text-sm py-1.5 w-full" value={yarnMaterial} onChange={e => setYarnMaterial(e.target.value)} placeholder={t('lib_yarn_material')} />
+            </Field>
+            <Field label={t('lib_yarn_amount_g')}>
+              <input type="number" className="input text-sm py-1.5 w-full" value={yarnAmountG} onChange={e => setYarnAmountG(e.target.value)} placeholder={t('lib_yarn_amount_g')} />
+            </Field>
+            <Field label={t('lib_yarn_amount_m')}>
+              <input type="number" className="input text-sm py-1.5 w-full" value={yarnAmountM} onChange={e => setYarnAmountM(e.target.value)} placeholder={t('lib_yarn_amount_m')} />
+            </Field>
           </div>
         )}
         {item.itemType === 'FABRIC' && (
           <div className="grid grid-cols-2 gap-2">
-            <input type="number" className="input text-sm py-1.5" value={fabricLength} onChange={e => setFabricLength(e.target.value)} placeholder={t('lib_fabric_length')} />
-            <input type="number" className="input text-sm py-1.5" value={fabricWidth} onChange={e => setFabricWidth(e.target.value)} placeholder={t('lib_fabric_width')} />
+            <Field label={t('lib_fabric_length')}>
+              <input type="number" className="input text-sm py-1.5 w-full" value={fabricLength} onChange={e => setFabricLength(e.target.value)} placeholder={t('lib_fabric_length')} />
+            </Field>
+            <Field label={t('lib_fabric_width')}>
+              <input type="number" className="input text-sm py-1.5 w-full" value={fabricWidth} onChange={e => setFabricWidth(e.target.value)} placeholder={t('lib_fabric_width')} />
+            </Field>
           </div>
         )}
         {item.itemType === 'KNITTING_NEEDLE' && (
           <div className="grid grid-cols-2 gap-2">
-            <input className="input text-sm py-1.5" value={needleSize} onChange={e => setNeedleSize(e.target.value)} placeholder={t('lib_needle_size')} />
-            <input type="number" className="input text-sm py-1.5" value={circularLength} onChange={e => setCircularLength(e.target.value)} placeholder={t('lib_circular_length')} />
+            <Field label={t('lib_needle_size')}>
+              <input className="input text-sm py-1.5 w-full" value={needleSize} onChange={e => setNeedleSize(e.target.value)} placeholder={t('lib_needle_size')} />
+            </Field>
+            <Field label={t('lib_circular_length')}>
+              <input type="number" className="input text-sm py-1.5 w-full" value={circularLength} onChange={e => setCircularLength(e.target.value)} placeholder={t('lib_circular_length')} />
+            </Field>
           </div>
         )}
         {item.itemType === 'CROCHET_HOOK' && (
-          <input className="input text-sm py-1.5 w-1/2" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder={t('lib_hook_size')} />
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={t('lib_hook_size')}>
+              <input className="input text-sm py-1.5 w-full" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder={t('lib_hook_size')} />
+            </Field>
+          </div>
         )}
         <div className="flex gap-2">
           <button onClick={handleSave} disabled={saving} className="btn-primary text-sm flex-1">
@@ -353,7 +375,10 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
   onCancel: () => void
 }) {
   const { t } = useTranslation()
+  const fileRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Shared
   const [name, setName] = useState('')
@@ -371,6 +396,13 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
   // Hook
   const [hookSize, setHookSize] = useState('')
 
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
   function autoName() {
     if (selectedType === 'KNITTING_NEEDLE' && needleSize) return `${needleSize} mm strikkepinne`
     if (selectedType === 'CROCHET_HOOK' && hookSize) return `${hookSize} mm heklenål`
@@ -384,7 +416,7 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
     setSaving(true)
     try {
       const finalName = name.trim() || autoName()
-      const item = await libraryApi.create({
+      let item = await libraryApi.create({
         itemType: selectedType,
         name: finalName,
         yarnMaterial: selectedType === 'YARN' ? yarnMaterial || undefined : undefined,
@@ -397,6 +429,9 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
         circularLengthCm: selectedType === 'KNITTING_NEEDLE' && circularLength ? parseInt(circularLength) : undefined,
         hookSizeMm: selectedType === 'CROCHET_HOOK' ? hookSize || undefined : undefined,
       })
+      if (imageFile) {
+        item = await libraryApi.uploadImage(item.id, imageFile)
+      }
       onCreated(item)
     } finally {
       setSaving(false)
@@ -491,6 +526,24 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
         />
       </Field>
 
+      {/* Image upload */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors"
+          title={t('lib_upload_image')}
+        >
+          {imagePreview ? (
+            <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+          ) : (
+            <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
+          )}
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+        <span className="text-xs text-warm-gray">{imageFile ? imageFile.name : t('lib_upload_image')}</span>
+      </div>
+
       <div className="flex gap-2">
         <button type="submit" disabled={saving} className="btn-primary text-sm flex-1">
           {saving ? t('saving') : t('lib_add_item')}
@@ -501,9 +554,9 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div>
+    <div className={className}>
       <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
       {children}
     </div>

@@ -50,13 +50,13 @@ export default function Projects() {
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               filter === cat
                 ? 'bg-sand-green text-gray-800 shadow-sm'
                 : 'bg-soft-brown/20 text-warm-gray hover:bg-soft-brown/40'
             }`}
           >
-            {cat === 'ALL' ? t('filter_all') : <>{CATEGORY_ICONS[cat]} {categoryLabel(cat)}</>}
+            {cat === 'ALL' ? t('filter_all') : <><span className="leading-none flex-shrink-0">{CATEGORY_ICONS[cat]}</span><span>{categoryLabel(cat)}</span></>}
           </button>
         ))}
       </div>
