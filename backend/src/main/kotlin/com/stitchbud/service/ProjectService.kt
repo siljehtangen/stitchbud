@@ -32,7 +32,7 @@ class ProjectService(
 
     fun createProject(req: CreateProjectRequest): ProjectDto {
         val project = Project(name = req.name, description = req.description, category = req.category, tags = req.tags,
-            startDate = req.startDate ?: System.currentTimeMillis())
+            startDate = req.startDate)
         val saved = projectRepository.save(project)
         saved.rowCounter = RowCounter(project = saved)
         saved.patternGrids.add(PatternGrid(project = saved))
@@ -64,7 +64,7 @@ class ProjectService(
     fun addMaterial(projectId: Long, req: AddMaterialRequest): ProjectDto {
         val project = projectRepository.findById(projectId).orElseThrow { RuntimeException("Project not found") }
         project.materials.add(
-            Material(type = req.type, color = req.color, colorHex = req.colorHex, amount = req.amount, unit = req.unit, project = project)
+            Material(name = req.name, type = req.type, itemType = req.itemType, color = req.color, colorHex = req.colorHex, amount = req.amount, unit = req.unit, imageUrl = req.imageUrl, project = project)
         )
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
@@ -175,7 +175,7 @@ class ProjectService(
     private fun Project.toDto() = ProjectDto(
         id = id, name = name, description = description, category = category,
         tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
-        materials = materials.map { MaterialDto(it.id, it.type, it.color, it.colorHex, it.amount, it.unit) },
+        materials = materials.map { MaterialDto(it.id, it.name, it.type, it.itemType, it.color, it.colorHex, it.amount, it.unit, it.imageUrl) },
         files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
         rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
         patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },

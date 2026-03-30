@@ -25,11 +25,14 @@ export interface LibraryItem {
 
 export interface Material {
   id: number
+  name: string
   type: string
+  itemType?: string
   color: string
   colorHex: string
   amount: string
   unit: string
+  imageUrl?: string
 }
 
 export interface RowCounter {

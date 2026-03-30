@@ -4,11 +4,14 @@ import com.stitchbud.model.ProjectCategory
 
 data class MaterialDto(
     val id: Long = 0,
+    val name: String,
     val type: String,
+    val itemType: String? = null,
     val color: String = "",
     val colorHex: String = "#000000",
     val amount: String = "",
-    val unit: String = "g"
+    val unit: String = "g",
+    val imageUrl: String? = null
 )
 
 data class RowCounterDto(
@@ -57,10 +60,10 @@ data class ProjectDto(
 
 data class CreateProjectRequest(
     val name: String,
-    val description: String = "",
+    val startDate: Long,
     val category: ProjectCategory,
-    val tags: String = "",
-    val startDate: Long? = null
+    val description: String = "",
+    val tags: String = ""
 )
 
 data class UpdateProjectRequest(
@@ -89,9 +92,12 @@ data class UpdatePatternGridRequest(
 )
 
 data class AddMaterialRequest(
+    val name: String,
     val type: String,
+    val itemType: String? = null,
     val color: String = "",
     val colorHex: String = "#000000",
     val amount: String = "",
-    val unit: String = "g"
+    val unit: String = "g",
+    val imageUrl: String? = null
 )
