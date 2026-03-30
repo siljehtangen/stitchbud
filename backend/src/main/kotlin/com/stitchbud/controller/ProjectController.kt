@@ -7,75 +7,76 @@ import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/projects")
-@CrossOrigin(origins = ["http://localhost:5173"])
 class ProjectController(private val projectService: ProjectService) {
+
+    private fun userId() = SecurityContextHolder.getContext().authentication.principal as String
 
     @GetMapping
     fun getAll(@RequestParam(required = false) category: String?): List<ProjectDto> =
-        if (category != null) projectService.getProjectsByCategory(ProjectCategory.valueOf(category.uppercase()))
-        else projectService.getAllProjects()
+        if (category != null) projectService.getProjectsByCategory(ProjectCategory.valueOf(category.uppercase()), userId())
+        else projectService.getAllProjects(userId())
 
     @GetMapping("/{id}")
-    fun getOne(@PathVariable id: Long) = projectService.getProject(id)
+    fun getOne(@PathVariable id: Long) = projectService.getProject(id, userId())
 
     @PostMapping
-    fun create(@RequestBody req: CreateProjectRequest) = projectService.createProject(req)
+    fun create(@RequestBody req: CreateProjectRequest) = projectService.createProject(req, userId())
 
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @RequestBody req: UpdateProjectRequest) =
-        projectService.updateProject(id, req)
+        projectService.updateProject(id, req, userId())
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
-        projectService.deleteProject(id)
+        projectService.deleteProject(id, userId())
         return ResponseEntity.noContent().build()
     }
 
     @PostMapping("/{id}/materials")
     fun addMaterial(@PathVariable id: Long, @RequestBody req: AddMaterialRequest) =
-        projectService.addMaterial(id, req)
+        projectService.addMaterial(id, req, userId())
 
     @DeleteMapping("/{id}/materials/{materialId}")
     fun deleteMaterial(@PathVariable id: Long, @PathVariable materialId: Long) =
-        projectService.deleteMaterial(id, materialId)
+        projectService.deleteMaterial(id, materialId, userId())
 
     @PutMapping("/{id}/row-counter")
     fun updateRowCounter(@PathVariable id: Long, @RequestBody req: UpdateRowCounterRequest) =
-        projectService.updateRowCounter(id, req)
+        projectService.updateRowCounter(id, req, userId())
 
     @PostMapping("/{id}/pattern-grids")
     fun createPatternGrid(@PathVariable id: Long) =
-        projectService.createPatternGrid(id)
+        projectService.createPatternGrid(id, userId())
 
     @PutMapping("/{id}/pattern-grids/{gridId}")
     fun updatePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long, @RequestBody req: UpdatePatternGridRequest) =
-        projectService.updatePatternGrid(id, gridId, req)
+        projectService.updatePatternGrid(id, gridId, req, userId())
 
     @DeleteMapping("/{id}/pattern-grids/{gridId}")
     fun deletePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long) =
-        projectService.deletePatternGrid(id, gridId)
+        projectService.deletePatternGrid(id, gridId, userId())
 
     @PostMapping("/{id}/cover-image", consumes = ["multipart/form-data"])
     fun uploadCoverImage(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
-        projectService.uploadCoverImage(id, file)
+        projectService.uploadCoverImage(id, file, userId())
 
     @PostMapping("/{id}/files", consumes = ["multipart/form-data"])
     fun uploadFile(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
-        projectService.uploadFile(id, file)
+        projectService.uploadFile(id, file, userId())
 
     @DeleteMapping("/{id}/files/{fileId}")
     fun deleteFile(@PathVariable id: Long, @PathVariable fileId: Long) =
-        projectService.deleteFile(id, fileId)
+        projectService.deleteFile(id, fileId, userId())
 }
 
 @RestController
 @RequestMapping("/api/files")
-@CrossOrigin(origins = ["http://localhost:5173"])
 class FileController(private val projectService: ProjectService) {
     @GetMapping("/{projectId}/{storedName}")
     fun serveFile(

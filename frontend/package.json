@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.2",
+    "@supabase/supabase-js": "^2.100.1",
     "axios": "^1.6.7",
     "i18next": "^25.10.10",
     "react": "^18.2.0",

@@ -7,6 +7,7 @@ import jakarta.persistence.*
 data class Project(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
+    var userId: String = "",
     var name: String,
     var description: String = "",
     @Enumerated(EnumType.STRING)
