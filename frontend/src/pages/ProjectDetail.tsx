@@ -316,7 +316,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     }
     setSaving(true)
     try {
-      const updated = await projectsApi.addMaterial(projectId, { type, color: '', colorHex: '#C6D8B8', amount, unit })
+      const updated = await projectsApi.addMaterial(projectId, { type, itemType: item.itemType, color: '', colorHex: '#C6D8B8', amount, unit, imageUrl: item.imageUrl })
       onUpdate(updated)
     } finally { setSaving(false) }
   }
@@ -333,7 +333,11 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       )}
       {project.materials.map(m => (
         <div key={m.id} className="card flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full border border-white shadow-sm flex-shrink-0" style={{ backgroundColor: m.colorHex }} />
+          {m.imageUrl ? (
+            <img src={m.imageUrl} alt={m.type} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-soft-brown/20" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg flex-shrink-0 border border-soft-brown/20 bg-soft-brown/10 flex items-center justify-center text-xl text-soft-brown/40">📷</div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm text-gray-800">{m.type}</p>
             {(m.amount || m.unit) && (
@@ -829,7 +833,11 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
             <div className="space-y-2">
               {project.materials.map(m => (
                 <div key={m.id} className="flex items-center gap-2.5">
-                  <div className="w-5 h-5 rounded-full shadow-sm border border-white flex-shrink-0" style={{ backgroundColor: m.colorHex }} />
+                  {m.imageUrl ? (
+                    <img src={m.imageUrl} alt={m.type} className="w-6 h-6 rounded object-cover flex-shrink-0 border border-soft-brown/20" />
+                  ) : (
+                    <div className="w-6 h-6 rounded flex-shrink-0 bg-soft-brown/20 flex items-center justify-center text-xs text-soft-brown/60">📷</div>
+                  )}
                   <span className="text-sm text-gray-700">
                     {m.type}{m.color ? ` — ${m.color}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                   </span>

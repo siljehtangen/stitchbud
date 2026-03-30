@@ -10,7 +10,7 @@ export const projectsApi = {
   getOne: (id: number) =>
     api.get<Project>(`/projects/${id}`).then(r => r.data),
 
-  create: (data: { name: string; description: string; category: ProjectCategory; tags: string; startDate?: number }) =>
+  create: (data: { name: string; startDate: number; category: ProjectCategory; description?: string; tags?: string }) =>
     api.post<Project>('/projects', data).then(r => r.data),
 
   update: (id: number, data: Partial<{ name: string; description: string; tags: string; imageUrl: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean }>) =>
@@ -27,7 +27,7 @@ export const projectsApi = {
   delete: (id: number) =>
     api.delete(`/projects/${id}`),
 
-  addMaterial: (id: number, data: { type: string; color: string; colorHex: string; amount: string; unit: string }) =>
+  addMaterial: (id: number, data: { name: string; type: string; itemType?: string; color?: string; colorHex?: string; amount?: string; unit?: string; imageUrl?: string }) =>
     api.post<Project>(`/projects/${id}/materials`, data).then(r => r.data),
 
   deleteMaterial: (id: number, materialId: number) =>

@@ -3,12 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
-import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
+import { GiChopsticks, GiPirateHook, GiSewingMachine, GiRolledCloth } from 'react-icons/gi'
+import { PiYarnFill } from 'react-icons/pi'
 
 const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
   KNITTING: <GiChopsticks className="text-sand-green-dark" />,
   CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
   SEWING: <GiSewingMachine className="text-warm-gray" />,
+}
+
+const ITEM_TYPE_ICONS: Record<string, React.ReactNode> = {
+  YARN: <PiYarnFill className="text-sand-green-dark" />,
+  FABRIC: <GiRolledCloth className="text-warm-gray" />,
+  KNITTING_NEEDLE: <GiChopsticks className="text-sand-green-dark" />,
+  CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
 }
 
 export default function Projects() {
@@ -79,13 +87,30 @@ export default function Projects() {
               className="card w-full text-left hover:shadow-md transition-shadow"
             >
               <div className="flex items-center gap-3">
-                <span className="text-3xl">{CATEGORY_ICONS[project.category]}</span>
+                {project.imageUrl ? (
+                  <img src={project.imageUrl} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                ) : (
+                  <span className="text-3xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800">{project.name}</p>
                   {project.description && (
                     <p className="text-sm text-warm-gray truncate">{project.description}</p>
                   )}
-                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                  {project.materials.length > 0 && (
+                    <div className="flex gap-2 mt-1.5 flex-wrap items-center">
+                      {project.materials.map(m => (
+                        m.imageUrl ? (
+                          <img key={m.id} src={m.imageUrl} alt={m.type} title={m.type} className="w-6 h-6 rounded object-cover border border-soft-brown/20" />
+                        ) : (
+                          <span key={m.id} className="text-xl leading-none" title={m.type}>
+                            {(m.itemType && ITEM_TYPE_ICONS[m.itemType]) ?? CATEGORY_ICONS[project.category]}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-1.5 mt-1 flex-wrap">
                     {project.tags.split(',').filter(Boolean).map(tag => (
                       <span key={tag} className="text-xs bg-soft-brown/20 text-warm-gray px-2 py-0.5 rounded-full">
                         {tag.trim()}
