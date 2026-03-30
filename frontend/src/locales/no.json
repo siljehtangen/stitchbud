@@ -172,5 +172,17 @@
   "landing_feat_yarn_label": "Materialer",
   "landing_feat_yarn": "Hold oversikt over garn, stoff og verktøy",
   "landing_tagline": "Fra oppslag til avslutning — hold alle prosjekter nære og alle detaljer husket.",
-  "landing_footer": "Laget for håndverkere · Stitchbud"
+  "landing_footer": "Laget for håndverkere · Stitchbud",
+
+  "auth_welcome": "Velkommen til Stitchbud",
+  "auth_subtitle": "Logg inn eller opprett en konto",
+  "auth_continue_google": "Fortsett med Google",
+  "auth_or": "eller",
+  "auth_email_placeholder": "din@epost.no",
+  "auth_send_magic_link": "Send magisk lenke",
+  "auth_sending": "Sender...",
+  "auth_no_password": "Ikke noe passord — vi sender deg en lenke på e-post",
+  "auth_check_email": "Sjekk innboksen din!",
+  "auth_magic_link_sent": "Vi sendte en magisk lenke til {{email}}. Klikk på den for å logge inn.",
+  "auth_try_again": "Prøv en annen e-post"
 }

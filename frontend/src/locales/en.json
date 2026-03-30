@@ -172,5 +172,17 @@
   "landing_feat_yarn_label": "Materials",
   "landing_feat_yarn": "Track yarn, fabric & tools",
   "landing_tagline": "From cast-on to bind-off — keep every project close, every detail remembered.",
-  "landing_footer": "Made for makers · Stitchbud"
+  "landing_footer": "Made for makers · Stitchbud",
+
+  "auth_welcome": "Welcome to Stitchbud",
+  "auth_subtitle": "Log in or create an account",
+  "auth_continue_google": "Continue with Google",
+  "auth_or": "or",
+  "auth_email_placeholder": "your@email.com",
+  "auth_send_magic_link": "Send magic link",
+  "auth_sending": "Sending...",
+  "auth_no_password": "No password needed — we'll email you a link",
+  "auth_check_email": "Check your inbox!",
+  "auth_magic_link_sent": "We sent a magic link to {{email}}. Click it to log in.",
+  "auth_try_again": "Try a different email"
 }
