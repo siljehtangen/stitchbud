@@ -102,7 +102,7 @@ export default function Library() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">{t('library_heading')}</h2>
-        <button onClick={() => setAdding(v => !v)} className="btn-secondary text-sm">
+        <button onClick={() => { if (!adding) setSelectedType(filterType ?? 'YARN'); setAdding(v => !v) }} className="btn-secondary text-sm">
           {adding ? t('cancel') : `+ ${t('library_add')}`}
         </button>
       </div>

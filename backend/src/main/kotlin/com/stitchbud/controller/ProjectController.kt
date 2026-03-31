@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/projects")
 class ProjectController(private val projectService: ProjectService) {
 
-    private fun userId() = SecurityContextHolder.getContext().authentication.principal as String
+    private fun userId() = SecurityContextHolder.getContext().authentication.name
 
     @GetMapping
     fun getAll(@RequestParam(required = false) category: String?): List<ProjectDto> =
@@ -35,6 +35,12 @@ class ProjectController(private val projectService: ProjectService) {
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
         projectService.deleteProject(id, userId())
+        return ResponseEntity.noContent().build()
+    }
+
+    @DeleteMapping("/account")
+    fun deleteAccount(): ResponseEntity<Unit> {
+        projectService.deleteAllUserData(userId())
         return ResponseEntity.noContent().build()
     }
 

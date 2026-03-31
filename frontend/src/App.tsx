@@ -7,6 +7,7 @@ import ProjectDetail from './pages/ProjectDetail'
 import NewProject from './pages/NewProject'
 import Library from './pages/Library'
 import AuthPage from './pages/AuthPage'
+import ProfilePage from './pages/ProfilePage'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
@@ -21,7 +22,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<AuthPage />} />
@@ -31,6 +32,7 @@ export default function App() {
               <Route path="/projects/new" element={<NewProject />} />
               <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/library" element={<Library />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
           </Routes>
         </BrowserRouter>

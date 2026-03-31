@@ -184,5 +184,16 @@
   "auth_no_password": "Ikke noe passord — vi sender deg en lenke på e-post",
   "auth_check_email": "Sjekk innboksen din!",
   "auth_magic_link_sent": "Vi sendte en magisk lenke til {{email}}. Klikk på den for å logge inn.",
-  "auth_try_again": "Prøv en annen e-post"
+  "auth_try_again": "Prøv en annen e-post",
+
+  "nav_profile": "Profil",
+  "profile_heading": "Profil",
+  "profile_sign_out": "Logg ut",
+
+  "delete_account_heading": "Slett konto",
+  "delete_account_description": "Sletter permanent alle prosjekter, materialer og opplastede filer. Dette kan ikke angres.",
+  "delete_account_btn": "Slett kontoen min",
+  "delete_account_confirm_warning": "Er du sikker? All data vil bli slettet permanent.",
+  "delete_account_confirm_btn": "Ja, slett alt",
+  "deleting": "Sletter..."
 }

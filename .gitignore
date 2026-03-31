@@ -33,6 +33,7 @@ frontend/prisma/client/
 .env
 .env.local
 .env.*.local
+backend/src/main/resources/application.properties
 
 # OS
 .DS_Store

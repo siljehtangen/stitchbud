@@ -128,17 +128,17 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
             <p className="text-sm text-warm-gray mt-1 truncate">{project.description}</p>
           )}
           {project.materials.length > 0 && (
-            <div className="flex gap-1.5 mt-2 flex-wrap">
-              {project.materials.slice(0, 4).map(m => (
-                <div
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {project.materials.slice(0, 3).map(m => (
+                <span
                   key={m.id}
-                  className="w-4 h-4 rounded-full border border-white shadow-sm"
-                  style={{ backgroundColor: m.colorHex }}
-                  title={`${m.color} ${m.type}`}
-                />
+                  className="px-2 py-0.5 rounded-full bg-soft-brown/20 text-warm-gray text-xs truncate max-w-[120px]"
+                >
+                  {m.type}
+                </span>
               ))}
-              {project.materials.length > 4 && (
-                <span className="text-xs text-warm-gray self-center">+{project.materials.length - 4}</span>
+              {project.materials.length > 3 && (
+                <span className="px-2 py-0.5 rounded-full bg-soft-brown/20 text-warm-gray text-xs">+{project.materials.length - 3}</span>
               )}
             </div>
           )}

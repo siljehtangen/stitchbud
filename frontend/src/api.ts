@@ -6,6 +6,7 @@ const api = axios.create({ baseURL: '/api' })
 
 api.interceptors.request.use(async config => {
   const { data } = await supabase.auth.getSession()
+  console.log('[api] session:', data.session ? 'present' : 'null', 'token:', data.session?.access_token?.slice(0, 20))
   if (data.session?.access_token) {
     config.headers.Authorization = `Bearer ${data.session.access_token}`
   }
@@ -102,3 +103,7 @@ export const libraryApi = {
 
 export const fileUrl = (projectId: number, storedName: string) =>
   `/api/files/${projectId}/${storedName}`
+
+export const accountApi = {
+  deleteAccount: () => api.delete('/projects/account'),
+}

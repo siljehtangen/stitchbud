@@ -184,5 +184,16 @@
   "auth_no_password": "No password needed — we'll email you a link",
   "auth_check_email": "Check your inbox!",
   "auth_magic_link_sent": "We sent a magic link to {{email}}. Click it to log in.",
-  "auth_try_again": "Try a different email"
+  "auth_try_again": "Try a different email",
+
+  "nav_profile": "Profile",
+  "profile_heading": "Profile",
+  "profile_sign_out": "Sign out",
+
+  "delete_account_heading": "Delete account",
+  "delete_account_description": "Permanently deletes all your projects, materials, and uploaded files. This cannot be undone.",
+  "delete_account_btn": "Delete my account",
+  "delete_account_confirm_warning": "Are you sure? All your data will be permanently deleted.",
+  "delete_account_confirm_btn": "Yes, delete everything",
+  "deleting": "Deleting..."
 }

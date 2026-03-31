@@ -61,6 +61,14 @@ class ProjectService(
         projectRepository.deleteById(id)
     }
 
+    fun deleteAllUserData(userId: String) {
+        val projects = projectRepository.findByUserIdOrderByUpdatedAtDesc(userId)
+        projects.forEach { project ->
+            project.files.forEach { deleteFileFromDisk(project.id, it.storedName) }
+        }
+        projectRepository.deleteAll(projects)
+    }
+
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
         project.materials.add(

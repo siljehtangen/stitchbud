@@ -316,7 +316,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     }
     setSaving(true)
     try {
-      const updated = await projectsApi.addMaterial(projectId, { type, itemType: item.itemType, color: '', colorHex: '#C6D8B8', amount, unit, imageUrl: item.imageUrl })
+      const updated = await projectsApi.addMaterial(projectId, { name: item.name, type, itemType: item.itemType, color: '', colorHex: '#C6D8B8', amount, unit, imageUrl: item.imageUrl })
       onUpdate(updated)
     } finally { setSaving(false) }
   }
@@ -419,7 +419,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               {t('lib_not_found_hint')}{' '}
               <button
                 type="button"
-                onClick={() => setCreatingInLib(true)}
+                onClick={() => { setNewLibType(filterType ?? 'YARN'); setCreatingInLib(true) }}
                 className="text-sand-blue-deep underline hover:no-underline font-medium"
               >{t('lib_create_new')}</button>
             </p>
