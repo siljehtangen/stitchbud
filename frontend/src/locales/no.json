@@ -80,6 +80,13 @@
   "uploading": "Laster opp...",
   "upload_file": "+ Last opp fil",
   "no_files_yet": "Ingen filer ennå. Last opp en PDF, Word-fil eller bilde.",
+  "preview_file": "Forhåndsvis",
+  "replace_file": "Erstatt",
+  "zoom_in": "Zoom inn",
+  "zoom_out": "Zoom ut",
+  "zoom_reset": "Nullstill zoom",
+  "close": "Lukk",
+  "open_file": "Åpne fil",
 
   "round_counter": "Rundeteller",
   "pattern_grid": "Mønsterrutenett",

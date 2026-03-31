@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { projectsApi, libraryApi } from '../api'
+import { projectsApi, libraryApi, fileUrl } from '../api'
 import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType } from '../types'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill, PiToolboxFill } from 'react-icons/pi'
@@ -556,6 +556,83 @@ function QuickAddLibraryForm({ selectedType, onTypeChange, onCreated, onCancel }
   )
 }
 
+// ── File Preview Modal ─────────────────────────────────────────
+function FilePreviewModal({ file, projectId, onClose }: {
+  file: ProjectFile; projectId: number; onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const [zoom, setZoom] = useState(1)
+  const url = fileUrl(projectId, file.storedName)
+  const fileIcon = (ft: string) =>
+    ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative flex flex-col items-center gap-3 w-full max-w-4xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between w-full">
+          <span className="text-white text-sm font-medium truncate max-w-xs">{file.originalName}</span>
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white text-2xl leading-none ml-4 flex-shrink-0"
+            title={t('close')}
+          >×</button>
+        </div>
+
+        {file.fileType === 'image' ? (
+          <>
+            <div className="overflow-auto rounded-lg w-full" style={{ maxHeight: '75vh' }}>
+              <img
+                src={url}
+                alt={file.originalName}
+                style={{ width: `${zoom * 100}%`, minWidth: '100%', display: 'block' }}
+                className="rounded-lg"
+              />
+            </div>
+            <div className="flex items-center gap-1 bg-black/60 rounded-full px-3 py-1.5">
+              <button
+                onClick={() => setZoom(z => Math.max(0.25, parseFloat((z - 0.25).toFixed(2))))}
+                className="text-white text-lg w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full"
+                title={t('zoom_out')}
+              >−</button>
+              <button
+                onClick={() => setZoom(1)}
+                className="text-white text-xs px-2 hover:bg-white/10 rounded-full h-8 min-w-[3rem]"
+                title={t('zoom_reset')}
+              >{Math.round(zoom * 100)}%</button>
+              <button
+                onClick={() => setZoom(z => Math.min(4, parseFloat((z + 0.25).toFixed(2))))}
+                className="text-white text-lg w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full"
+                title={t('zoom_in')}
+              >+</button>
+            </div>
+          </>
+        ) : file.fileType === 'pdf' ? (
+          <iframe
+            src={url}
+            title={file.originalName}
+            className="w-full rounded-lg bg-white"
+            style={{ height: '78vh' }}
+          />
+        ) : (
+          <div className="bg-white rounded-xl p-10 text-center">
+            <div className="text-6xl mb-4">{fileIcon(file.fileType)}</div>
+            <p className="text-gray-800 font-medium mb-6">{file.originalName}</p>
+            <a href={url} target="_blank" rel="noopener noreferrer" className="btn-primary">
+              {t('open_file')}
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Recipe Tab ─────────────────────────────────────────────────
 function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
   recipeText: string; files: ProjectFile[]; projectId: number
@@ -563,7 +640,13 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
 }) {
   const { t } = useTranslation()
   const [uploading, setUploading] = useState(false)
+  const [replacingId, setReplacingId] = useState<number | null>(null)
+  const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const replaceRef = useRef<HTMLInputElement>(null)
+
+  const fileIcon = (ft: string) =>
+    ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -578,8 +661,24 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
     }
   }
 
-  const fileIcon = (ft: string) =>
-    ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
+  async function handleReplace(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || replacingId === null) return
+    setUploading(true)
+    try {
+      const updated = await projectsApi.replaceFile(projectId, replacingId, file)
+      onUpdate(updated)
+    } finally {
+      setUploading(false)
+      setReplacingId(null)
+      if (replaceRef.current) replaceRef.current.value = ''
+    }
+  }
+
+  function startReplace(fileId: number) {
+    setReplacingId(fileId)
+    replaceRef.current?.click()
+  }
 
   return (
     <div className="space-y-4">
@@ -604,13 +703,8 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
           >
             {uploading ? t('uploading') : t('upload_file')}
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*,.pdf,.doc,.docx"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
+          <input ref={fileRef} type="file" accept="image/*,.pdf,.doc,.docx" onChange={handleFileUpload} className="hidden" />
+          <input ref={replaceRef} type="file" accept="image/*,.pdf,.doc,.docx" onChange={handleReplace} className="hidden" />
         </div>
 
         {files.length === 0 ? (
@@ -620,28 +714,39 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
         ) : (
           <div className="space-y-2">
             {files.map(f => {
-              const url = `/api/files/${projectId}/${f.storedName}`
+              const url = fileUrl(projectId, f.storedName)
               return (
                 <div key={f.id} className="card flex items-center gap-3">
-                  {f.fileType === 'image' ? (
-                    <a href={url} target="_blank" rel="noopener noreferrer">
-                      <img src={url} alt={f.originalName} className="w-12 h-12 object-cover rounded-lg flex-shrink-0" />
-                    </a>
-                  ) : (
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-2xl flex-shrink-0">
-                      {fileIcon(f.fileType)}
-                    </a>
-                  )}
+                  <button
+                    onClick={() => setPreviewFile(f)}
+                    className="flex-shrink-0 focus:outline-none"
+                    title={t('preview_file')}
+                  >
+                    {f.fileType === 'image' ? (
+                      <img src={url} alt={f.originalName} className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity" />
+                    ) : (
+                      <span className="w-12 h-12 flex items-center justify-center text-2xl hover:opacity-70 transition-opacity">{fileIcon(f.fileType)}</span>
+                    )}
+                  </button>
                   <div className="flex-1 min-w-0">
-                    <a href={url} target="_blank" rel="noopener noreferrer"
-                      className="text-sm font-medium text-gray-800 hover:text-sand-green-dark truncate block">
+                    <button
+                      onClick={() => setPreviewFile(f)}
+                      className="text-sm font-medium text-gray-800 hover:text-sand-green-dark truncate block text-left w-full"
+                    >
                       {f.originalName}
-                    </a>
+                    </button>
                     <p className="text-xs text-warm-gray capitalize">{f.fileType}</p>
                   </div>
                   <button
+                    onClick={() => startReplace(f.id)}
+                    disabled={uploading}
+                    className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
+                    title={t('replace_file')}
+                  >↺</button>
+                  <button
                     onClick={async () => onUpdate(await projectsApi.deleteFile(projectId, f.id))}
                     className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+                    title={t('delete')}
                   >×</button>
                 </div>
               )
@@ -649,6 +754,14 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
           </div>
         )}
       </div>
+
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          projectId={projectId}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   )
 }
@@ -853,7 +966,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
           {project.files.length > 0 && (
             <div className="flex gap-2 flex-wrap">
               {project.files.map(f => {
-                const url = `/api/files/${projectId}/${f.storedName}`
+                const url = fileUrl(projectId, f.storedName)
                 return f.fileType === 'image' ? (
                   <a key={f.id} href={url} target="_blank" rel="noopener noreferrer">
                     <img src={url} alt={f.originalName} className="w-20 h-20 object-cover rounded-xl shadow-sm" />

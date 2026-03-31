@@ -80,6 +80,13 @@
   "uploading": "Uploading...",
   "upload_file": "+ Upload file",
   "no_files_yet": "No files yet. Upload a PDF, Word doc, or image.",
+  "preview_file": "Preview",
+  "replace_file": "Replace",
+  "zoom_in": "Zoom in",
+  "zoom_out": "Zoom out",
+  "zoom_reset": "Reset zoom",
+  "close": "Close",
+  "open_file": "Open file",
 
   "round_counter": "Round Counter",
   "pattern_grid": "Pattern Grid",

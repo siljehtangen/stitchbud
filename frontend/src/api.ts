@@ -74,6 +74,11 @@ export const projectsApi = {
 
   deleteFile: (id: number, fileId: number) =>
     api.delete<Project>(`/projects/${id}/files/${fileId}`).then(r => r.data),
+
+  replaceFile: async (id: number, fileId: number, file: File): Promise<Project> => {
+    await api.delete(`/projects/${id}/files/${fileId}`)
+    return projectsApi.uploadProjectFile(id, file)
+  },
 }
 
 export const libraryApi = {
