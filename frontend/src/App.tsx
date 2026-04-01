@@ -9,6 +9,8 @@ import Library from './pages/Library'
 import AuthPage from './pages/AuthPage'
 import ProfilePage from './pages/ProfilePage'
 import { ThemeProvider } from './context/ThemeContext'
+import { ToastProvider } from './context/ToastContext'
+import { ConfirmDialogProvider } from './context/ConfirmDialogContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function ProtectedRoutes() {
@@ -21,6 +23,8 @@ function ProtectedRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
+      <ToastProvider>
+      <ConfirmDialogProvider>
       <AuthProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
@@ -37,6 +41,8 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </ConfirmDialogProvider>
+      </ToastProvider>
     </ThemeProvider>
   )
 }

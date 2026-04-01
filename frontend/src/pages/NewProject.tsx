@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
+import { useToast } from '../context/ToastContext'
 import type { ProjectCategory } from '../types'
 import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 
@@ -16,6 +17,7 @@ type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 export default function NewProject() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<ProjectCategory>('KNITTING')
@@ -66,6 +68,7 @@ export default function NewProject() {
       const others = coverImages.filter(img => !img.isMain)
       if (mainImg) await projectsApi.uploadCoverImage(project.id, mainImg.file)
       for (const img of others) await projectsApi.uploadCoverImage(project.id, img.file)
+      showToast(t('project_created_toast'))
       navigate(`/projects/${project.id}`)
     } catch {
       setError(t('failed_create_project'))

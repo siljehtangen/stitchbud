@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback, useRef, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../context/ToastContext'
+import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { projectsApi, libraryApi, fileUrl } from '../api'
 import { libraryItemImagesForProject, materialImageUrls, projectCoverImageUrls, uniqueImageUrls } from '../projectOverviewMedia'
 import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
@@ -57,6 +59,8 @@ export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { showToast } = useToast()
+  const { confirm } = useConfirmDialog()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('info')
@@ -126,6 +130,7 @@ export default function ProjectDetail() {
     try {
       const updated = await projectsApi.uploadCoverImage(projectId, file)
       setProject(updated)
+      showToast(t('cover_added_toast'))
     } catch {
       setCoverImageError(t('upload_failed'))
     } finally {
@@ -141,7 +146,12 @@ export default function ProjectDetail() {
   }
 
   async function handleDelete() {
-    if (!confirm(t('delete_confirm', { name: project?.name }))) return
+    const ok = await confirm({
+      message: t('delete_confirm', { name: project?.name }),
+      confirmLabel: t('delete'),
+      tone: 'danger',
+    })
+    if (!ok) return
     await projectsApi.delete(projectId)
     navigate('/home')
   }
@@ -205,7 +215,20 @@ export default function ProjectDetail() {
                     title={img.isMain ? t('main_image') : t('set_as_main')}
                   >★</button>
                   <button
-                    onClick={async () => setProject(await projectsApi.deleteCoverImage(projectId, img.id))}
+                    onClick={async () => {
+                      const ok = await confirm({
+                        message: t('delete_cover_image_confirm'),
+                        confirmLabel: t('dialog_btn_remove'),
+                        tone: 'danger',
+                      })
+                      if (!ok) return
+                      try {
+                        setProject(await projectsApi.deleteCoverImage(projectId, img.id))
+                        showToast(t('cover_image_removed_toast'))
+                      } catch {
+                        showToast(t('upload_failed'), 'info')
+                      }
+                    }}
                     className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
                     title={t('delete')}
                   >×</button>
@@ -280,6 +303,8 @@ function MaterialsTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
+  const { confirm } = useConfirmDialog()
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
   const [search, setSearch] = useState('')
@@ -378,12 +403,16 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       }
       onUpdate(updated)
       setPendingItem(null)
+      showToast(t('material_added_toast'))
+    } catch {
+      showToast(t('upload_failed'), 'info')
     } finally { setSaving(false) }
   }
 
   function handleLibItemCreated(item: LibraryItem) {
     setLibraryItems(prev => [item, ...prev])
     setCreatingInLib(false)
+    showToast(t('lib_item_created_toast'))
   }
 
   return (
@@ -418,7 +447,20 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               </div>
               <button
                 type="button"
-                onClick={async () => onUpdate(await projectsApi.deleteMaterial(projectId, m.id))}
+                onClick={async () => {
+                  const ok = await confirm({
+                    message: t('delete_material_confirm', { name: m.type }),
+                    confirmLabel: t('dialog_btn_remove'),
+                    tone: 'danger',
+                  })
+                  if (!ok) return
+                  try {
+                    onUpdate(await projectsApi.deleteMaterial(projectId, m.id))
+                    showToast(t('material_removed_toast'))
+                  } catch {
+                    showToast(t('upload_failed'), 'info')
+                  }
+                }}
                 className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
                 title={t('delete')}
               >×</button>
@@ -476,37 +518,44 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => addFromLibrary(pendingItem, '')}
+                onClick={() => void addFromLibrary(pendingItem, '')}
                 className="btn-primary text-sm flex-1"
               >{saving ? t('saving') : t('add_library_to_project')}</button>
               <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">{t('cancel')}</button>
             </div>
           </div>
         )}
-        <div className="space-y-1 max-h-64 overflow-y-auto">
+        <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
           {filtered.length === 0 ? (
             <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
           ) : (
             filtered.map(item => (
-              <button
+              <div
                 key={item.id}
-                disabled={saving}
-                onClick={() => handleLibraryClick(item)}
-                className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-sand-green/20 transition-colors text-left"
+                className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
               >
                 {libraryItemThumbUrl(item) ? (
-                  <img src={libraryItemThumbUrl(item)} alt={item.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+                  <img src={libraryItemThumbUrl(item)} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
                 ) : (
-                  <div className="w-9 h-9 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-base">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
                     {TYPE_ICONS[item.itemType]}
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{item.name}</p>
-                  {itemSummary(item) && <p className="text-xs text-warm-gray truncate">{itemSummary(item)}</p>}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
+                  {itemSummary(item) && (
+                    <p className="truncate text-xs text-warm-gray">{itemSummary(item)}</p>
+                  )}
                 </div>
-                <span className="text-xs text-sand-blue-deep flex-shrink-0">+</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleLibraryClick(item)}
+                  className="btn-primary flex-shrink-0 whitespace-nowrap py-2 px-3 text-xs"
+                >
+                  {t('add_library_to_project')}
+                </button>
+              </div>
             ))
           )}
         </div>
@@ -624,6 +673,8 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
   onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void
 }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
+  const { confirm } = useConfirmDialog()
   const [uploading, setUploading] = useState(false)
   const [replacingId, setReplacingId] = useState<number | null>(null)
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
@@ -640,6 +691,7 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
     try {
       const updated = await projectsApi.uploadProjectFile(projectId, file)
       onUpdate(updated)
+      showToast(t('attachment_added_toast'))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -729,7 +781,20 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
                     title={t('replace_file')}
                   >↺</button>
                   <button
-                    onClick={async () => onUpdate(await projectsApi.deleteFile(projectId, f.id))}
+                    onClick={async () => {
+                      const ok = await confirm({
+                        message: t('delete_attachment_confirm', { name: f.originalName }),
+                        confirmLabel: t('dialog_btn_remove'),
+                        tone: 'danger',
+                      })
+                      if (!ok) return
+                      try {
+                        onUpdate(await projectsApi.deleteFile(projectId, f.id))
+                        showToast(t('attachment_removed_toast'))
+                      } catch {
+                        showToast(t('upload_failed'), 'info')
+                      }
+                    }}
                     className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
                     title={t('delete')}
                   >×</button>
@@ -756,6 +821,8 @@ function KnitTab({ project, projectId, onUpdate, category }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void; category: ProjectCategory
 }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
+  const { confirm } = useConfirmDialog()
   const [activeGridIndex, setActiveGridIndex] = useState(0)
 
   const hasCounter = !!project.rowCounter
@@ -767,13 +834,25 @@ function KnitTab({ project, projectId, onUpdate, category }: {
     const updated = await projectsApi.createPatternGrid(projectId)
     onUpdate(updated)
     setActiveGridIndex(updated.patternGrids.length - 1)
+    showToast(t('grid_added_toast'))
   }
 
   async function handleDeleteGrid() {
     if (!activeGrid || grids.length <= 1) return
-    const updated = await projectsApi.deletePatternGrid(projectId, activeGrid.id)
-    onUpdate(updated)
-    setActiveGridIndex(i => Math.min(i, Math.max(0, updated.patternGrids.length - 1)))
+    const ok = await confirm({
+      message: t('delete_grid_confirm'),
+      confirmLabel: t('delete'),
+      tone: 'danger',
+    })
+    if (!ok) return
+    try {
+      const updated = await projectsApi.deletePatternGrid(projectId, activeGrid.id)
+      onUpdate(updated)
+      setActiveGridIndex(i => Math.min(i, Math.max(0, updated.patternGrids.length - 1)))
+      showToast(t('grid_deleted_toast'))
+    } catch {
+      showToast(t('upload_failed'), 'info')
+    }
   }
 
   const gridHeader = (

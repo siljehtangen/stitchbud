@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../context/ToastContext'
+import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
@@ -23,6 +25,8 @@ function fileTypeIcon(url: string) {
 
 export default function Library() {
   const { t, i18n } = useTranslation()
+  const { showToast } = useToast()
+  const { confirm } = useConfirmDialog()
   const [items, setItems] = useState<LibraryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -94,14 +98,21 @@ export default function Library() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm(t('lib_delete_confirm'))) return
+    const ok = await confirm({
+      message: t('lib_delete_confirm'),
+      confirmLabel: t('delete'),
+      tone: 'danger',
+    })
+    if (!ok) return
     await libraryApi.delete(id)
     setItems(prev => prev.filter(i => i.id !== id))
+    showToast(t('lib_item_deleted_toast'))
   }
 
   function handleCreated(item: LibraryItem) {
     setItems(prev => [item, ...prev])
     setAdding(false)
+    showToast(t('lib_item_created_toast'))
   }
 
   function handleUpdated(item: LibraryItem) {
@@ -258,6 +269,8 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   onUpdated: (updated: LibraryItem) => void
 }) {
   const { t, i18n } = useTranslation()
+  const { showToast } = useToast()
+  const { confirm } = useConfirmDialog()
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -309,6 +322,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       })
       onUpdated(updated)
       setEditing(false)
+      showToast(t('lib_item_updated_toast'))
     } finally {
       setSaving(false)
     }
@@ -346,7 +360,20 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
                 >★</button>
                 <button
                   type="button"
-                  onClick={async () => onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      message: t('delete_library_photo_confirm'),
+                      confirmLabel: t('dialog_btn_remove'),
+                      tone: 'danger',
+                    })
+                    if (!ok) return
+                    try {
+                      onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))
+                      showToast(t('library_photo_removed_toast'))
+                    } catch {
+                      showToast(t('upload_failed'), 'info')
+                    }
+                  }}
                   className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
                 >×</button>
               </div>
