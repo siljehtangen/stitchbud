@@ -343,11 +343,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       )}
       {project.materials.map(m => (
         <div key={m.id} className="card flex items-center gap-3">
-          {m.imageUrl ? (
-            <img src={m.imageUrl} alt={m.type} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-soft-brown/20" />
-          ) : (
-            <div className="w-10 h-10 rounded-lg flex-shrink-0 border border-soft-brown/20 bg-soft-brown/10 flex items-center justify-center text-xl text-soft-brown/40">📷</div>
-          )}
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm text-gray-800">{m.type}</p>
             {(m.amount || m.unit) && (

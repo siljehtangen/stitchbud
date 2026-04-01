@@ -1,8 +1,7 @@
-import { Document, Page, Text, View, StyleSheet, Image as PdfImage } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { Project, PatternCell } from '../types'
 
 const accent = '#6FA8BC'
-const accentBg = '#BFD8E0'
 
 const S = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, color: '#333', padding: 48 },
@@ -20,11 +19,7 @@ const S = StyleSheet.create({
   fieldLabel: { fontSize: 7.5, color: '#888', marginBottom: 1 },
   fieldValue: { fontSize: 9.5, color: '#555' },
   matRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
-  swatch: { width: 11, height: 11, borderRadius: 6, borderWidth: 1, borderColor: '#ccc', borderStyle: 'solid', marginRight: 7 },
   matText: { fontSize: 9.5 },
-  imgRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
-  img: { width: 130, height: 130, marginRight: 8, marginBottom: 8, borderRadius: 5 },
-  fileLink: { fontSize: 9, color: '#3a6e80', marginBottom: 3 },
   pCell: { width: 13, height: 13, borderWidth: 0.5, borderColor: '#e0e0e0', borderStyle: 'solid' },
   gridRow: { flexDirection: 'row' },
   clipNote: { fontSize: 8, color: '#999', fontStyle: 'italic', marginTop: 4 },
@@ -55,12 +50,10 @@ export interface PdfProps {
 
 export function ProjectOverviewPdf({
   project, name, description, recipeText, filledCraftFields,
-  craftDetails, projectId, categoryLabel, labels,
+  craftDetails, categoryLabel, labels,
 }: PdfProps) {
   const hasMaterials = filledCraftFields.length > 0 || project.materials.length > 0
-  const imageFiles = project.files.filter(f => f.fileType === 'image')
-  const otherFiles = project.files.filter(f => f.fileType !== 'image')
-  const hasRecipe = !!recipeText || project.files.length > 0
+  const hasRecipe = !!recipeText
 
   const gridDatas = (() => {
     if (project.category === 'SEWING' || !project.patternGrids?.length) return []
@@ -77,9 +70,6 @@ export function ProjectOverviewPdf({
       }
     })
   })()
-
-  const getImgUrl = (storedName: string) =>
-    storedName.startsWith('http') ? storedName : `${window.location.origin}/api/files/${projectId}/${storedName}`
 
   return (
     <Document>
@@ -109,7 +99,6 @@ export function ProjectOverviewPdf({
             )}
             {project.materials.map(m => (
               <View key={m.id} style={S.matRow}>
-                <View style={[S.swatch, { backgroundColor: m.colorHex }]} />
                 <Text style={S.matText}>
                   {m.type}{m.color ? ` \u2014 ${m.color}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                 </Text>
@@ -121,17 +110,7 @@ export function ProjectOverviewPdf({
         {hasRecipe ? (
           <View style={S.section}>
             <Text style={S.sectionTitle}>{labels.recipe.toUpperCase()}</Text>
-            {imageFiles.length > 0 && (
-              <View style={S.imgRow}>
-                {imageFiles.map(f => (
-                  <PdfImage key={f.id} style={S.img} src={getImgUrl(f.storedName)} />
-                ))}
-              </View>
-            )}
-            {otherFiles.map(f => (
-              <Text key={f.id} style={S.fileLink}>{f.originalName}</Text>
-            ))}
-            {recipeText ? <Text style={S.body}>{recipeText}</Text> : null}
+            <Text style={S.body}>{recipeText}</Text>
           </View>
         ) : null}
 
