@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi, libraryApi, fileUrl } from '../api'
-import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
-import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType } from '../types'
+import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
+import type { Project, PatternCell, ProjectCategory, ProjectFile, LibraryItem, LibraryItemType, ProjectImage, Material } from '../types'
 import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
@@ -71,6 +71,8 @@ export default function ProjectDetail() {
   const [endDate, setEndDate] = useState('')
   const coverImageRef = useRef<HTMLInputElement>(null)
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [coverImageError, setCoverImageError] = useState('')
+  const MAX_COVER_IMAGES = 3
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -115,13 +117,16 @@ export default function ProjectDetail() {
     autoSave({ name, description, notes, tags, recipeText, [field]: value })
   }
 
-  async function handleCoverImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleCoverImageUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setCoverImageError('')
     setUploadingCover(true)
     try {
       const updated = await projectsApi.uploadCoverImage(projectId, file)
       setProject(updated)
+    } catch {
+      setCoverImageError(t('upload_failed'))
     } finally {
       setUploadingCover(false)
       if (coverImageRef.current) coverImageRef.current.value = ''
@@ -183,31 +188,42 @@ export default function ProjectDetail() {
 
       {tab === 'info' && (
         <div className="space-y-4">
-          {/* Cover image */}
-          <div className="relative">
-            <button
-              onClick={() => coverImageRef.current?.click()}
-              disabled={uploadingCover}
-              className="w-full rounded-xl overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors relative bg-soft-brown/10 flex items-center justify-center min-h-[9rem]"
-              title={t('upload_cover_image')}
-            >
-              {project.imageUrl ? (
-                <img src={project.imageUrl} alt={name} className="w-full h-auto object-contain rounded-xl" />
-              ) : (
-                <span className="text-warm-gray text-sm">{uploadingCover ? t('uploading') : t('upload_cover_image')}</span>
+          {/* Cover images (up to 3) */}
+          <div className="space-y-2">
+            <div className="flex gap-2 flex-wrap">
+              {(project.coverImages ?? []).map(img => (
+                <div key={img.id} className="relative group flex-shrink-0">
+                  <img
+                    src={img.storedName}
+                    alt={img.originalName}
+                    className={`w-24 h-24 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
+                  />
+                  <button
+                    onClick={async () => setProject(await projectsApi.setCoverImageMain(projectId, img.id))}
+                    className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
+                    title={img.isMain ? 'Main image' : 'Set as main'}
+                  >★</button>
+                  <button
+                    onClick={async () => setProject(await projectsApi.deleteCoverImage(projectId, img.id))}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+                    title={t('delete')}
+                  >×</button>
+                </div>
+              ))}
+              {(project.coverImages ?? []).length < MAX_COVER_IMAGES && (
+                <button
+                  onClick={() => coverImageRef.current?.click()}
+                  disabled={uploadingCover}
+                  className="w-24 h-24 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
+                  title={t('upload_cover_image')}
+                >
+                  <span className="text-xl leading-none">+</span>
+                  <span className="text-xs text-center px-1">{uploadingCover ? t('uploading') : t('upload_cover_image')}</span>
+                </button>
               )}
-            </button>
-            {project.imageUrl && (
-              <button
-                onClick={async () => {
-                  const updated = await projectsApi.update(projectId, { imageUrl: '' })
-                  setProject(updated)
-                }}
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none flex items-center justify-center transition-colors"
-                title={t('delete')}
-              >×</button>
-            )}
-            <input ref={coverImageRef} type="file" accept="image/*" onChange={handleCoverImageUpload} className="hidden" />
+            </div>
+            {coverImageError && <p className="text-xs text-red-500">{coverImageError}</p>}
+            <input ref={coverImageRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleCoverImageUpload} className="hidden" />
           </div>
 
           <Field label={t('field_name')}>
@@ -262,7 +278,7 @@ export default function ProjectDetail() {
 function MaterialsTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
   const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
   const [search, setSearch] = useState('')
@@ -270,7 +286,13 @@ function MaterialsTab({ project, projectId, onUpdate }: {
   const [creatingInLib, setCreatingInLib] = useState(false)
   const [newLibType, setNewLibType] = useState<LibraryItemType>('YARN')
   const [pendingItem, setPendingItem] = useState<LibraryItem | null>(null)
-  const [pendingColor, setPendingColor] = useState<string>('')
+
+  const [uploadingMaterialId, setUploadingMaterialId] = useState<number | null>(null)
+  const [materialImageError, setMaterialImageError] = useState('')
+  const materialImageRef = useRef<HTMLInputElement>(null)
+  const [pendingMaterialImgId, setPendingMaterialImgId] = useState<number | null>(null)
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null)
+  const MAX_MATERIAL_IMAGES = 3
 
   useEffect(() => {
     libraryApi.getAll().then(setLibraryItems)
@@ -309,7 +331,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
   function handleLibraryClick(item: LibraryItem) {
     if (item.itemType === 'YARN' || item.itemType === 'FABRIC') {
       setPendingItem(item)
-      setPendingColor('')
     } else {
       addFromLibrary(item, '')
     }
@@ -337,8 +358,30 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       const updated = await projectsApi.addMaterial(projectId, { name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit, imageUrl: item.imageUrl })
       onUpdate(updated)
       setPendingItem(null)
-      setPendingColor('')
     } finally { setSaving(false) }
+  }
+
+  async function handleMaterialImageUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || pendingMaterialImgId === null) return
+    setMaterialImageError('')
+    setUploadingMaterialId(pendingMaterialImgId)
+    try {
+      const updated = await projectsApi.uploadMaterialImage(projectId, pendingMaterialImgId, file)
+      onUpdate(updated)
+      setEditingMaterial(prev => prev ? (updated.materials.find(m => m.id === prev.id) ?? null) : null)
+    } catch {
+      setMaterialImageError(t('upload_failed'))
+    } finally {
+      setUploadingMaterialId(null)
+      setPendingMaterialImgId(null)
+      if (materialImageRef.current) materialImageRef.current.value = ''
+    }
+  }
+
+  function startMaterialImageUpload(materialId: number) {
+    setPendingMaterialImgId(materialId)
+    materialImageRef.current?.click()
   }
 
   function handleLibItemCreated(item: LibraryItem) {
@@ -348,23 +391,108 @@ function MaterialsTab({ project, projectId, onUpdate }: {
 
   return (
     <div className="space-y-3">
+      <input ref={materialImageRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleMaterialImageUpload} className="hidden" />
+
+      {/* Material edit modal */}
+      {editingMaterial && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setEditingMaterial(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-semibold text-gray-800">{editingMaterial.type}</h3>
+                {(editingMaterial.amount || editingMaterial.unit) && (
+                  <p className="text-sm text-warm-gray">{editingMaterial.amount}{editingMaterial.amount && editingMaterial.unit ? ` ${editingMaterial.unit}` : ''}</p>
+                )}
+              </div>
+              <button onClick={() => setEditingMaterial(null)} className="text-warm-gray hover:text-red-400 text-2xl leading-none flex-shrink-0">×</button>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {(editingMaterial.images ?? []).map(img => (
+                <div key={img.id} className="relative group flex-shrink-0">
+                  <img
+                    src={img.storedName}
+                    alt={img.originalName}
+                    className={`w-20 h-20 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
+                  />
+                  <button
+                    onClick={async () => {
+                      const updated = await projectsApi.setMaterialImageMain(projectId, img.id)
+                      onUpdate(updated)
+                      setEditingMaterial(updated.materials.find(m => m.id === editingMaterial.id) ?? null)
+                    }}
+                    className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
+                    title={img.isMain ? 'Main image' : 'Set as main'}
+                  >★</button>
+                  <button
+                    onClick={async () => {
+                      const updated = await projectsApi.deleteMaterialImage(projectId, img.id)
+                      onUpdate(updated)
+                      setEditingMaterial(updated.materials.find(m => m.id === editingMaterial.id) ?? null)
+                    }}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+                  >×</button>
+                </div>
+              ))}
+              {(editingMaterial.images ?? []).length < MAX_MATERIAL_IMAGES && (
+                <button
+                  onClick={() => startMaterialImageUpload(editingMaterial.id)}
+                  disabled={uploadingMaterialId === editingMaterial.id}
+                  className="w-20 h-20 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
+                >
+                  <span className="text-xl leading-none">{uploadingMaterialId === editingMaterial.id ? '…' : '+'}</span>
+                  <span className="text-xs text-center px-1">{uploadingMaterialId === editingMaterial.id ? t('uploading') : t('upload_cover_image')}</span>
+                </button>
+              )}
+            </div>
+            {materialImageError && <p className="text-xs text-red-500">{materialImageError}</p>}
+          </div>
+        </div>
+      )}
       {project.materials.length === 0 && (
         <p className="text-sm text-warm-gray text-center py-2">{t('no_materials_yet')}</p>
       )}
-      {project.materials.map(m => (
-        <div key={m.id} className="card flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-gray-800">{m.type}</p>
-            {(m.amount || m.unit) && (
-              <p className="text-xs text-warm-gray">{m.amount}{m.amount && m.unit ? ` ${m.unit}` : ''}</p>
-            )}
+      {project.materials.map(m => {
+        const mainImg = m.images?.find(img => img.isMain) ?? m.images?.[0]
+        return (
+          <div key={m.id} className="card">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                onClick={() => setEditingMaterial(m)}
+              >
+                {mainImg ? (
+                  <img
+                    src={mainImg.storedName}
+                    alt={mainImg.originalName}
+                    className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg border-2 border-dashed border-soft-brown/30 bg-soft-brown/10 flex items-center justify-center text-warm-gray flex-shrink-0">
+                    <span className="text-xl leading-none">+</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-gray-800">{m.type}</p>
+                  {(m.amount || m.unit) && (
+                    <p className="text-xs text-warm-gray">{m.amount}{m.amount && m.unit ? ` ${m.unit}` : ''}</p>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={async () => onUpdate(await projectsApi.deleteMaterial(projectId, m.id))}
+                className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+              >×</button>
+            </div>
           </div>
-          <button
-            onClick={async () => onUpdate(await projectsApi.deleteMaterial(projectId, m.id))}
-            className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none"
-          >×</button>
-        </div>
-      ))}
+        )
+      })}
 
       {/* Library picker */}
       <div className="card space-y-2.5">
@@ -407,32 +535,11 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               <p className="text-sm font-medium text-gray-800 flex-1 truncate">{pendingItem.name}</p>
               <button type="button" onClick={() => setPendingItem(null)} className="text-warm-gray hover:text-red-400 text-lg leading-none">×</button>
             </div>
-            <p className="text-xs text-warm-gray">{t('color_label')} ({t('optional')})</p>
-            <div className="flex flex-wrap gap-1.5">
-              {COLORS.map(color => {
-                const isSelected = pendingColor === color.name
-                return (
-                  <button
-                    key={color.name}
-                    type="button"
-                    title={getColorName(color, i18n.language)}
-                    onClick={() => setPendingColor(isSelected ? '' : color.name)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${isSelected ? 'border-sand-blue-deep ring-2 ring-sand-blue-deep/40 scale-110' : 'border-black/10 hover:border-black/25'}`}
-                    style={{ backgroundColor: color.hex }}
-                  />
-                )
-              })}
-            </div>
-            {pendingColor && (
-              <p className="text-xs text-gray-600">
-                {getColorName(COLORS.find(c => c.name === pendingColor)!, i18n.language)}
-              </p>
-            )}
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={saving}
-                onClick={() => addFromLibrary(pendingItem, pendingColor)}
+                onClick={() => addFromLibrary(pendingItem, '')}
                 className="btn-primary text-sm flex-1"
               >{saving ? t('saving') : t('lib_add_item')}</button>
               <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">{t('cancel')}</button>
@@ -808,6 +915,32 @@ function KnitTab({ project, projectId, onUpdate, category }: {
   )
 }
 
+/** Fetch an image URL and return a JPEG data URI by drawing it through a canvas.
+ *  This is the only reliable way to embed external images in react-pdf v4 browser mode. */
+async function fetchAsJpegDataUri(url: string): Promise<string> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`fetch ${url} → ${res.status}`)
+  const blob = await res.blob()
+  const blobUrl = URL.createObjectURL(blob)
+  return new Promise<string>((resolve, reject) => {
+    const img = new window.Image()
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        const MAX = 1600
+        const scale = Math.min(MAX / img.naturalWidth, MAX / img.naturalHeight, 1)
+        canvas.width  = Math.round(img.naturalWidth  * scale)
+        canvas.height = Math.round(img.naturalHeight * scale)
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        URL.revokeObjectURL(blobUrl)
+        resolve(canvas.toDataURL('image/jpeg', 0.88))
+      } catch (e) { URL.revokeObjectURL(blobUrl); reject(e) }
+    }
+    img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error('img load failed')) }
+    img.src = blobUrl
+  })
+}
+
 // ── Overview Tab ───────────────────────────────────────────────
 function OverviewTab({ project, name, description, recipeText, craftDetails, projectId }: {
   project: Project; name: string; description: string; recipeText: string
@@ -818,15 +951,35 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
     ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
   async function downloadOverview() {
-    const [{ pdf }, { ProjectOverviewPdf }] = await Promise.all([
+    const [{ pdf }, { ProjectOverviewPdf }, { fileUrl }] = await Promise.all([
       import('@react-pdf/renderer'),
       import('./ProjectPdf'),
+      import('../api'),
     ])
 
     const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
     const filledCraftFields = craftFields
       .filter(f => craftDetails[f.key]?.trim())
       .map(f => ({ key: f.key, label: t(f.labelKey as Parameters<typeof t>[0]) }))
+
+    // Collect all image URLs that need to be embedded in the PDF
+    const imageUrls: string[] = []
+    if (project.imageUrl) imageUrls.push(project.imageUrl)
+    project.materials.forEach(m => { if (m.imageUrl) imageUrls.push(m.imageUrl) })
+    project.files
+      .filter(f => f.fileType === 'image')
+      .forEach(f => imageUrls.push(fileUrl(projectId, f.storedName)))
+
+    // Convert each image to a JPEG data URI via canvas — the only reliable way
+    // to embed external images in react-pdf v4 browser mode
+    const imageData: Record<string, string> = {}
+    await Promise.all(imageUrls.map(async url => {
+      try {
+        imageData[url] = await fetchAsJpegDataUri(url)
+      } catch {
+        // leave out — img() in ProjectPdf will fall back to the raw URL
+      }
+    }))
 
     const doc = (
       <ProjectOverviewPdf
@@ -839,6 +992,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
         projectId={projectId}
         categoryLabel={t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])}
         language={i18n.language}
+        imageData={imageData}
         labels={{
           info: t('section_info'),
           materials: t('section_materials'),
@@ -869,8 +1023,15 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
         </button>
       </div>
       <Section title={t('section_info')}>
-        <h3 className="font-semibold text-gray-800 text-base">{name}</h3>
-        {description && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{description}</p>}
+        <div className="flex gap-4 items-start">
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-800 text-base">{name}</h3>
+            {description && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{description}</p>}
+          </div>
+          {project.imageUrl && (
+            <img src={project.imageUrl} alt={name} className="w-28 h-28 object-cover rounded-xl flex-shrink-0" />
+          )}
+        </div>
       </Section>
 
       {(filledCraftFields.length > 0 || hasMaterials) && (

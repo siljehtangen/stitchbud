@@ -26,6 +26,8 @@ data class Project(
     var rowCounter: RowCounter? = null,
     @OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     var patternGrids: MutableList<PatternGrid> = mutableListOf(),
+    @OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    var images: MutableList<ProjectImage> = mutableListOf(),
     var startDate: Long? = null,
     var endDate: Long? = null,
     var createdAt: Long = System.currentTimeMillis(),

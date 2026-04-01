@@ -3,6 +3,7 @@ package com.stitchbud.service
 import com.stitchbud.dto.*
 import com.stitchbud.model.*
 import com.stitchbud.repository.MaterialRepository
+import com.stitchbud.repository.ProjectImageRepository
 import com.stitchbud.repository.ProjectRepository
 import com.stitchbud.repository.ProjectFileRepository
 import org.springframework.beans.factory.annotation.Value
@@ -19,6 +20,7 @@ class ProjectService(
     private val projectRepository: ProjectRepository,
     private val materialRepository: MaterialRepository,
     private val projectFileRepository: ProjectFileRepository,
+    private val projectImageRepository: ProjectImageRepository,
     private val storageService: SupabaseStorageService,
     private val libraryService: LibraryService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
@@ -59,7 +61,7 @@ class ProjectService(
 
     fun deleteProject(id: Long, userId: String) {
         val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { RuntimeException("Project not found") }
-        project.imageUrl?.let { storageService.deleteByUrl(it) }
+        project.images.forEach { img -> try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {} }
         project.files.forEach { file ->
             if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
             else deleteFileFromDisk(project.id, file.storedName)
@@ -70,7 +72,7 @@ class ProjectService(
     fun deleteAllUserData(userId: String) {
         val projects = projectRepository.findByUserIdOrderByUpdatedAtDesc(userId)
         projects.forEach { project ->
-            project.imageUrl?.let { storageService.deleteByUrl(it) }
+            project.images.forEach { img -> try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {} }
             project.files.forEach { file ->
                 if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
                 else deleteFileFromDisk(project.id, file.storedName)
@@ -82,11 +84,17 @@ class ProjectService(
 
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        project.materials.add(
-            Material(name = req.name, type = req.type, itemType = req.itemType, color = req.color, colorHex = req.colorHex, amount = req.amount, unit = req.unit, imageUrl = req.imageUrl, project = project)
-        )
+        val material = Material(name = req.name, type = req.type, itemType = req.itemType, color = req.color, colorHex = req.colorHex, amount = req.amount, unit = req.unit, imageUrl = req.imageUrl, project = project)
+        project.materials.add(material)
         project.updatedAt = System.currentTimeMillis()
-        return projectRepository.save(project).toDto()
+        val saved = projectRepository.save(project)
+        // If a library image URL was provided, register it as the main material image
+        if (!req.imageUrl.isNullOrBlank()) {
+            val mat = saved.materials.last()
+            saved.images.add(ProjectImage(storedName = req.imageUrl, originalName = "", section = "material", materialId = mat.id, isMain = true, project = saved))
+            return projectRepository.save(saved).toDto()
+        }
+        return saved.toDto()
     }
 
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
@@ -134,6 +142,85 @@ class ProjectService(
     fun deletePatternGrid(projectId: Long, gridId: Long, userId: String): ProjectDto {
         val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
         project.patternGrids.removeIf { it.id == gridId }
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun registerCoverImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val coverImages = project.images.filter { it.section == "cover" }
+        if (coverImages.size >= 3) throw RuntimeException("Maximum 3 cover images allowed")
+        val isFirst = coverImages.isEmpty()
+        val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "cover", materialId = null, isMain = isFirst, project = project)
+        project.images.add(img)
+        if (isFirst) project.imageUrl = req.fileUrl
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun setCoverImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val target = project.images.find { it.id == imageId && it.section == "cover" } ?: throw RuntimeException("Image not found")
+        project.images.filter { it.section == "cover" }.forEach { it.isMain = false }
+        target.isMain = true
+        project.imageUrl = target.storedName
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun deleteCoverImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val img = project.images.find { it.id == imageId && it.section == "cover" } ?: throw RuntimeException("Image not found")
+        val wasMain = img.isMain
+        try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {}
+        project.images.removeIf { it.id == imageId }
+        if (wasMain) {
+            val next = project.images.firstOrNull { it.section == "cover" }
+            next?.isMain = true
+            project.imageUrl = next?.storedName
+        }
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun registerMaterialImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val materialId = req.materialId ?: throw RuntimeException("materialId required")
+        project.materials.find { it.id == materialId } ?: throw RuntimeException("Material not found")
+        val matImages = project.images.filter { it.section == "material" && it.materialId == materialId }
+        if (matImages.size >= 3) throw RuntimeException("Maximum 3 images per material")
+        val isFirst = matImages.isEmpty()
+        val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "material", materialId = materialId, isMain = isFirst, project = project)
+        project.images.add(img)
+        if (isFirst) {
+            project.materials.find { it.id == materialId }?.imageUrl = req.fileUrl
+        }
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun setMaterialImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val target = project.images.find { it.id == imageId && it.section == "material" } ?: throw RuntimeException("Image not found")
+        project.images.filter { it.section == "material" && it.materialId == target.materialId }.forEach { it.isMain = false }
+        target.isMain = true
+        project.materials.find { it.id == target.materialId }?.imageUrl = target.storedName
+        project.updatedAt = System.currentTimeMillis()
+        return projectRepository.save(project).toDto()
+    }
+
+    fun deleteMaterialImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val img = project.images.find { it.id == imageId && it.section == "material" } ?: throw RuntimeException("Image not found")
+        val wasMain = img.isMain
+        val materialId = img.materialId
+        try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {}
+        project.images.removeIf { it.id == imageId }
+        if (wasMain && materialId != null) {
+            val next = project.images.firstOrNull { it.section == "material" && it.materialId == materialId }
+            next?.isMain = true
+            project.materials.find { it.id == materialId }?.imageUrl = next?.storedName
+        }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
@@ -215,7 +302,13 @@ class ProjectService(
     private fun Project.toDto() = ProjectDto(
         id = id, name = name, description = description, category = category,
         tags = tags, imageUrl = imageUrl, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
-        materials = materials.map { MaterialDto(it.id, it.name, it.type, it.itemType, it.color, it.colorHex, it.amount, it.unit, it.imageUrl) },
+        coverImages = images.filter { it.section == "cover" }.map { ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id) },
+        materials = materials.map { m ->
+            MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit, m.imageUrl,
+                images = images.filter { it.section == "material" && it.materialId == m.id }
+                    .map { ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id) }
+            )
+        },
         files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
         rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
         patternGrids = patternGrids.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },

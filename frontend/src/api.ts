@@ -39,8 +39,32 @@ export const projectsApi = {
 
   uploadCoverImage: async (id: number, file: File): Promise<Project> => {
     const publicUrl = await uploadFile(file, `project-covers/${id}`)
-    return api.put<Project>(`/projects/${id}`, { imageUrl: publicUrl }).then(r => r.data)
+    return api.post<Project>(`/projects/${id}/cover-images/register`, {
+      originalName: file.name,
+      fileUrl: publicUrl,
+    }).then(r => r.data)
   },
+
+  setCoverImageMain: (id: number, imageId: number): Promise<Project> =>
+    api.put<Project>(`/projects/${id}/cover-images/${imageId}/main`).then(r => r.data),
+
+  deleteCoverImage: (id: number, imageId: number): Promise<Project> =>
+    api.delete<Project>(`/projects/${id}/cover-images/${imageId}`).then(r => r.data),
+
+  uploadMaterialImage: async (id: number, materialId: number, file: File): Promise<Project> => {
+    const publicUrl = await uploadFile(file, `project-materials/${id}/${materialId}`)
+    return api.post<Project>(`/projects/${id}/material-images/register`, {
+      originalName: file.name,
+      fileUrl: publicUrl,
+      materialId,
+    }).then(r => r.data)
+  },
+
+  setMaterialImageMain: (id: number, imageId: number): Promise<Project> =>
+    api.put<Project>(`/projects/${id}/material-images/${imageId}/main`).then(r => r.data),
+
+  deleteMaterialImage: (id: number, imageId: number): Promise<Project> =>
+    api.delete<Project>(`/projects/${id}/material-images/${imageId}`).then(r => r.data),
 
   delete: (id: number) =>
     api.delete(`/projects/${id}`),

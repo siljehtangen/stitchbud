@@ -11,6 +11,8 @@ const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
   SEWING: <GiSewingMachine className="text-warm-gray" />,
 }
 
+type CoverImageEntry = { file: File; preview: string; isMain: boolean }
+
 export default function NewProject() {
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -18,8 +20,7 @@ export default function NewProject() {
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<ProjectCategory>('KNITTING')
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10))
-  const [coverImage, setCoverImage] = useState<File | null>(null)
-  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [coverImages, setCoverImages] = useState<CoverImageEntry[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const coverRef = useRef<HTMLInputElement>(null)
@@ -32,9 +33,23 @@ export default function NewProject() {
 
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    setCoverImage(file)
-    setCoverPreview(URL.createObjectURL(file))
+    if (!file || coverImages.length >= 3) return
+    const preview = URL.createObjectURL(file)
+    setCoverImages(prev => [...prev, { file, preview, isMain: prev.length === 0 }])
+    if (coverRef.current) coverRef.current.value = ''
+  }
+
+  function setMainImage(index: number) {
+    setCoverImages(prev => prev.map((img, i) => ({ ...img, isMain: i === index })))
+  }
+
+  function removeImage(index: number) {
+    setCoverImages(prev => {
+      const wasMain = prev[index].isMain
+      const updated = prev.filter((_, i) => i !== index)
+      if (wasMain && updated.length > 0) updated[0] = { ...updated[0], isMain: true }
+      return updated
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,9 +61,11 @@ export default function NewProject() {
         name: name.trim(), description, category, tags: '',
         startDate: startDate ? new Date(startDate).getTime() : Date.now(),
       })
-      if (coverImage) {
-        await projectsApi.uploadCoverImage(project.id, coverImage)
-      }
+      // Upload main image first so it's marked as main, then the rest
+      const mainImg = coverImages.find(img => img.isMain)
+      const others = coverImages.filter(img => !img.isMain)
+      if (mainImg) await projectsApi.uploadCoverImage(project.id, mainImg.file)
+      for (const img of others) await projectsApi.uploadCoverImage(project.id, img.file)
       navigate(`/projects/${project.id}`)
     } catch {
       setError(t('failed_create_project'))
@@ -67,21 +84,40 @@ export default function NewProject() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Cover image */}
-        <div>
-          <button
-            type="button"
-            onClick={() => coverRef.current?.click()}
-            className="w-full h-32 rounded-xl overflow-hidden border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex items-center justify-center"
-          >
-            {coverPreview ? (
-              <img src={coverPreview} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-warm-gray text-sm">{t('upload_cover_image')}</span>
-            )}
-          </button>
-          <input ref={coverRef} type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
+        {/* Cover images (up to 3) */}
+        <div className="flex gap-2 flex-wrap">
+          {coverImages.map((img, i) => (
+            <div key={i} className="relative group flex-shrink-0">
+              <img
+                src={img.preview}
+                alt=""
+                className={`w-24 h-24 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
+              />
+              <button
+                type="button"
+                onClick={() => setMainImage(i)}
+                className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
+                title={img.isMain ? 'Main image' : 'Set as main'}
+              >★</button>
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+              >×</button>
+            </div>
+          ))}
+          {coverImages.length < 3 && (
+            <button
+              type="button"
+              onClick={() => coverRef.current?.click()}
+              className="w-24 h-24 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
+            >
+              <span className="text-xl leading-none">+</span>
+              <span className="text-xs text-center px-1">{t('upload_cover_image')}</span>
+            </button>
+          )}
         </div>
+        <input ref={coverRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleCoverChange} className="hidden" />
 
         {/* Category selector */}
         <div>

@@ -24,6 +24,16 @@ export interface LibraryItem {
   createdAt: number
 }
 
+export interface ProjectImage {
+  id: number
+  storedName: string
+  originalName: string
+  section: string
+  materialId?: number
+  isMain: boolean
+  projectId: number
+}
+
 export interface Material {
   id: number
   name: string
@@ -34,6 +44,7 @@ export interface Material {
   amount: string
   unit: string
   imageUrl?: string
+  images: ProjectImage[]
 }
 
 export interface RowCounter {
@@ -67,6 +78,7 @@ export interface Project {
   category: ProjectCategory
   tags: string
   imageUrl?: string
+  coverImages: ProjectImage[]
   notes: string
   recipeText: string
   craftDetails: string

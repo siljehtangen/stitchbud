@@ -204,5 +204,6 @@
   "delete_account_btn": "Slett kontoen min",
   "delete_account_confirm_warning": "Er du sikker? All data vil bli slettet permanent.",
   "delete_account_confirm_btn": "Ja, slett alt",
-  "deleting": "Sletter..."
+  "deleting": "Sletter...",
+  "upload_failed": "Opplasting feilet. Prøv igjen."
 }

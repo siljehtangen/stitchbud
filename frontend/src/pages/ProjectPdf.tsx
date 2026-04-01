@@ -1,13 +1,15 @@
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer'
 import type { Project, PatternCell } from '../types'
 import { COLOR_MAP_BY_HEX, getColorName } from '../colors'
+import { fileUrl } from '../api'
 
 const accent = '#6FA8BC'
 
 const S = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, color: '#333', padding: 48 },
   h1: { fontSize: 22, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
-  meta: { fontSize: 9, color: '#888', marginBottom: 24 },
+  meta: { fontSize: 9, color: '#888', marginBottom: 16 },
+  coverImage: { width: '100%', height: 180, objectFit: 'contain', marginBottom: 20 },
   section: { marginBottom: 22 },
   sectionTitle: {
     fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: accent,
@@ -20,7 +22,11 @@ const S = StyleSheet.create({
   fieldLabel: { fontSize: 7.5, color: '#888', marginBottom: 1 },
   fieldValue: { fontSize: 9.5, color: '#555' },
   matRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
+  matImage: { width: 40, height: 40, objectFit: 'cover', marginRight: 8 },
   matText: { fontSize: 9.5 },
+  recipeImage: { width: '100%', height: 250, objectFit: 'contain', marginBottom: 8 },
+  attachment: { fontSize: 9, color: '#888', marginBottom: 3 },
+  attachmentLink: { fontSize: 9, color: '#6FA8BC', marginBottom: 3, textDecoration: 'underline' },
   pCell: { width: 13, height: 13, borderWidth: 0.5, borderColor: '#e0e0e0', borderStyle: 'solid' },
   gridRow: { flexDirection: 'row' },
   clipNote: { fontSize: 8, color: '#999', fontStyle: 'italic', marginTop: 4 },
@@ -48,14 +54,22 @@ export interface PdfProps {
   categoryLabel: string
   labels: PdfLabels
   language: string
+  /** Pre-fetched base64 data URIs keyed by original URL, to avoid CORS issues at render time */
+  imageData: Record<string, string>
 }
 
 export function ProjectOverviewPdf({
   project, name, description, recipeText, filledCraftFields,
-  craftDetails, categoryLabel, labels, language,
+  craftDetails, projectId, categoryLabel, labels, language, imageData,
 }: PdfProps) {
   const hasMaterials = filledCraftFields.length > 0 || project.materials.length > 0
   const hasRecipe = !!recipeText
+
+  const imageFiles = project.files.filter(f => f.fileType === 'image')
+  const nonImageFiles = project.files.filter(f => f.fileType !== 'image')
+  const hasFiles = project.files.length > 0
+
+  const img = (url: string) => imageData[url] ?? url
 
   const gridDatas = (() => {
     if (project.category === 'SEWING' || !project.patternGrids?.length) return []
@@ -78,6 +92,10 @@ export function ProjectOverviewPdf({
       <Page size="A4" style={S.page}>
         <Text style={S.h1}>{name}</Text>
         <Text style={S.meta}>{categoryLabel}</Text>
+
+        {project.imageUrl ? (
+          <Image src={img(project.imageUrl)} style={S.coverImage} />
+        ) : null}
 
         {description ? (
           <View style={S.section}>
@@ -104,6 +122,9 @@ export function ProjectOverviewPdf({
               const colorLabel = colorEntry ? getColorName(colorEntry, language) : m.color
               return (
                 <View key={m.id} style={S.matRow}>
+                  {m.imageUrl ? (
+                    <Image src={img(m.imageUrl)} style={S.matImage} />
+                  ) : null}
                   <Text style={S.matText}>
                     {m.type}{colorLabel ? ` \u2014 ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                   </Text>
@@ -113,10 +134,19 @@ export function ProjectOverviewPdf({
           </View>
         ) : null}
 
-        {hasRecipe ? (
+        {(hasRecipe || hasFiles) ? (
           <View style={S.section}>
             <Text style={S.sectionTitle}>{labels.recipe.toUpperCase()}</Text>
-            <Text style={S.body}>{recipeText}</Text>
+            {hasRecipe && <Text style={S.body}>{recipeText}</Text>}
+            {imageFiles.map(f => {
+              const url = fileUrl(projectId, f.storedName)
+              return <Image key={f.id} src={img(url)} style={S.recipeImage} />
+            })}
+            {nonImageFiles.map(f => (
+              <Link key={f.id} src={fileUrl(projectId, f.storedName)} style={S.attachmentLink}>
+                {f.fileType === 'pdf' ? '(PDF) ' : f.fileType === 'word' ? '(Word) ' : ''}{f.originalName}
+              </Link>
+            ))}
           </View>
         ) : null}
 

@@ -204,5 +204,6 @@
   "delete_account_btn": "Delete my account",
   "delete_account_confirm_warning": "Are you sure? All your data will be permanently deleted.",
   "delete_account_confirm_btn": "Yes, delete everything",
-  "deleting": "Deleting..."
+  "deleting": "Deleting...",
+  "upload_failed": "Upload failed. Please try again."
 }

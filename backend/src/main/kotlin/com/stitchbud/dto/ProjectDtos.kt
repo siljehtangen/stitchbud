@@ -2,6 +2,16 @@ package com.stitchbud.dto
 
 import com.stitchbud.model.ProjectCategory
 
+data class ProjectImageDto(
+    val id: Long = 0,
+    val storedName: String,
+    val originalName: String,
+    val section: String,
+    val materialId: Long?,
+    val isMain: Boolean,
+    val projectId: Long
+)
+
 data class MaterialDto(
     val id: Long = 0,
     val name: String,
@@ -11,7 +21,8 @@ data class MaterialDto(
     val colorHex: String = "#000000",
     val amount: String = "",
     val unit: String = "g",
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val images: List<ProjectImageDto> = emptyList()
 )
 
 data class RowCounterDto(
@@ -48,6 +59,7 @@ data class ProjectDto(
     val notes: String = "",
     val recipeText: String = "",
     val craftDetails: String = "{}",
+    val coverImages: List<ProjectImageDto> = emptyList(),
     val materials: List<MaterialDto> = emptyList(),
     val files: List<ProjectFileDto> = emptyList(),
     val rowCounter: RowCounterDto? = null,
@@ -106,4 +118,10 @@ data class AddMaterialRequest(
     val amount: String = "",
     val unit: String = "g",
     val imageUrl: String? = null
+)
+
+data class RegisterProjectImageRequest(
+    val originalName: String,
+    val fileUrl: String,
+    val materialId: Long? = null
 )

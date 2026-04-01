@@ -83,6 +83,32 @@ class ProjectController(private val projectService: ProjectService) {
     @DeleteMapping("/{id}/files/{fileId}")
     fun deleteFile(@PathVariable id: Long, @PathVariable fileId: Long) =
         projectService.deleteFile(id, fileId, userId())
+
+    // Cover image multi-upload endpoints
+    @PostMapping("/{id}/cover-images/register")
+    fun registerCoverImage(@PathVariable id: Long, @RequestBody req: RegisterProjectImageRequest) =
+        projectService.registerCoverImage(id, req, userId())
+
+    @PutMapping("/{id}/cover-images/{imageId}/main")
+    fun setCoverImageMain(@PathVariable id: Long, @PathVariable imageId: Long) =
+        projectService.setCoverImageMain(id, imageId, userId())
+
+    @DeleteMapping("/{id}/cover-images/{imageId}")
+    fun deleteCoverImage(@PathVariable id: Long, @PathVariable imageId: Long) =
+        projectService.deleteCoverImage(id, imageId, userId())
+
+    // Material image multi-upload endpoints
+    @PostMapping("/{id}/material-images/register")
+    fun registerMaterialImage(@PathVariable id: Long, @RequestBody req: RegisterProjectImageRequest) =
+        projectService.registerMaterialImage(id, req, userId())
+
+    @PutMapping("/{id}/material-images/{imageId}/main")
+    fun setMaterialImageMain(@PathVariable id: Long, @PathVariable imageId: Long) =
+        projectService.setMaterialImageMain(id, imageId, userId())
+
+    @DeleteMapping("/{id}/material-images/{imageId}")
+    fun deleteMaterialImage(@PathVariable id: Long, @PathVariable imageId: Long) =
+        projectService.deleteMaterialImage(id, imageId, userId())
 }
 
 @RestController
