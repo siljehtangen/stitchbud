@@ -7,6 +7,7 @@ export interface LibraryItem {
   itemType: LibraryItemType
   name: string
   imageUrl?: string
+  colors: string[]
   // Yarn
   yarnMaterial?: string
   yarnBrand?: string

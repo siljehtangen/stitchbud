@@ -5,6 +5,7 @@ data class LibraryItemDto(
     val itemType: String,
     val name: String,
     val imageUrl: String? = null,
+    val colors: List<String> = emptyList(),
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,
     val yarnAmountG: Int? = null,
@@ -20,6 +21,7 @@ data class LibraryItemDto(
 data class UpdateLibraryItemRequest(
     val name: String? = null,
     val imageUrl: String? = null,
+    val colors: List<String>? = null,
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,
     val yarnAmountG: Int? = null,
@@ -34,6 +36,7 @@ data class UpdateLibraryItemRequest(
 data class CreateLibraryItemRequest(
     val itemType: String,
     val name: String,
+    val colors: List<String>? = null,
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,
     val yarnAmountG: Int? = null,

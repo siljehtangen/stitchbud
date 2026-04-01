@@ -28,6 +28,7 @@ class LibraryService(
             userId = userId,
             itemType = req.itemType,
             name = req.name,
+            colors = req.colors?.joinToString(","),
             yarnMaterial = req.yarnMaterial,
             yarnBrand = req.yarnBrand,
             yarnAmountG = req.yarnAmountG,
@@ -46,6 +47,7 @@ class LibraryService(
         if (item.userId != userId) throw RuntimeException("Not found")
         req.name?.let { item.name = it }
         req.imageUrl?.let { item.imageUrl = it }
+        req.colors?.let { item.colors = it.joinToString(",") }
         req.yarnMaterial?.let { item.yarnMaterial = it }
         req.yarnBrand?.let { item.yarnBrand = it }
         req.yarnAmountG?.let { item.yarnAmountG = it }
@@ -100,6 +102,7 @@ class LibraryService(
         itemType = itemType,
         name = name,
         imageUrl = imageUrl ?: imageStoredName?.let { "/api/library-images/$it" },
+        colors = colors?.split(",")?.filter { it.isNotEmpty() } ?: emptyList(),
         yarnMaterial = yarnMaterial,
         yarnBrand = yarnBrand,
         yarnAmountG = yarnAmountG,

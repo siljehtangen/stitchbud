@@ -25,5 +25,7 @@ data class LibraryItem(
     var circularLengthCm: Int? = null,
     // Crochet hook
     var hookSizeMm: String? = null,
+    // Colors (comma-separated list, applicable for YARN and FABRIC)
+    var colors: String? = null,
     var createdAt: Long = System.currentTimeMillis()
 )

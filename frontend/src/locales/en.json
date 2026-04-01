@@ -159,6 +159,8 @@
   "lib_delete_confirm": "Delete this item?",
   "lib_select_for_project": "Add to project",
   "lib_all": "All",
+  "lib_colors": "Colors",
+  "lib_filter_color": "Filter by color",
   "lib_search_placeholder": "Search library...",
   "lib_create_new": "Create new in library",
   "lib_not_found_hint": "Can't find what you're looking for?",

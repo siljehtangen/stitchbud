@@ -86,7 +86,7 @@ export const libraryApi = {
     api.get<LibraryItem[]>('/library').then(r => r.data),
 
   create: (data: {
-    itemType: string; name: string
+    itemType: string; name: string; colors?: string[]
     yarnMaterial?: string; yarnBrand?: string; yarnAmountG?: number; yarnAmountM?: number
     fabricWidthCm?: number; fabricLengthCm?: number
     needleSizeMm?: string; circularLengthCm?: number
@@ -100,7 +100,7 @@ export const libraryApi = {
   },
 
   update: (id: number, data: {
-    name?: string; imageUrl?: string
+    name?: string; imageUrl?: string; colors?: string[]
     yarnMaterial?: string; yarnBrand?: string; yarnAmountG?: number; yarnAmountM?: number
     fabricWidthCm?: number; fabricLengthCm?: number
     needleSizeMm?: string; circularLengthCm?: number

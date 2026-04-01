@@ -2,10 +2,12 @@ import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
+import { COLORS, COLOR_MAP } from '../colors'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
 
 const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
+const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
 
 const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx'
 
@@ -26,6 +28,67 @@ const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
   CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
 }
 
+// ── Color Picker ───────────────────────────────────────────────
+function ColorPicker({ selected, onChange }: {
+  selected: string[]
+  onChange: (colors: string[]) => void
+}) {
+  function toggle(name: string) {
+    if (selected.includes(name)) {
+      onChange(selected.filter(c => c !== name))
+    } else {
+      onChange([...selected, name])
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Selected chips */}
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map(name => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-soft-brown/20 text-gray-700"
+            >
+              <span
+                className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
+                style={{ backgroundColor: COLOR_MAP[name] ?? '#ccc' }}
+              />
+              {name}
+              <button
+                type="button"
+                onClick={() => toggle(name)}
+                className="ml-0.5 text-warm-gray hover:text-red-400 leading-none"
+              >×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      {/* Color swatches grid */}
+      <div className="flex flex-wrap gap-1.5">
+        {COLORS.map(({ name, hex }) => {
+          const isSelected = selected.includes(name)
+          return (
+            <button
+              key={name}
+              type="button"
+              title={name}
+              onClick={() => toggle(name)}
+              className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 ${
+                isSelected
+                  ? 'border-sand-blue-deep ring-2 ring-sand-blue-deep/40 scale-110'
+                  : 'border-black/10 hover:border-black/25'
+              }`}
+              style={{ backgroundColor: hex }}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function Library() {
   const { t } = useTranslation()
   const [items, setItems] = useState<LibraryItem[]>([])
@@ -33,15 +96,26 @@ export default function Library() {
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
   const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
+  const [filterColor, setFilterColor] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
     libraryApi.getAll().then(setItems).finally(() => setLoading(false))
   }, [])
 
+  // Show color filter only when type filter is yarn/fabric or no type filter (but items with colors exist)
+  const showColorFilter = filterType === null || COLOR_ITEM_TYPES.includes(filterType)
+
+  // Collect colors that actually exist in filtered-by-type items
+  const colorableItems = items.filter(i => COLOR_ITEM_TYPES.includes(i.itemType as LibraryItemType))
+  const availableColors = Array.from(
+    new Set(colorableItems.flatMap(i => i.colors ?? []))
+  )
+
   const q = search.toLowerCase()
   const filtered = items.filter(i => {
     if (filterType && i.itemType !== filterType) return false
+    if (filterColor && !(i.colors ?? []).includes(filterColor)) return false
     if (!q) return true
     return [
       i.name,
@@ -121,6 +195,7 @@ export default function Library() {
 
       {/* Filter bar */}
       <div className="space-y-2">
+        {/* Type filter */}
         <div className="flex gap-1.5 flex-wrap">
           <button
             type="button"
@@ -135,7 +210,10 @@ export default function Library() {
             <button
               key={type}
               type="button"
-              onClick={() => setFilterType(filterType === type ? null : type)}
+              onClick={() => {
+                setFilterType(filterType === type ? null : type)
+                setFilterColor(null)
+              }}
               className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
               }`}
@@ -145,6 +223,46 @@ export default function Library() {
             </button>
           ))}
         </div>
+
+        {/* Color filter — only visible when relevant and colors exist */}
+        {showColorFilter && availableColors.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <span className="text-xs text-warm-gray">{t('lib_filter_color')}:</span>
+            {filterColor && (
+              <button
+                type="button"
+                onClick={() => setFilterColor(null)}
+                className="px-2 py-0.5 rounded-full text-xs bg-soft-brown/20 text-warm-gray hover:bg-red-100 hover:text-red-500 transition-colors"
+              >
+                {t('clear_filter')}
+              </button>
+            )}
+            {availableColors.map(name => {
+              const hex = COLOR_MAP[name] ?? '#ccc'
+              const isActive = filterColor === name
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  title={name}
+                  onClick={() => setFilterColor(isActive ? null : name)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all border ${
+                    isActive
+                      ? 'border-sand-blue-deep bg-sand-blue text-gray-800 font-medium'
+                      : 'border-black/10 bg-white text-warm-gray hover:border-black/25 hover:text-gray-700'
+                  }`}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
+                    style={{ backgroundColor: hex }}
+                  />
+                  {name}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         <input
           type="search"
           className="input text-sm py-2 w-full"
@@ -211,8 +329,11 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  const hasColors = COLOR_ITEM_TYPES.includes(item.itemType as LibraryItemType)
+
   // Edit fields
   const [name, setName] = useState(item.name)
+  const [colors, setColors] = useState<string[]>(item.colors ?? [])
   const [yarnBrand, setYarnBrand] = useState(item.yarnBrand ?? '')
   const [yarnMaterial, setYarnMaterial] = useState(item.yarnMaterial ?? '')
   const [yarnAmountG, setYarnAmountG] = useState(item.yarnAmountG?.toString() ?? '')
@@ -241,6 +362,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
     try {
       const updated = await libraryApi.update(item.id, {
         name: name.trim() || item.name,
+        colors: hasColors ? colors : undefined,
         yarnBrand: item.itemType === 'YARN' ? yarnBrand || undefined : undefined,
         yarnMaterial: item.itemType === 'YARN' ? yarnMaterial || undefined : undefined,
         yarnAmountG: item.itemType === 'YARN' && yarnAmountG ? parseInt(yarnAmountG) : undefined,
@@ -290,6 +412,14 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
             />
           </Field>
         </div>
+
+        {/* Color picker for yarn/fabric */}
+        {hasColors && (
+          <Field label={t('lib_colors')}>
+            <ColorPicker selected={colors} onChange={setColors} />
+          </Field>
+        )}
+
         {item.itemType === 'YARN' && (
           <div className="grid grid-cols-2 gap-2">
             <Field label={t('lib_yarn_brand')}>
@@ -373,6 +503,24 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm text-gray-800">{item.name}</p>
         {subtitle && <p className="text-xs text-warm-gray">{subtitle}</p>}
+        {/* Color swatches display */}
+        {(item.colors ?? []).length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {(item.colors ?? []).map(name => (
+              <span
+                key={name}
+                title={name}
+                className="inline-flex items-center gap-1 text-xs text-warm-gray"
+              >
+                <span
+                  className="w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0"
+                  style={{ backgroundColor: COLOR_MAP[name] ?? '#ccc' }}
+                />
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <button
         onClick={() => setEditing(true)}
@@ -402,6 +550,7 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
 
   // Shared
   const [name, setName] = useState('')
+  const [colors, setColors] = useState<string[]>([])
   // Yarn
   const [yarnMaterial, setYarnMaterial] = useState('')
   const [yarnBrand, setYarnBrand] = useState('')
@@ -415,6 +564,8 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
   const [circularLength, setCircularLength] = useState('')
   // Hook
   const [hookSize, setHookSize] = useState('')
+
+  const hasColors = COLOR_ITEM_TYPES.includes(selectedType)
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -439,6 +590,7 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
       let item = await libraryApi.create({
         itemType: selectedType,
         name: finalName,
+        colors: hasColors && colors.length > 0 ? colors : undefined,
         yarnMaterial: selectedType === 'YARN' ? yarnMaterial || undefined : undefined,
         yarnBrand: selectedType === 'YARN' ? yarnBrand || undefined : undefined,
         yarnAmountG: selectedType === 'YARN' && yarnAmountG ? parseInt(yarnAmountG) : undefined,
@@ -474,7 +626,7 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
           <button
             key={type}
             type="button"
-            onClick={() => onTypeChange(type)}
+            onClick={() => { onTypeChange(type); setColors([]) }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               selectedType === type ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
             }`}
@@ -534,6 +686,13 @@ function AddItemForm({ selectedType, onTypeChange, onCreated, onCancel }: {
             <input className="input text-sm py-2" value={hookSize} onChange={e => setHookSize(e.target.value)} placeholder="5.0" />
           </Field>
         </div>
+      )}
+
+      {/* Color picker for yarn/fabric */}
+      {hasColors && (
+        <Field label={t('lib_colors')}>
+          <ColorPicker selected={colors} onChange={setColors} />
+        </Field>
       )}
 
       {/* Optional custom name */}
