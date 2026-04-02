@@ -10,7 +10,8 @@ const S = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, color: '#333', padding: 48 },
   h1: { fontSize: 22, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
   meta: { fontSize: 9, color: '#888', marginBottom: 16 },
-  coverImage: { width: '100%', height: 180, objectFit: 'contain', marginBottom: 20 },
+  coverImages: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
+  coverImage: { flex: 1, minWidth: 100, height: 180, objectFit: 'contain', marginRight: 6 },
   section: { marginBottom: 22 },
   sectionTitle: {
     fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: accent,
@@ -97,9 +98,11 @@ export function ProjectOverviewPdf({
         <Text style={S.h1}>{name}</Text>
         <Text style={S.meta}>{categoryLabel}</Text>
 
-        {coverUrls.map((url, i) => (
-          <Image key={i} src={img(url)} style={S.coverImage} />
-        ))}
+        <View style={S.coverImages}>
+          {coverUrls.map((url, i) => (
+            <Image key={i} src={img(url)} style={S.coverImage} />
+          ))}
+        </View>
 
         {description ? (
           <View style={S.section}>
