@@ -85,8 +85,8 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* FAB (hidden on pages where we have a labeled "Add project" button) */}
-      {location.pathname !== '/home' && location.pathname !== '/projects' && (
+      {/* FAB — only on project detail pages */}
+      {/^\/projects\/\d+/.test(location.pathname) && (
         <button
           onClick={() => navigate('/projects/new')}
           className="fixed bottom-20 right-6 w-14 h-14 bg-sand-green hover:bg-sand-green-dark shadow-lg rounded-full flex items-center justify-center text-2xl transition-all duration-200 hover:scale-105 z-10"

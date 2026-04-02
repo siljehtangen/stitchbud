@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { useConfirmDialog } from '../context/ConfirmDialogContext'
@@ -23,6 +23,120 @@ function fileTypeIcon(url: string) {
 }
 
 
+function ColorMultiSelect({ availableColors, selected, onChange, language, placeholder, searchPlaceholder, noResults, clearLabel }: {
+  availableColors: string[]
+  selected: string[]
+  onChange: (colors: string[]) => void
+  language: string
+  placeholder: string
+  searchPlaceholder: string
+  noResults: string
+  clearLabel: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const toggle = useCallback((name: string) => {
+    onChange(selected.includes(name) ? selected.filter(c => c !== name) : [...selected, name])
+  }, [selected, onChange])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const q = query.toLowerCase()
+  const filtered = availableColors.filter(name => {
+    const hex = COLOR_MAP[name] ?? '#ccc'
+    const colorEntry = COLOR_MAP_BY_HEX[hex]
+    const displayName = colorEntry ? getColorName(colorEntry, language) : name
+    return displayName.toLowerCase().includes(q)
+  })
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="input text-sm py-1.5 w-full text-left flex items-center gap-1.5 flex-wrap min-h-[36px]"
+      >
+        {selected.length === 0 ? (
+          <span className="text-warm-gray">{placeholder}…</span>
+        ) : (
+          selected.map(name => {
+            const hex = COLOR_MAP[name] ?? '#ccc'
+            const colorEntry = COLOR_MAP_BY_HEX[hex]
+            const displayName = colorEntry ? getColorName(colorEntry, language) : name
+            return (
+              <span key={name} className="inline-flex items-center gap-1 bg-sand-blue/40 text-gray-700 text-xs rounded-full px-2 py-0.5">
+                <span className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: hex }} />
+                {displayName}
+                <span
+                  role="button"
+                  onClick={e => { e.stopPropagation(); toggle(name) }}
+                  className="ml-0.5 leading-none hover:text-red-400 cursor-pointer"
+                >×</span>
+              </span>
+            )
+          })
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute z-30 mt-1 w-full bg-white border border-soft-brown/30 rounded-xl shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-soft-brown/20">
+            <input
+              autoFocus
+              type="text"
+              className="input text-sm py-1.5 w-full"
+              placeholder={searchPlaceholder}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+          <ul className="max-h-52 overflow-y-auto py-1">
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-xs text-warm-gray">{noResults}</li>
+            )}
+            {filtered.map(name => {
+              const hex = COLOR_MAP[name] ?? '#ccc'
+              const colorEntry = COLOR_MAP_BY_HEX[hex]
+              const displayName = colorEntry ? getColorName(colorEntry, language) : name
+              const checked = selected.includes(name)
+              return (
+                <li
+                  key={name}
+                  onClick={() => toggle(name)}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors ${checked ? 'bg-sand-blue/20 text-gray-800' : 'hover:bg-soft-brown/10 text-gray-700'}`}
+                >
+                  <span className="w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: hex }} />
+                  <span className="flex-1">{displayName}</span>
+                  {checked && <span className="text-sand-blue-deep text-xs">✓</span>}
+                </li>
+              )
+            })}
+          </ul>
+          {selected.length > 0 && (
+            <div className="border-t border-soft-brown/20 px-3 py-2">
+              <button type="button" onClick={() => onChange([])} className="text-xs text-warm-gray hover:text-red-400 transition-colors">
+                {clearLabel}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Library() {
   const { t, i18n } = useTranslation()
   const { showToast } = useToast()
@@ -32,7 +146,7 @@ export default function Library() {
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
   const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
-  const [filterColor, setFilterColor] = useState<string | null>(null)
+  const [filterColors, setFilterColors] = useState<string[]>([])
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -51,7 +165,7 @@ export default function Library() {
   const q = search.toLowerCase()
   const filtered = items.filter(i => {
     if (filterType && i.itemType !== filterType) return false
-    if (filterColor && !(i.colors ?? []).includes(filterColor)) return false
+    if (filterColors.length > 0 && !filterColors.some(c => (i.colors ?? []).includes(c))) return false
     if (!q) return true
     return [
       i.name,
@@ -155,7 +269,7 @@ export default function Library() {
               type="button"
               onClick={() => {
                 setFilterType(filterType === type ? null : type)
-                setFilterColor(null)
+                setFilterColors([])
               }}
               className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
@@ -167,45 +281,18 @@ export default function Library() {
           ))}
         </div>
 
-        {/* Color filter — only visible when relevant and colors exist */}
+        {/* Color filter — searchable multi-select */}
         {showColorFilter && availableColors.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-xs text-warm-gray">{t('lib_filter_color')}:</span>
-            {filterColor && (
-              <button
-                type="button"
-                onClick={() => setFilterColor(null)}
-                className="px-2 py-0.5 rounded-full text-xs bg-soft-brown/20 text-warm-gray hover:bg-red-100 hover:text-red-500 transition-colors"
-              >
-                {t('clear_filter')}
-              </button>
-            )}
-            {availableColors.map(name => {
-              const hex = COLOR_MAP[name] ?? '#ccc'
-              const colorEntry = COLOR_MAP_BY_HEX[hex]
-              const displayName = colorEntry ? getColorName(colorEntry, i18n.language) : name
-              const isActive = filterColor === name
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  title={displayName}
-                  onClick={() => setFilterColor(isActive ? null : name)}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all border ${
-                    isActive
-                      ? 'border-sand-blue-deep bg-sand-blue text-gray-800 font-medium'
-                      : 'border-black/10 bg-white text-warm-gray hover:border-black/25 hover:text-gray-700'
-                  }`}
-                >
-                  <span
-                    className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
-                    style={{ backgroundColor: hex }}
-                  />
-                  {displayName}
-                </button>
-              )
-            })}
-          </div>
+          <ColorMultiSelect
+            availableColors={availableColors}
+            selected={filterColors}
+            onChange={setFilterColors}
+            language={i18n.language}
+            placeholder={t('lib_filter_color')}
+            searchPlaceholder={t('lib_color_search_placeholder')}
+            noResults={t('lib_color_no_results')}
+            clearLabel={t('lib_clear_color_filter')}
+          />
         )}
 
         <input
