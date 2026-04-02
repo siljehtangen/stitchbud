@@ -36,7 +36,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       <div
-        className="fixed bottom-6 right-4 z-[100] flex w-full max-w-sm flex-col gap-3 pointer-events-none"
+        className="fixed bottom-6 right-4 z-[100] flex flex-col gap-3 pointer-events-none items-end"
         aria-live="polite"
         aria-relevant="additions text"
       >
@@ -44,14 +44,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={toast.id}
             role="status"
-            className={`animate-toast-in pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3.5 shadow-[0_12px_40px_-8px_rgba(60,50,40,0.18),0_4px_14px_-4px_rgba(60,50,40,0.1)] backdrop-blur-md ${
+            className={`animate-toast-in pointer-events-auto inline-flex items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-[0_12px_40px_-8px_rgba(60,50,40,0.18),0_4px_14px_-4px_rgba(60,50,40,0.1)] backdrop-blur-md ${
               toast.variant === 'success'
                 ? 'border-sand-green/35 bg-gradient-to-br from-white/95 via-cream/95 to-sand-green/15 text-gray-800 ring-1 ring-sand-green/20'
                 : 'border-sand-blue/40 bg-gradient-to-br from-white/95 via-cream/95 to-sand-blue/20 text-gray-800 ring-1 ring-sand-blue/15'
             }`}
           >
             <span
-              className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
                 toast.variant === 'success'
                   ? 'bg-sand-green/50 text-sand-green-dark'
                   : 'bg-sand-blue/60 text-sand-blue-deep'
@@ -64,7 +64,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <HiInformationCircle className="h-5 w-5" />
               )}
             </span>
-            <p className="min-w-0 flex-1 pt-1 text-sm font-medium leading-snug tracking-tight text-gray-800">
+            <p className="min-w-0 flex-1 text-sm font-medium leading-snug tracking-tight text-gray-800">
               {toast.message}
             </p>
           </div>

@@ -281,27 +281,30 @@ export default function Library() {
           ))}
         </div>
 
-        {/* Color filter — searchable multi-select */}
-        {showColorFilter && availableColors.length > 0 && (
-          <ColorMultiSelect
-            availableColors={availableColors}
-            selected={filterColors}
-            onChange={setFilterColors}
-            language={i18n.language}
-            placeholder={t('lib_filter_color')}
-            searchPlaceholder={t('lib_color_search_placeholder')}
-            noResults={t('lib_color_no_results')}
-            clearLabel={t('lib_clear_color_filter')}
+        {/* Search + color filter side by side */}
+        <div className="flex gap-2">
+          <input
+            type="search"
+            className="input text-sm py-2 w-1/2 min-w-0"
+            placeholder={t('lib_search_placeholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
-        )}
-
-        <input
-          type="search"
-          className="input text-sm py-2 w-full"
-          placeholder={t('lib_search_placeholder')}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+          {showColorFilter && availableColors.length > 0 && (
+            <div className="w-1/2 flex-shrink-0">
+              <ColorMultiSelect
+                availableColors={availableColors}
+                selected={filterColors}
+                onChange={setFilterColors}
+                language={i18n.language}
+                placeholder={t('lib_filter_color')}
+                searchPlaceholder={t('lib_color_search_placeholder')}
+                noResults={t('lib_color_no_results')}
+                clearLabel={t('lib_clear_color_filter')}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {adding && (
