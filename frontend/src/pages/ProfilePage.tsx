@@ -62,7 +62,7 @@ export default function ProfilePage() {
       {/* Sign out */}
       <button
         onClick={handleSignOut}
-        className="w-full py-3 rounded-xl border border-soft-brown/30 text-warm-gray font-medium text-sm hover:bg-soft-brown/10 transition-colors"
+        className="btn-secondary w-full py-3 text-sm"
       >
         {t('profile_sign_out')}
       </button>
