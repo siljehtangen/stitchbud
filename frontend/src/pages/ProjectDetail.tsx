@@ -1259,36 +1259,50 @@ function RoundCounterWidget({ counter, onSave }: {
   onSave: (stitchesPerRound: number, totalRounds: number, checked: number[]) => void
 }) {
   const { t } = useTranslation()
+
+  function parseChecked(s: string): Set<number> {
+    try { return new Set(JSON.parse(s) as number[]) } catch { return new Set() }
+  }
+
   const [spr, setSpr] = useState(counter.stitchesPerRound)
   const [rounds, setRounds] = useState(counter.totalRounds)
-  const [checked, setChecked] = useState<Set<number>>(() => {
-    try { return new Set(JSON.parse(counter.checkedStitches) as number[]) } catch { return new Set() }
-  })
+  const [checked, setChecked] = useState<Set<number>>(() => parseChecked(counter.checkedStitches))
   const [configured, setConfigured] = useState(counter.stitchesPerRound > 0 && counter.totalRounds > 0)
   const [editSpr, setEditSpr] = useState(counter.stitchesPerRound || 8)
   const [editRounds, setEditRounds] = useState(counter.totalRounds || 10)
+
+  const checkedRef = useRef(checked)
+  const sprRef = useRef(spr)
+  const roundsRef = useRef(rounds)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    setSpr(counter.stitchesPerRound)
-    setRounds(counter.totalRounds)
-    try { setChecked(new Set(JSON.parse(counter.checkedStitches) as number[])) } catch { setChecked(new Set()) }
-    setConfigured(counter.stitchesPerRound > 0 && counter.totalRounds > 0)
-    setEditSpr(counter.stitchesPerRound || 8)
-    setEditRounds(counter.totalRounds || 10)
-  }, [counter.stitchesPerRound, counter.totalRounds, counter.checkedStitches])
+    const newSpr = counter.stitchesPerRound
+    const newRounds = counter.totalRounds
+    setSpr(newSpr); sprRef.current = newSpr
+    setRounds(newRounds); roundsRef.current = newRounds
+    setConfigured(newSpr > 0 && newRounds > 0)
+    setEditSpr(newSpr || 8)
+    setEditRounds(newRounds || 10)
+  }, [counter.stitchesPerRound, counter.totalRounds])
 
   function toggleStitch(idx: number) {
-    const next = new Set(checked)
+    const next = new Set(checkedRef.current)
     if (next.has(idx)) next.delete(idx); else next.add(idx)
-    setChecked(next)
+    checkedRef.current = next
+    setChecked(new Set(next))
+
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => onSave(spr, rounds, Array.from(next)), 400)
+    saveTimer.current = setTimeout(() => {
+      onSave(sprRef.current, roundsRef.current, Array.from(checkedRef.current))
+    }, 400)
   }
 
   function handleConfigure() {
-    setSpr(editSpr); setRounds(editRounds)
     const empty = new Set<number>()
+    setSpr(editSpr); sprRef.current = editSpr
+    setRounds(editRounds); roundsRef.current = editRounds
+    checkedRef.current = empty
     setChecked(empty)
     setConfigured(true)
     onSave(editSpr, editRounds, [])
@@ -1296,8 +1310,9 @@ function RoundCounterWidget({ counter, onSave }: {
 
   function handleReset() {
     const empty = new Set<number>()
+    checkedRef.current = empty
     setChecked(empty)
-    onSave(spr, rounds, [])
+    onSave(sprRef.current, roundsRef.current, [])
   }
 
   if (!configured) {
