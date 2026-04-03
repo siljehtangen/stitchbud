@@ -1397,12 +1397,35 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showS
   const [selectedSymbol, setSelectedSymbol] = useState('O')
   const [mode, setMode] = useState<'color' | 'symbol' | 'erase'>('color')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingFlush = useRef<(() => void) | null>(null)
+
+  // Flush any pending debounced save on unmount (e.g. navigating away mid-edit)
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      pendingFlush.current?.()
+    }
+  }, [])
 
   const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
 
   function autoSave(newCells: PatternCell[], r: number, c: number) {
     if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => onSave(newCells, r, c), 600)
+    pendingFlush.current = () => onSave(newCells, r, c)
+    saveTimer.current = setTimeout(() => {
+      onSave(newCells, r, c)
+      pendingFlush.current = null
+    }, 600)
+  }
+
+  function flushAndStopEditing() {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current)
+      saveTimer.current = null
+    }
+    pendingFlush.current?.()
+    pendingFlush.current = null
+    setEditing(false)
   }
 
   function handleCell(row: number, col: number) {
@@ -1436,7 +1459,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showS
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setEditing(e => !e)}
+          onClick={() => editing ? flushAndStopEditing() : setEditing(true)}
           className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
         >{editing ? t('done_editing_grid') : t('edit_grid')}</button>
         <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>
