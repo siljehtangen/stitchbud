@@ -3,7 +3,6 @@ package com.stitchbud.controller
 import com.stitchbud.dto.*
 import com.stitchbud.model.ProjectCategory
 import com.stitchbud.service.ProjectService
-import com.stitchbud.controller.BadRequestException
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType

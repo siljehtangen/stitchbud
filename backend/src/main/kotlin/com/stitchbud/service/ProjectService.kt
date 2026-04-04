@@ -7,6 +7,7 @@ import com.stitchbud.model.*
 import com.stitchbud.repository.MaterialRepository
 import com.stitchbud.repository.ProjectRepository
 import com.stitchbud.repository.ProjectFileRepository
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +26,14 @@ class ProjectService(
     private val libraryService: LibraryService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
 ) {
+    companion object {
+        private const val MAX_IMAGES = 3
+        private val logger = LoggerFactory.getLogger(ProjectService::class.java)
+    }
+
+    private fun findProject(id: Long, userId: String): Project =
+        projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
+
     fun getAllProjects(userId: String): List<ProjectDto> =
         projectRepository.findByUserIdOrderByUpdatedAtDesc(userId).map { it.toDto() }
 
@@ -32,7 +41,7 @@ class ProjectService(
         projectRepository.findByUserIdAndCategory(userId, category).map { it.toDto() }
 
     fun getProject(id: Long, userId: String): ProjectDto =
-        projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }.toDto()
+        findProject(id, userId).toDto()
 
     fun createProject(req: CreateProjectRequest, userId: String): ProjectDto {
         val project = Project(userId = userId, name = req.name, description = req.description, category = req.category, tags = req.tags,
@@ -44,7 +53,7 @@ class ProjectService(
     }
 
     fun updateProject(id: Long, req: UpdateProjectRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(id, userId)
         req.name?.let { project.name = it }
         req.description?.let { project.description = it }
         req.tags?.let { project.tags = it }
@@ -59,8 +68,11 @@ class ProjectService(
     }
 
     fun deleteProject(id: Long, userId: String) {
-        val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
-        project.images.forEach { img -> try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {} }
+        val project = findProject(id, userId)
+        project.images.forEach { img ->
+            try { storageService.deleteByUrl(img.storedName) }
+            catch (e: Exception) { logger.warn("Failed to delete image ${img.storedName}: ${e.message}") }
+        }
         project.files.forEach { file ->
             if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
             else deleteFileFromDisk(project.id, file.storedName)
@@ -71,7 +83,10 @@ class ProjectService(
     fun deleteAllUserData(userId: String) {
         val projects = projectRepository.findByUserIdOrderByUpdatedAtDesc(userId)
         projects.forEach { project ->
-            project.images.forEach { img -> try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {} }
+            project.images.forEach { img ->
+                try { storageService.deleteByUrl(img.storedName) }
+                catch (e: Exception) { logger.warn("Failed to delete image ${img.storedName}: ${e.message}") }
+            }
             project.files.forEach { file ->
                 if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
                 else deleteFileFromDisk(project.id, file.storedName)
@@ -82,7 +97,7 @@ class ProjectService(
     }
 
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val material = Material(
             name = req.name,
             type = req.type,
@@ -99,7 +114,7 @@ class ProjectService(
     }
 
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         project.materials.removeIf { it.id == materialId }
         project.images.removeIf { it.section == "material" && it.materialId == materialId }
         project.updatedAt = System.currentTimeMillis()
@@ -107,7 +122,7 @@ class ProjectService(
     }
 
     fun updateRowCounter(projectId: Long, req: UpdateRowCounterRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         project.rowCounter?.let {
             it.stitchesPerRound = req.stitchesPerRound
             it.totalRounds = req.totalRounds
@@ -125,14 +140,14 @@ class ProjectService(
     }
 
     fun createPatternGrid(projectId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         project.patternGrids.add(PatternGrid(project = project))
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
 
     fun updatePatternGrid(projectId: Long, gridId: Long, req: UpdatePatternGridRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val grid = project.patternGrids.find { it.id == gridId } ?: throw NotFoundException("Grid not found")
         grid.rows = req.rows
         grid.cols = req.cols
@@ -142,16 +157,16 @@ class ProjectService(
     }
 
     fun deletePatternGrid(projectId: Long, gridId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         project.patternGrids.removeIf { it.id == gridId }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
 
     fun registerCoverImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val coverImages = project.images.filter { it.section == "cover" }
-        if (coverImages.size >= 3) throw BadRequestException("Maximum 3 cover images allowed")
+        if (coverImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES cover images allowed")
         val isFirst = coverImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "cover", materialId = null, isMain = isFirst, project = project)
         project.images.add(img)
@@ -160,7 +175,7 @@ class ProjectService(
     }
 
     fun setCoverImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val target = project.images.find { it.id == imageId && it.section == "cover" } ?: throw NotFoundException("Image not found")
         project.images.filter { it.section == "cover" }.forEach { it.isMain = false }
         target.isMain = true
@@ -169,10 +184,11 @@ class ProjectService(
     }
 
     fun deleteCoverImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val img = project.images.find { it.id == imageId && it.section == "cover" } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
-        try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {}
+        try { storageService.deleteByUrl(img.storedName) }
+        catch (e: Exception) { logger.warn("Failed to delete cover image ${img.storedName}: ${e.message}") }
         project.images.removeIf { it.id == imageId }
         if (wasMain) {
             val next = project.images.firstOrNull { it.section == "cover" }
@@ -183,11 +199,11 @@ class ProjectService(
     }
 
     fun registerMaterialImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val materialId = req.materialId ?: throw BadRequestException("materialId required")
         project.materials.find { it.id == materialId } ?: throw NotFoundException("Material not found")
         val matImages = project.images.filter { it.section == "material" && it.materialId == materialId }
-        if (matImages.size >= 3) throw BadRequestException("Maximum 3 images per material")
+        if (matImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES images per material")
         val isFirst = matImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "material", materialId = materialId, isMain = isFirst, project = project)
         project.images.add(img)
@@ -196,7 +212,7 @@ class ProjectService(
     }
 
     fun setMaterialImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val target = project.images.find { it.id == imageId && it.section == "material" } ?: throw NotFoundException("Image not found")
         project.images.filter { it.section == "material" && it.materialId == target.materialId }.forEach { it.isMain = false }
         target.isMain = true
@@ -205,11 +221,12 @@ class ProjectService(
     }
 
     fun deleteMaterialImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val img = project.images.find { it.id == imageId && it.section == "material" } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
         val materialId = img.materialId
-        try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {}
+        try { storageService.deleteByUrl(img.storedName) }
+        catch (e: Exception) { logger.warn("Failed to delete material image ${img.storedName}: ${e.message}") }
         project.images.removeIf { it.id == imageId }
         if (wasMain && materialId != null) {
             val next = project.images.firstOrNull { it.section == "material" && it.materialId == materialId }
@@ -220,9 +237,9 @@ class ProjectService(
     }
 
     fun uploadCoverImage(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val coverImages = project.images.filter { it.section == "cover" }
-        if (coverImages.size >= 3) throw BadRequestException("Maximum 3 cover images allowed")
+        if (coverImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES cover images allowed")
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "cover_${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
         val dir = Paths.get(uploadDir, projectId.toString())
@@ -245,23 +262,17 @@ class ProjectService(
     }
 
     fun uploadFile(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
         val dir = Paths.get(uploadDir, projectId.toString())
         Files.createDirectories(dir)
         file.transferTo(dir.resolve(storedName).toFile())
-        val fileType = when {
-            file.contentType?.startsWith("image/") == true -> "image"
-            file.contentType == "application/pdf" -> "pdf"
-            file.contentType?.contains("word") == true || ext == "docx" || ext == "doc" -> "word"
-            else -> "other"
-        }
         val pf = ProjectFile(
             originalName = file.originalFilename ?: storedName,
             storedName = storedName,
             mimeType = file.contentType ?: "application/octet-stream",
-            fileType = fileType,
+            fileType = detectFileType(file.contentType ?: "", ext),
             project = project
         )
         project.files.add(pf)
@@ -270,19 +281,13 @@ class ProjectService(
     }
 
     fun registerFile(projectId: Long, req: RegisterProjectFileRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val ext = req.originalName.substringAfterLast('.', "").lowercase()
-        val fileType = when {
-            req.mimeType.startsWith("image/") -> "image"
-            req.mimeType == "application/pdf" || ext == "pdf" -> "pdf"
-            req.mimeType.contains("word") || ext == "docx" || ext == "doc" -> "word"
-            else -> "other"
-        }
         val pf = ProjectFile(
             originalName = req.originalName,
             storedName = req.fileUrl,
             mimeType = req.mimeType,
-            fileType = fileType,
+            fileType = detectFileType(req.mimeType, ext),
             project = project
         )
         project.files.add(pf)
@@ -291,7 +296,7 @@ class ProjectService(
     }
 
     fun deleteFile(projectId: Long, fileId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val project = findProject(projectId, userId)
         val pf = project.files.find { it.id == fileId } ?: throw NotFoundException("File not found")
         if (!pf.storedName.startsWith("http")) deleteFileFromDisk(projectId, pf.storedName)
         project.files.removeIf { it.id == fileId }
@@ -302,8 +307,16 @@ class ProjectService(
     fun getFilePath(projectId: Long, storedName: String): java.io.File =
         Paths.get(uploadDir, projectId.toString(), storedName).toFile()
 
+    private fun detectFileType(mimeType: String, ext: String): String = when {
+        mimeType.startsWith("image/") -> "image"
+        mimeType == "application/pdf" || ext == "pdf" -> "pdf"
+        mimeType.contains("word") || ext == "docx" || ext == "doc" -> "word"
+        else -> "other"
+    }
+
     private fun deleteFileFromDisk(projectId: Long, storedName: String) {
-        try { Paths.get(uploadDir, projectId.toString(), storedName).toFile().delete() } catch (_: Exception) {}
+        try { Paths.get(uploadDir, projectId.toString(), storedName).toFile().delete() }
+        catch (e: Exception) { logger.warn("Failed to delete file $storedName for project $projectId: ${e.message}") }
     }
 
     private fun Project.toDto(): ProjectDto {
