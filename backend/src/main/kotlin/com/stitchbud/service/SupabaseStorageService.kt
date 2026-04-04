@@ -15,6 +15,11 @@ class SupabaseStorageService(
 ) {
     private val client = HttpClient.newHttpClient()
 
+    /**
+     * Deletes a file from Supabase Storage asynchronously.
+     * Uses sendAsync so the calling thread is not blocked while waiting on the HTTP response.
+     * The result is intentionally ignored — storage cleanup failures are non-fatal.
+     */
     fun deleteByUrl(url: String) {
         if (!url.startsWith("http")) return
         val path = extractPath(url) ?: return
@@ -24,7 +29,7 @@ class SupabaseStorageService(
                 .header("Authorization", "Bearer $serviceKey")
                 .DELETE()
                 .build()
-            client.send(request, HttpResponse.BodyHandlers.discarding())
+            client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
         } catch (_: Exception) {}
     }
 

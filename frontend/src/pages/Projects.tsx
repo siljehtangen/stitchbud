@@ -3,14 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
-import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
 import { projectCoverImageUrls } from '../projectOverviewMedia'
-
-const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
-  SEWING: <GiSewingMachine className="text-warm-gray" />,
-}
+import { CATEGORY_ICONS } from '../constants/categories'
 
 function categoryBadgeClass(cat: ProjectCategory) {
   if (cat === 'KNITTING') return 'badge-knitting'

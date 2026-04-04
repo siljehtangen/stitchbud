@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import type { Project, ProjectCategory } from '../types'
-import { GiChopsticks, GiPirateHook, GiSewingMachine, GiButterfly } from 'react-icons/gi'
+import { GiButterfly } from 'react-icons/gi'
 import ProjectCard from '../components/ProjectCard'
-
-const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
-  SEWING: <GiSewingMachine className="text-warm-gray" />,
-}
+import { CATEGORY_ICONS } from '../constants/categories'
 
 
 export default function Dashboard() {

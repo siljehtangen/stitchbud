@@ -1,9 +1,10 @@
 package com.stitchbud.service
 
+import com.stitchbud.controller.BadRequestException
+import com.stitchbud.controller.NotFoundException
 import com.stitchbud.dto.*
 import com.stitchbud.model.*
 import com.stitchbud.repository.MaterialRepository
-import com.stitchbud.repository.ProjectImageRepository
 import com.stitchbud.repository.ProjectRepository
 import com.stitchbud.repository.ProjectFileRepository
 import org.springframework.beans.factory.annotation.Value
@@ -20,7 +21,6 @@ class ProjectService(
     private val projectRepository: ProjectRepository,
     private val materialRepository: MaterialRepository,
     private val projectFileRepository: ProjectFileRepository,
-    private val projectImageRepository: ProjectImageRepository,
     private val storageService: SupabaseStorageService,
     private val libraryService: LibraryService,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
@@ -32,7 +32,7 @@ class ProjectService(
         projectRepository.findByUserIdAndCategory(userId, category).map { it.toDto() }
 
     fun getProject(id: Long, userId: String): ProjectDto =
-        projectRepository.findByIdAndUserId(id, userId).orElseThrow { RuntimeException("Project not found") }.toDto()
+        projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }.toDto()
 
     fun createProject(req: CreateProjectRequest, userId: String): ProjectDto {
         val project = Project(userId = userId, name = req.name, description = req.description, category = req.category, tags = req.tags,
@@ -44,7 +44,7 @@ class ProjectService(
     }
 
     fun updateProject(id: Long, req: UpdateProjectRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
         req.name?.let { project.name = it }
         req.description?.let { project.description = it }
         req.tags?.let { project.tags = it }
@@ -59,7 +59,7 @@ class ProjectService(
     }
 
     fun deleteProject(id: Long, userId: String) {
-        val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Project not found") }
         project.images.forEach { img -> try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {} }
         project.files.forEach { file ->
             if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
@@ -82,7 +82,7 @@ class ProjectService(
     }
 
     fun addMaterial(projectId: Long, req: AddMaterialRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         val material = Material(
             name = req.name,
             type = req.type,
@@ -99,7 +99,7 @@ class ProjectService(
     }
 
     fun deleteMaterial(projectId: Long, materialId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         project.materials.removeIf { it.id == materialId }
         project.images.removeIf { it.section == "material" && it.materialId == materialId }
         project.updatedAt = System.currentTimeMillis()
@@ -107,7 +107,7 @@ class ProjectService(
     }
 
     fun updateRowCounter(projectId: Long, req: UpdateRowCounterRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         project.rowCounter?.let {
             it.stitchesPerRound = req.stitchesPerRound
             it.totalRounds = req.totalRounds
@@ -125,15 +125,15 @@ class ProjectService(
     }
 
     fun createPatternGrid(projectId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         project.patternGrids.add(PatternGrid(project = project))
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
 
     fun updatePatternGrid(projectId: Long, gridId: Long, req: UpdatePatternGridRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val grid = project.patternGrids.find { it.id == gridId } ?: throw RuntimeException("Grid not found")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val grid = project.patternGrids.find { it.id == gridId } ?: throw NotFoundException("Grid not found")
         grid.rows = req.rows
         grid.cols = req.cols
         grid.cellData = req.cellData
@@ -142,16 +142,16 @@ class ProjectService(
     }
 
     fun deletePatternGrid(projectId: Long, gridId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         project.patternGrids.removeIf { it.id == gridId }
         project.updatedAt = System.currentTimeMillis()
         return projectRepository.save(project).toDto()
     }
 
     fun registerCoverImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         val coverImages = project.images.filter { it.section == "cover" }
-        if (coverImages.size >= 3) throw RuntimeException("Maximum 3 cover images allowed")
+        if (coverImages.size >= 3) throw BadRequestException("Maximum 3 cover images allowed")
         val isFirst = coverImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "cover", materialId = null, isMain = isFirst, project = project)
         project.images.add(img)
@@ -160,8 +160,8 @@ class ProjectService(
     }
 
     fun setCoverImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val target = project.images.find { it.id == imageId && it.section == "cover" } ?: throw RuntimeException("Image not found")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val target = project.images.find { it.id == imageId && it.section == "cover" } ?: throw NotFoundException("Image not found")
         project.images.filter { it.section == "cover" }.forEach { it.isMain = false }
         target.isMain = true
         project.updatedAt = System.currentTimeMillis()
@@ -169,8 +169,8 @@ class ProjectService(
     }
 
     fun deleteCoverImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val img = project.images.find { it.id == imageId && it.section == "cover" } ?: throw RuntimeException("Image not found")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val img = project.images.find { it.id == imageId && it.section == "cover" } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
         try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {}
         project.images.removeIf { it.id == imageId }
@@ -183,12 +183,11 @@ class ProjectService(
     }
 
     fun registerMaterialImage(projectId: Long, req: RegisterProjectImageRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val materialId = req.materialId ?: throw RuntimeException("materialId required")
-        project.materials.find { it.id == materialId } ?: throw RuntimeException("Material not found")
-        val matImages = projectImageRepository.findByProject_Id(project.id)
-            .filter { it.section == "material" && it.materialId == materialId }
-        if (matImages.size >= 3) throw RuntimeException("Maximum 3 images per material")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val materialId = req.materialId ?: throw BadRequestException("materialId required")
+        project.materials.find { it.id == materialId } ?: throw NotFoundException("Material not found")
+        val matImages = project.images.filter { it.section == "material" && it.materialId == materialId }
+        if (matImages.size >= 3) throw BadRequestException("Maximum 3 images per material")
         val isFirst = matImages.isEmpty()
         val img = ProjectImage(storedName = req.fileUrl, originalName = req.originalName, section = "material", materialId = materialId, isMain = isFirst, project = project)
         project.images.add(img)
@@ -197,8 +196,8 @@ class ProjectService(
     }
 
     fun setMaterialImageMain(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val target = project.images.find { it.id == imageId && it.section == "material" } ?: throw RuntimeException("Image not found")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val target = project.images.find { it.id == imageId && it.section == "material" } ?: throw NotFoundException("Image not found")
         project.images.filter { it.section == "material" && it.materialId == target.materialId }.forEach { it.isMain = false }
         target.isMain = true
         project.updatedAt = System.currentTimeMillis()
@@ -206,8 +205,8 @@ class ProjectService(
     }
 
     fun deleteMaterialImage(projectId: Long, imageId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val img = project.images.find { it.id == imageId && it.section == "material" } ?: throw RuntimeException("Image not found")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val img = project.images.find { it.id == imageId && it.section == "material" } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
         val materialId = img.materialId
         try { storageService.deleteByUrl(img.storedName) } catch (_: Exception) {}
@@ -221,9 +220,9 @@ class ProjectService(
     }
 
     fun uploadCoverImage(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         val coverImages = project.images.filter { it.section == "cover" }
-        if (coverImages.size >= 3) throw RuntimeException("Maximum 3 cover images allowed")
+        if (coverImages.size >= 3) throw BadRequestException("Maximum 3 cover images allowed")
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "cover_${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
         val dir = Paths.get(uploadDir, projectId.toString())
@@ -246,7 +245,7 @@ class ProjectService(
     }
 
     fun uploadFile(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
         val dir = Paths.get(uploadDir, projectId.toString())
@@ -271,7 +270,7 @@ class ProjectService(
     }
 
     fun registerFile(projectId: Long, req: RegisterProjectFileRequest, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
         val ext = req.originalName.substringAfterLast('.', "").lowercase()
         val fileType = when {
             req.mimeType.startsWith("image/") -> "image"
@@ -292,8 +291,8 @@ class ProjectService(
     }
 
     fun deleteFile(projectId: Long, fileId: Long, userId: String): ProjectDto {
-        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { RuntimeException("Project not found") }
-        val pf = project.files.find { it.id == fileId } ?: throw RuntimeException("File not found")
+        val project = projectRepository.findByIdAndUserId(projectId, userId).orElseThrow { NotFoundException("Project not found") }
+        val pf = project.files.find { it.id == fileId } ?: throw NotFoundException("File not found")
         if (!pf.storedName.startsWith("http")) deleteFileFromDisk(projectId, pf.storedName)
         project.files.removeIf { it.id == fileId }
         project.updatedAt = System.currentTimeMillis()
@@ -308,16 +307,15 @@ class ProjectService(
     }
 
     private fun Project.toDto(): ProjectDto {
-        val allImages = projectImageRepository.findByProject_Id(id)
         fun toImgDto(it: ProjectImage) =
             ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id)
-        val coverRows = allImages.filter { it.section == "cover" }.sortedBy { it.id }
+        val coverRows = images.filter { it.section == "cover" }.sortedBy { it.id }
         return ProjectDto(
             id = id, name = name, description = description, category = category,
             tags = tags, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
             coverImages = coverRows.map(::toImgDto),
             materials = materials.map { m ->
-                val matImages = allImages
+                val matImages = images
                     .filter { it.section == "material" && it.materialId == m.id }
                     .sortedBy { it.id }
                 MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit,

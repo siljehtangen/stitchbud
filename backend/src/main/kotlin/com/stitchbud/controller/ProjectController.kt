@@ -3,6 +3,7 @@ package com.stitchbud.controller
 import com.stitchbud.dto.*
 import com.stitchbud.model.ProjectCategory
 import com.stitchbud.service.ProjectService
+import com.stitchbud.controller.BadRequestException
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -18,9 +19,14 @@ class ProjectController(private val projectService: ProjectService) {
     private fun userId() = SecurityContextHolder.getContext().authentication.name
 
     @GetMapping
-    fun getAll(@RequestParam(required = false) category: String?): List<ProjectDto> =
-        if (category != null) projectService.getProjectsByCategory(ProjectCategory.valueOf(category.uppercase()), userId())
-        else projectService.getAllProjects(userId())
+    fun getAll(@RequestParam(required = false) category: String?): List<ProjectDto> {
+        if (category != null) {
+            val cat = runCatching { ProjectCategory.valueOf(category.uppercase()) }
+                .getOrElse { throw BadRequestException("Invalid category: $category") }
+            return projectService.getProjectsByCategory(cat, userId())
+        }
+        return projectService.getAllProjects(userId())
+    }
 
     @GetMapping("/{id}")
     fun getOne(@PathVariable id: Long) = projectService.getProject(id, userId())

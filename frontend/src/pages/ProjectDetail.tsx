@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, type ChangeEvent } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
@@ -12,6 +12,8 @@ import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsStars, BsListStars } from 'react-icons/bs'
 import { ITEM_TYPES, TYPE_ICONS, LibraryItemForm } from '../components/LibraryItemForm'
+import { ColorMultiSelect } from '../components/ColorMultiSelect'
+import { itemSummary, typeLabel } from '../utils/libraryUtils'
 
 // Gauge removed; only needle/hook sizes remain per category
 const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
@@ -98,10 +100,14 @@ export default function ProjectDetail() {
   const autoSave = useCallback((updates: object) => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      const updated = await projectsApi.update(projectId, updates)
-      setProject(updated)
+      try {
+        const updated = await projectsApi.update(projectId, updates)
+        setProject(updated)
+      } catch {
+        showToast(t('save_failed'), 'info')
+      }
     }, 800)
-  }, [projectId])
+  }, [projectId, showToast, t])
 
   function handleInfoChange(field: string, value: string) {
     if (field === 'name') setName(value)
@@ -146,8 +152,12 @@ export default function ProjectDetail() {
       tone: 'danger',
     })
     if (!ok) return
-    await projectsApi.delete(projectId)
-    navigate('/home')
+    try {
+      await projectsApi.delete(projectId)
+      navigate('/home')
+    } catch {
+      showToast(t('delete_failed'), 'info')
+    }
   }
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
@@ -292,99 +302,6 @@ export default function ProjectDetail() {
   )
 }
 
-// ── Color Multi-Select (for library picker) ────────────────────
-function LibraryColorMultiSelect({ availableColors, selected, onChange, language, placeholder, searchPlaceholder, noResults, clearLabel }: {
-  availableColors: string[]
-  selected: string[]
-  onChange: (colors: string[]) => void
-  language: string
-  placeholder: string
-  searchPlaceholder: string
-  noResults: string
-  clearLabel: string
-}) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const toggle = useCallback((name: string) => {
-    onChange(selected.includes(name) ? selected.filter(c => c !== name) : [...selected, name])
-  }, [selected, onChange])
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false); setQuery('')
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const q = query.toLowerCase()
-  const filteredOpts = availableColors.filter(name => {
-    const hex = COLOR_MAP[name] ?? '#ccc'
-    const colorEntry = COLOR_MAP_BY_HEX[hex]
-    const displayName = colorEntry ? getColorName(colorEntry, language) : name
-    return displayName.toLowerCase().includes(q)
-  })
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="input text-sm py-1.5 w-full text-left flex items-center gap-1.5 flex-wrap min-h-[36px]"
-      >
-        {selected.length === 0 ? (
-          <span className="text-warm-gray">{placeholder}…</span>
-        ) : (
-          selected.map(name => {
-            const hex = COLOR_MAP[name] ?? '#ccc'
-            const colorEntry = COLOR_MAP_BY_HEX[hex]
-            const displayName = colorEntry ? getColorName(colorEntry, language) : name
-            return (
-              <span key={name} className="inline-flex items-center gap-1 bg-sand-blue/40 text-gray-700 text-xs rounded-full px-2 py-0.5">
-                <span className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: hex }} />
-                {displayName}
-                <span role="button" onClick={e => { e.stopPropagation(); toggle(name) }} className="ml-0.5 leading-none hover:text-red-400 cursor-pointer">×</span>
-              </span>
-            )
-          })
-        )}
-      </button>
-      {open && (
-        <div className="absolute z-30 mt-1 w-full bg-white border border-soft-brown/30 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-2 border-b border-soft-brown/20">
-            <input autoFocus type="text" className="input text-sm py-1.5 w-full" placeholder={searchPlaceholder} value={query} onChange={e => setQuery(e.target.value)} />
-          </div>
-          <ul className="max-h-52 overflow-y-auto py-1">
-            {filteredOpts.length === 0 && <li className="px-3 py-2 text-xs text-warm-gray">{noResults}</li>}
-            {filteredOpts.map(name => {
-              const hex = COLOR_MAP[name] ?? '#ccc'
-              const colorEntry = COLOR_MAP_BY_HEX[hex]
-              const displayName = colorEntry ? getColorName(colorEntry, language) : name
-              const checked = selected.includes(name)
-              return (
-                <li key={name} onClick={() => toggle(name)} className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors ${checked ? 'bg-sand-blue/20 text-gray-800' : 'hover:bg-soft-brown/10 text-gray-700'}`}>
-                  <span className="w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: hex }} />
-                  <span className="flex-1">{displayName}</span>
-                  {checked && <span className="text-sand-blue-deep text-xs">✓</span>}
-                </li>
-              )
-            })}
-          </ul>
-          {selected.length > 0 && (
-            <div className="border-t border-soft-brown/20 px-3 py-2">
-              <button type="button" onClick={() => onChange([])} className="text-xs text-warm-gray hover:text-red-400 transition-colors">{clearLabel}</button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Materials Tab ──────────────────────────────────────────────
 function MaterialsTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
@@ -420,29 +337,6 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     if (!q) return true
     return [i.name, i.yarnBrand, i.yarnMaterial, i.needleSizeMm, i.hookSizeMm].some(v => v?.toLowerCase().includes(q))
   })
-
-  const typeLabel = (type: LibraryItemType) => {
-    if (type === 'YARN') return t('lib_yarn')
-    if (type === 'FABRIC') return t('lib_fabric')
-    if (type === 'KNITTING_NEEDLE') return t('lib_knitting_needle')
-    if (type === 'CROCHET_HOOK') return t('lib_crochet_hook')
-    return type
-  }
-
-  const itemSummary = (item: LibraryItem) => {
-    if (item.itemType === 'YARN') {
-      const parts = [item.yarnBrand, item.yarnMaterial].filter(Boolean).join(', ')
-      const amounts = [item.yarnAmountG && `${item.yarnAmountG}g`, item.yarnAmountM && `${item.yarnAmountM}m`].filter(Boolean).join(' / ')
-      return [parts, amounts].filter(Boolean).join(' · ')
-    }
-    if (item.itemType === 'FABRIC')
-      return [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`].filter(Boolean).join(' × ')
-    if (item.itemType === 'KNITTING_NEEDLE')
-      return [item.needleSizeMm && `${item.needleSizeMm} mm`, item.circularLengthCm && `${item.circularLengthCm} cm`].filter(Boolean).join(', ')
-    if (item.itemType === 'CROCHET_HOOK')
-      return item.hookSizeMm ? `${item.hookSizeMm} mm` : ''
-    return ''
-  }
 
   function handleLibraryClick(item: LibraryItem) {
     if (item.itemType === 'YARN' || item.itemType === 'FABRIC') {
@@ -483,21 +377,18 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       })
       const newMat = updated.materials.reduce((a, b) => (a.id > b.id ? a : b))
       if (libImgs.length > 0) {
+        // Register first image (becomes main), then the rest in parallel
         updated = await projectsApi.registerMaterialImageByUrl(
           projectId,
           newMat.id,
           libImgs[0].storedName,
           libImgs[0].originalName || 'image',
         )
-      }
-      if (libImgs.length > 1) {
-        for (let i = 1; i < libImgs.length; i++) {
-          updated = await projectsApi.registerMaterialImageByUrl(
-            projectId,
-            newMat.id,
-            libImgs[i].storedName,
-            libImgs[i].originalName || 'image',
-          )
+        if (libImgs.length > 1) {
+          await Promise.all(libImgs.slice(1).map(img =>
+            projectsApi.registerMaterialImageByUrl(projectId, newMat.id, img.storedName, img.originalName || 'image')
+          ))
+          updated = await projectsApi.getOne(projectId)
         }
       }
       onUpdate(updated)
@@ -585,7 +476,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
               className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'}`}
             >
               <span>{TYPE_ICONS[type]}</span>
-              <span>{typeLabel(type)}</span>
+              <span>{typeLabel(type, t)}</span>
             </button>
           ))}
         </div>
@@ -599,7 +490,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
           />
           {showColorFilter && availableColors.length > 0 && (
             <div className="w-1/2 flex-shrink-0">
-              <LibraryColorMultiSelect
+              <ColorMultiSelect
                 availableColors={availableColors}
                 selected={filterColors}
                 onChange={setFilterColors}
@@ -658,9 +549,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
-                  {itemSummary(item) && (
-                    <p className="truncate text-xs text-warm-gray">{itemSummary(item)}</p>
-                  )}
+                  {(() => { const s = itemSummary(item); return s ? <p className="truncate text-xs text-warm-gray">{s}</p> : null })()}
                 </div>
                 <button
                   type="button"
@@ -1295,7 +1184,7 @@ function RoundCounterWidget({ counter, onSave }: {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       onSave(sprRef.current, roundsRef.current, Array.from(checkedRef.current))
-    }, 400)
+    }, 800)
   }
 
   function handleConfigure() {
@@ -1422,7 +1311,7 @@ function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showS
     }
   }, [])
 
-  const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
+  const cellMap = useMemo(() => new Map(cells.map(c => [`${c.row},${c.col}`, c])), [cells])
 
   function autoSave(newCells: PatternCell[], r: number, c: number) {
     if (saveTimer.current) clearTimeout(saveTimer.current)

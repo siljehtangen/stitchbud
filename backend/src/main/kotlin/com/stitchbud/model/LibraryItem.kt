@@ -1,9 +1,15 @@
 package com.stitchbud.model
 
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 
 @Entity
-@Table(name = "library_items")
+@Table(
+    name = "library_items",
+    indexes = [
+        Index(name = "idx_library_items_user_id", columnList = "userId"),
+    ]
+)
 data class LibraryItem(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
@@ -26,7 +32,8 @@ data class LibraryItem(
     var hookSizeMm: String? = null,
     // Colors (comma-separated list, applicable for YARN and FABRIC)
     var colors: String? = null,
-    @OneToMany(mappedBy = "libraryItem", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "libraryItem", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     var images: MutableList<LibraryItemImage> = mutableListOf(),
     var createdAt: Long = System.currentTimeMillis()
 )

@@ -4,13 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import { useToast } from '../context/ToastContext'
 import type { ProjectCategory } from '../types'
-import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
-
-const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
-  SEWING: <GiSewingMachine className="text-warm-gray" />,
-}
+import { CATEGORY_ICONS } from '../constants/categories'
 
 type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 
@@ -69,11 +63,11 @@ export default function NewProject() {
         name: name.trim(), description, category, tags: '',
         startDate: startDate ? new Date(startDate).getTime() : Date.now(),
       })
-      // Upload main image first so it's marked as main, then the rest
+      // Upload main image first so it's marked as main, then the rest in parallel
       const mainImg = coverImages.find(img => img.isMain)
       const others = coverImages.filter(img => !img.isMain)
       if (mainImg) await projectsApi.uploadCoverImage(project.id, mainImg.file)
-      for (const img of others) await projectsApi.uploadCoverImage(project.id, img.file)
+      if (others.length > 0) await Promise.all(others.map(img => projectsApi.uploadCoverImage(project.id, img.file)))
       showToast(t('project_created_toast'))
       navigate(`/projects/${project.id}`)
     } catch {

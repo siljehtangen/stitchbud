@@ -1,5 +1,7 @@
 package com.stitchbud.service
 
+import com.stitchbud.controller.BadRequestException
+import com.stitchbud.controller.NotFoundException
 import com.stitchbud.dto.CreateLibraryItemRequest
 import com.stitchbud.dto.LibraryItemImageDto
 import com.stitchbud.dto.RegisterLibraryImageRequest
@@ -50,8 +52,7 @@ class LibraryService(
     }
 
     fun update(id: Long, req: UpdateLibraryItemRequest, userId: String): LibraryItemDto {
-        val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
-        if (item.userId != userId) throw RuntimeException("Not found")
+        val item = libraryItemRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Not found") }
         req.name?.let { item.name = it }
         req.colors?.let { item.colors = it.joinToString(",") }
         req.yarnMaterial?.let { item.yarnMaterial = it }
@@ -67,10 +68,9 @@ class LibraryService(
     }
 
     fun registerLibraryImage(id: Long, req: RegisterLibraryImageRequest, userId: String): LibraryItemDto {
-        val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
-        if (item.userId != userId) throw RuntimeException("Not found")
+        val item = libraryItemRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Not found") }
         migrateLegacyImageIfNeeded(item)
-        if (item.images.size >= MAX_IMAGES) throw RuntimeException("Maximum $MAX_IMAGES images per library item")
+        if (item.images.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES images per library item")
         val isFirst = item.images.isEmpty()
         val img = LibraryItemImage(
             storedName = req.fileUrl,
@@ -83,20 +83,18 @@ class LibraryService(
     }
 
     fun setLibraryImageMain(libraryItemId: Long, imageId: Long, userId: String): LibraryItemDto {
-        val item = libraryItemRepository.findById(libraryItemId).orElseThrow { RuntimeException("Item not found") }
-        if (item.userId != userId) throw RuntimeException("Not found")
+        val item = libraryItemRepository.findByIdAndUserId(libraryItemId, userId).orElseThrow { NotFoundException("Not found") }
         migrateLegacyImageIfNeeded(item)
-        val target = item.images.find { it.id == imageId } ?: throw RuntimeException("Image not found")
+        val target = item.images.find { it.id == imageId } ?: throw NotFoundException("Image not found")
         item.images.forEach { it.isMain = false }
         target.isMain = true
         return libraryItemRepository.save(item).toDto()
     }
 
     fun deleteLibraryImage(libraryItemId: Long, imageId: Long, userId: String): LibraryItemDto {
-        val item = libraryItemRepository.findById(libraryItemId).orElseThrow { RuntimeException("Item not found") }
-        if (item.userId != userId) throw RuntimeException("Not found")
+        val item = libraryItemRepository.findByIdAndUserId(libraryItemId, userId).orElseThrow { NotFoundException("Not found") }
         migrateLegacyImageIfNeeded(item)
-        val img = item.images.find { it.id == imageId } ?: throw RuntimeException("Image not found")
+        val img = item.images.find { it.id == imageId } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
         deleteStoredImage(img.storedName)
         item.images.removeIf { it.id == imageId }
@@ -108,10 +106,9 @@ class LibraryService(
     }
 
     fun uploadImage(id: Long, file: MultipartFile, userId: String): LibraryItemDto {
-        val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
-        if (item.userId != userId) throw RuntimeException("Not found")
+        val item = libraryItemRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Not found") }
         migrateLegacyImageIfNeeded(item)
-        if (item.images.size >= MAX_IMAGES) throw RuntimeException("Maximum $MAX_IMAGES images per library item")
+        if (item.images.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES images per library item")
         item.imageStoredName?.let { deleteImageFromDisk(it) }
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
@@ -134,8 +131,7 @@ class LibraryService(
     }
 
     fun delete(id: Long, userId: String) {
-        val item = libraryItemRepository.findById(id).orElseThrow { RuntimeException("Item not found") }
-        if (item.userId != userId) throw RuntimeException("Not found")
+        val item = libraryItemRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Not found") }
         item.images.forEach { deleteStoredImage(it.storedName) }
         item.images.clear()
         item.imageStoredName?.let { deleteImageFromDisk(it) }

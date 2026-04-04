@@ -11,12 +11,30 @@ const projectRes = (p: Project) => normalizeProject(p)
 
 api.interceptors.request.use(async config => {
   const { data } = await supabase.auth.getSession()
-  console.log('[api] session:', data.session ? 'present' : 'null', 'token:', data.session?.access_token?.slice(0, 20))
   if (data.session?.access_token) {
     config.headers.Authorization = `Bearer ${data.session.access_token}`
   }
   return config
 })
+
+// On 401, try to refresh the session once and retry the request.
+api.interceptors.response.use(
+  res => res,
+  async error => {
+    const original = error.config
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true
+      const { data } = await supabase.auth.refreshSession()
+      if (data.session?.access_token) {
+        original.headers.Authorization = `Bearer ${data.session.access_token}`
+        return api(original)
+      }
+      // Refresh failed — sign the user out so they land on the login page
+      await supabase.auth.signOut()
+    }
+    return Promise.reject(error)
+  }
+)
 
 /** Upload a file to Supabase Storage and return its public URL. */
 export async function uploadFile(file: File, folder: string): Promise<string> {

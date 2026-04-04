@@ -226,5 +226,7 @@
   "delete_account_confirm_warning": "Are you sure? All your data will be permanently deleted.",
   "delete_account_confirm_btn": "Yes, delete everything",
   "deleting": "Deleting...",
-  "upload_failed": "Upload failed. Please try again."
+  "upload_failed": "Upload failed. Please try again.",
+  "save_failed": "Could not save changes. Please try again.",
+  "delete_failed": "Could not delete. Please try again."
 }

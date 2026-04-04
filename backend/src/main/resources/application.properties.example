@@ -1,0 +1,14 @@
+# Copy this to application.properties and fill in real values.
+# Required — no defaults:
+DB_PASSWORD=your_database_password
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+
+# Optional — defaults shown:
+# DB_URL=jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0
+# DB_USERNAME=postgres.your_project_ref
+# SUPABASE_JWKS_URI=https://your_project_ref.supabase.co/auth/v1/.well-known/jwks.json
+# SUPABASE_URL=https://your_project_ref.supabase.co
+# STORAGE_BUCKET=stitchbud-files
+# DDL_AUTO=validate
+# PORT=8080
+# UPLOAD_DIR=./uploads
