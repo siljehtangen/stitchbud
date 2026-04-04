@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
+import { resolveColorDisplay } from '../colors'
 
 interface Props {
   availableColors: string[]
@@ -34,9 +34,7 @@ export function ColorMultiSelect({ availableColors, selected, onChange, language
 
   const q = query.toLowerCase()
   const filtered = availableColors.filter(name => {
-    const hex = COLOR_MAP[name] ?? '#ccc'
-    const colorEntry = COLOR_MAP_BY_HEX[hex]
-    const displayName = colorEntry ? getColorName(colorEntry, language) : name
+    const { displayName } = resolveColorDisplay(name, language)
     return displayName.toLowerCase().includes(q)
   })
 
@@ -51,9 +49,7 @@ export function ColorMultiSelect({ availableColors, selected, onChange, language
           <span className="text-warm-gray">{placeholder}…</span>
         ) : (
           selected.map(name => {
-            const hex = COLOR_MAP[name] ?? '#ccc'
-            const colorEntry = COLOR_MAP_BY_HEX[hex]
-            const displayName = colorEntry ? getColorName(colorEntry, language) : name
+            const { hex, displayName } = resolveColorDisplay(name, language)
             return (
               <span key={name} className="inline-flex items-center gap-1 bg-sand-blue/40 text-gray-700 text-xs rounded-full px-2 py-0.5">
                 <span className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: hex }} />
@@ -86,9 +82,7 @@ export function ColorMultiSelect({ availableColors, selected, onChange, language
               <li className="px-3 py-2 text-xs text-warm-gray">{noResults}</li>
             )}
             {filtered.map(name => {
-              const hex = COLOR_MAP[name] ?? '#ccc'
-              const colorEntry = COLOR_MAP_BY_HEX[hex]
-              const displayName = colorEntry ? getColorName(colorEntry, language) : name
+              const { hex, displayName } = resolveColorDisplay(name, language)
               const checked = selected.includes(name)
               return (
                 <li

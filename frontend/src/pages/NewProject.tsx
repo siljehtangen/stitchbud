@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
 import { useToast } from '../context/ToastContext'
 import type { ProjectCategory } from '../types'
-import { CATEGORY_ICONS } from '../constants/categories'
+import { CATEGORY_ICONS, CATEGORIES } from '../constants/categories'
+import { MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
 
 type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 
@@ -15,27 +16,19 @@ export default function NewProject() {
   const { showToast } = useToast()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const initialCategory = ((): ProjectCategory => {
-    const raw = searchParams.get('category')
-    if (raw === 'KNITTING' || raw === 'CROCHET' || raw === 'SEWING') return raw
-    return 'KNITTING'
-  })()
-  const [category, setCategory] = useState<ProjectCategory>(initialCategory)
+  const raw = searchParams.get('category')
+  const [category, setCategory] = useState<ProjectCategory>(
+    raw === 'KNITTING' || raw === 'CROCHET' || raw === 'SEWING' ? raw : 'KNITTING'
+  )
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10))
   const [coverImages, setCoverImages] = useState<CoverImageEntry[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const coverRef = useRef<HTMLInputElement>(null)
 
-  const categories: { value: ProjectCategory }[] = [
-    { value: 'KNITTING' },
-    { value: 'CROCHET' },
-    { value: 'SEWING' },
-  ]
-
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || coverImages.length >= 3) return
+    if (!file || coverImages.length >= MAX_LIBRARY_PHOTOS) return
     const preview = URL.createObjectURL(file)
     setCoverImages(prev => [...prev, { file, preview, isMain: prev.length === 0 }])
     if (coverRef.current) coverRef.current.value = ''
@@ -109,7 +102,7 @@ export default function NewProject() {
               >×</button>
             </div>
           ))}
-          {coverImages.length < 3 && (
+          {coverImages.length < MAX_LIBRARY_PHOTOS && (
             <button
               type="button"
               onClick={() => coverRef.current?.click()}
@@ -120,25 +113,25 @@ export default function NewProject() {
             </button>
           )}
         </div>
-        <input ref={coverRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleCoverChange} className="hidden" />
+        <input ref={coverRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handleCoverChange} className="hidden" />
 
         {/* Category selector */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')}</label>
           <div className="grid grid-cols-3 gap-2">
-            {categories.map(cat => (
+            {CATEGORIES.map(cat => (
               <button
-                key={cat.value}
+                key={cat}
                 type="button"
-                onClick={() => setCategory(cat.value)}
+                onClick={() => setCategory(cat)}
                 className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all ${
-                  category === cat.value
+                  category === cat
                     ? 'border-sand-green-dark bg-sand-green/20'
                     : 'border-soft-brown/30 hover:border-sand-green/50'
                 }`}
               >
-                <span className="text-2xl">{CATEGORY_ICONS[cat.value]}</span>
-                <span className="text-sm font-medium">{t(`category_${cat.value.toLowerCase()}` as const)}</span>
+                <span className="text-2xl">{CATEGORY_ICONS[cat]}</span>
+                <span className="text-sm font-medium">{t(`category_${cat.toLowerCase()}` as const)}</span>
               </button>
             ))}
           </div>

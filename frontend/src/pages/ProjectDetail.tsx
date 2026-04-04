@@ -11,9 +11,11 @@ import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsStars, BsListStars } from 'react-icons/bs'
-import { ITEM_TYPES, TYPE_ICONS, LibraryItemForm } from '../components/LibraryItemForm'
-import { ColorMultiSelect } from '../components/ColorMultiSelect'
-import { itemSummary, typeLabel } from '../utils/libraryUtils'
+import { TYPE_ICONS, LibraryItemForm } from '../components/LibraryItemForm'
+import { LibraryFilterBar } from '../components/LibraryFilterBar'
+import { categoryLabel } from '../constants/categories'
+import { itemSummary, libraryItemImageUrl, fileTypeIcon } from '../utils/libraryUtils'
+import { useLibraryFilter } from '../hooks/useLibraryFilter'
 
 // Gauge removed; only needle/hook sizes remain per category
 const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
@@ -173,15 +175,13 @@ export default function ProjectDetail() {
     { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
   ]
 
-  const categoryLabel = (cat: ProjectCategory) => t(`category_${cat.toLowerCase()}` as const)
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2">←</button>
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
-          <span className="text-xs text-warm-gray">{categoryLabel(project.category)}</span>
+          <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
         </div>
         <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">{t('delete')}</button>
       </div>
@@ -306,37 +306,20 @@ export default function ProjectDetail() {
 function MaterialsTab({ project, projectId, onUpdate }: {
   project: Project; projectId: number; onUpdate: (p: Project) => void
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { showToast } = useToast()
   const { confirm } = useConfirmDialog()
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
-  const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
-  const [filterColors, setFilterColors] = useState<string[]>([])
-  const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [creatingInLib, setCreatingInLib] = useState(false)
   const [newLibType, setNewLibType] = useState<LibraryItemType>('YARN')
   const [pendingItem, setPendingItem] = useState<LibraryItem | null>(null)
 
-  function libraryItemThumbUrl(item: LibraryItem) {
-    const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
-    return main?.storedName
-  }
+  const { filterType, setFilterType, filterColors, setFilterColors, search, setSearch, showColorFilter, availableColors, filtered } = useLibraryFilter(libraryItems)
 
   useEffect(() => {
     libraryApi.getAll().then(setLibraryItems)
   }, [])
-  const showColorFilter = filterType === null || filterType === 'YARN' || filterType === 'FABRIC'
-  const colorableItems = libraryItems.filter(i => i.itemType === 'YARN' || i.itemType === 'FABRIC')
-  const availableColors = Array.from(new Set(colorableItems.flatMap(i => i.colors ?? [])))
-
-  const q = search.toLowerCase()
-  const filtered = libraryItems.filter(i => {
-    if (filterType && i.itemType !== filterType) return false
-    if (filterColors.length > 0 && !filterColors.some(c => (i.colors ?? []).includes(c))) return false
-    if (!q) return true
-    return [i.name, i.yarnBrand, i.yarnMaterial, i.needleSizeMm, i.hookSizeMm].some(v => v?.toLowerCase().includes(q))
-  })
 
   function handleLibraryClick(item: LibraryItem) {
     if (item.itemType === 'YARN' || item.itemType === 'FABRIC') {
@@ -357,10 +340,10 @@ function MaterialsTab({ project, projectId, onUpdate }: {
     } else if (item.itemType === 'FABRIC') {
       amount = [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`].filter(Boolean).join(' × ')
     } else if (item.itemType === 'KNITTING_NEEDLE') {
-      type = item.needleSizeMm ? `${item.needleSizeMm} mm strikkepinne` : item.name
+      type = item.needleSizeMm ? `${item.needleSizeMm} mm ${t('lib_knitting_needle')}` : item.name
       if (item.circularLengthCm) amount = `${item.circularLengthCm} cm`
     } else if (item.itemType === 'CROCHET_HOOK') {
-      type = item.hookSizeMm ? `${item.hookSizeMm} mm heklenål` : item.name
+      type = item.hookSizeMm ? `${item.hookSizeMm} mm ${t('lib_crochet_hook')}` : item.name
     }
     const colorHex = colorName ? (COLOR_MAP[colorName] ?? '') : ''
     const libImgsRaw = libraryItemImagesForProject(item)
@@ -462,52 +445,21 @@ function MaterialsTab({ project, projectId, onUpdate }: {
       {/* Library picker */}
       <div className="card space-y-2.5">
         <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('add_from_library')}</h4>
-        <div className="flex gap-1.5 flex-wrap">
-          <button
-            type="button"
-            onClick={() => { setFilterType(null); setFilterColors([]) }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterType === null ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'}`}
-          >{t('lib_all')}</button>
-          {ITEM_TYPES.map(type => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => { setFilterType(filterType === type ? null : type); setFilterColors([]) }}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'}`}
-            >
-              <span>{TYPE_ICONS[type]}</span>
-              <span>{typeLabel(type, t)}</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="search"
-            className="input text-sm py-2 w-1/2 min-w-0"
-            placeholder={t('lib_search_placeholder')}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {showColorFilter && availableColors.length > 0 && (
-            <div className="w-1/2 flex-shrink-0">
-              <ColorMultiSelect
-                availableColors={availableColors}
-                selected={filterColors}
-                onChange={setFilterColors}
-                language={i18n.language}
-                placeholder={t('lib_filter_color')}
-                searchPlaceholder={t('lib_color_search_placeholder')}
-                noResults={t('lib_color_no_results')}
-                clearLabel={t('lib_clear_color_filter')}
-              />
-            </div>
-          )}
-        </div>
+        <LibraryFilterBar
+          filterType={filterType}
+          setFilterType={setFilterType}
+          filterColors={filterColors}
+          setFilterColors={setFilterColors}
+          search={search}
+          setSearch={setSearch}
+          showColorFilter={showColorFilter}
+          availableColors={availableColors}
+        />
         {pendingItem && (
           <div className="border border-sand-blue/40 rounded-lg p-3 space-y-2.5 bg-sand-blue/5">
             <div className="flex items-center gap-2">
-              {libraryItemThumbUrl(pendingItem) ? (
-                <img src={libraryItemThumbUrl(pendingItem)} alt={pendingItem.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+              {libraryItemImageUrl(pendingItem) ? (
+                <img src={libraryItemImageUrl(pendingItem)} alt={pendingItem.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
               ) : (
                 <div className="w-8 h-8 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-sm">
                   {TYPE_ICONS[pendingItem.itemType]}
@@ -540,8 +492,8 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                 key={item.id}
                 className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
               >
-                {libraryItemThumbUrl(item) ? (
-                  <img src={libraryItemThumbUrl(item)} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+                {libraryItemImageUrl(item) ? (
+                  <img src={libraryItemImageUrl(item)} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
                 ) : (
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
                     {TYPE_ICONS[item.itemType]}
@@ -549,7 +501,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
-                  {(() => { const s = itemSummary(item); return s ? <p className="truncate text-xs text-warm-gray">{s}</p> : null })()}
+                  {itemSummary(item) && <p className="truncate text-xs text-warm-gray">{itemSummary(item)}</p>}
                 </div>
                 <button
                   type="button"
@@ -595,8 +547,6 @@ function FilePreviewModal({ file, projectId, onClose }: {
   const { t } = useTranslation()
   const [zoom, setZoom] = useState(1)
   const url = fileUrl(projectId, file.storedName)
-  const fileIcon = (ft: string) =>
-    ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
   return (
     <div
@@ -659,7 +609,7 @@ function FilePreviewModal({ file, projectId, onClose }: {
           />
         ) : (
           <div className="bg-white rounded-xl p-10 text-center">
-            <div className="text-6xl mb-4">{fileIcon(file.fileType)}</div>
+            <div className="text-6xl mb-4">{fileTypeIcon(file.fileType)}</div>
             <p className="text-gray-800 font-medium mb-6">{file.originalName}</p>
             <a href={url} target="_blank" rel="noopener noreferrer" className="btn-primary">
               {t('open_file')}
@@ -684,9 +634,6 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const replaceRef = useRef<HTMLInputElement>(null)
-
-  const fileIcon = (ft: string) =>
-    ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -766,7 +713,7 @@ function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChange }: {
                     {f.fileType === 'image' ? (
                       <img src={url} alt={f.originalName} className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity" />
                     ) : (
-                      <span className="w-12 h-12 flex items-center justify-center text-2xl hover:opacity-70 transition-opacity">{fileIcon(f.fileType)}</span>
+                      <span className="w-12 h-12 flex items-center justify-center text-2xl hover:opacity-70 transition-opacity">{fileTypeIcon(f.fileType)}</span>
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
@@ -966,9 +913,6 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
   craftDetails: Record<string, string>; projectId: number
 }) {
   const { t, i18n } = useTranslation()
-  const fileIcon = (ft: string) =>
-    ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
-
   async function downloadOverview() {
     const [{ pdf }, { ProjectOverviewPdf }, { fileUrl }] = await Promise.all([
       import('@react-pdf/renderer'),
@@ -1115,7 +1059,7 @@ function OverviewTab({ project, name, description, recipeText, craftDetails, pro
                 ) : (
                   <a key={f.id} href={url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md">
-                    <span>{fileIcon(f.fileType)}</span>
+                    <span>{fileTypeIcon(f.fileType)}</span>
                     <span className="text-gray-700 max-w-[8rem] truncate">{f.originalName}</span>
                   </a>
                 )

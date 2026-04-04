@@ -1,34 +1,19 @@
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
-import type { Project, ProjectCategory } from '../types'
+import type { ProjectCategory } from '../types'
 import { GiButterfly } from 'react-icons/gi'
 import ProjectCard from '../components/ProjectCard'
-import { CATEGORY_ICONS } from '../constants/categories'
+import { CATEGORY_ICONS, categoryLabel } from '../constants/categories'
+import { useAsyncData } from '../hooks/useAsyncData'
+import { useProjectFilter } from '../hooks/useProjectFilter'
 
 
 export default function Dashboard() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [filter, setFilter] = useState<ProjectCategory | 'ALL'>('ALL')
-  const [loading, setLoading] = useState(true)
+  const { data: projects, loading } = useAsyncData(() => projectsApi.getAll(), [])
+  const { filter, setFilter, filtered, counts, newProjectPath } = useProjectFilter(projects)
   const navigate = useNavigate()
   const { t } = useTranslation()
-
-  useEffect(() => {
-    projectsApi.getAll().then(setProjects).finally(() => setLoading(false))
-  }, [])
-
-  const filtered = filter === 'ALL' ? projects : projects.filter(p => p.category === filter)
-  const newProjectPath = filter === 'ALL' ? '/projects/new' : `/projects/new?category=${filter}`
-  const counts = {
-    ALL: projects.length,
-    KNITTING: projects.filter(p => p.category === 'KNITTING').length,
-    CROCHET: projects.filter(p => p.category === 'CROCHET').length,
-    SEWING: projects.filter(p => p.category === 'SEWING').length,
-  }
-
-  const categoryLabel = (cat: ProjectCategory) => t(`category_${cat.toLowerCase()}` as const)
 
   return (
     <div className="space-y-6">
@@ -56,7 +41,7 @@ export default function Dashboard() {
           >
             <span className="text-2xl">{CATEGORY_ICONS[cat]}</span>
             <span className="text-xl font-semibold text-gray-800">{counts[cat]}</span>
-            <span className="text-xs text-warm-gray">{categoryLabel(cat)}</span>
+            <span className="text-xs text-warm-gray">{categoryLabel(cat, t)}</span>
           </button>
         ))}
       </div>
@@ -65,7 +50,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-gray-800">
-            {filter === 'ALL' ? t('recent_projects') : categoryLabel(filter)}
+            {filter === 'ALL' ? t('recent_projects') : categoryLabel(filter, t)}
           </h3>
           <div className="flex items-center gap-2">
             {filter !== 'ALL' && (

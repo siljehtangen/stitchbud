@@ -47,7 +47,7 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
 
 export const projectsApi = {
   getAll: (category?: ProjectCategory) =>
-    api.get<Project[]>('/projects', { params: category ? { category } : {} }).then(r => r.data.map(projectRes)),
+    api.get<Project[]>('/projects', { params: { category } }).then(r => r.data.map(projectRes)),
 
   getOne: (id: number) =>
     api.get<Project>(`/projects/${id}`).then(r => projectRes(r.data)),

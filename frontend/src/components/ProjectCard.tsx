@@ -1,24 +1,17 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GiChopsticks, GiPirateHook, GiSewingMachine } from 'react-icons/gi'
-import type { Project, ProjectCategory } from '../types'
+import type { Project } from '../types'
 import { projectCoverImageUrls } from '../projectOverviewMedia'
-
-const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET: <GiPirateHook className="text-sand-blue-deep" />,
-  SEWING: <GiSewingMachine className="text-warm-gray" />,
-}
-
-function categoryBadgeClass(cat: ProjectCategory) {
-  if (cat === 'KNITTING') return 'badge-knitting'
-  if (cat === 'CROCHET') return 'badge-crochet'
-  return 'badge-sewing'
-}
+import { CATEGORY_ICONS, categoryBadgeClass } from '../constants/categories'
 
 export default function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
   const { t } = useTranslation()
+  const checkedStitches = useMemo(() => {
+    try { return JSON.parse(project.rowCounter?.checkedStitches || '[]') }
+    catch { return [] }
+  }, [project.rowCounter?.checkedStitches])
   const progress = project.rowCounter && project.rowCounter.totalRounds > 0
-    ? Math.round((project.rowCounter.checkedStitches ? JSON.parse(project.rowCounter.checkedStitches).length : 0) / (project.rowCounter.stitchesPerRound * project.rowCounter.totalRounds) * 100)
+    ? Math.round(checkedStitches.length / (project.rowCounter.stitchesPerRound * project.rowCounter.totalRounds) * 100)
     : null
   const cover = projectCoverImageUrls(project)[0]
 
@@ -57,7 +50,7 @@ export default function ProjectCard({ project, onClick }: { project: Project; on
       {progress !== null && (
         <div className="mt-3">
           <div className="flex justify-between text-xs text-warm-gray mb-1">
-            <span>{t('row_counter', { current: JSON.parse(project.rowCounter!.checkedStitches || '[]').length, total: project.rowCounter!.stitchesPerRound * project.rowCounter!.totalRounds })}</span>
+            <span>{t('row_counter', { current: checkedStitches.length, total: project.rowCounter!.stitchesPerRound * project.rowCounter!.totalRounds })}</span>
             <span>{progress}%</span>
           </div>
           <div className="w-full bg-soft-brown/30 rounded-full h-1.5">

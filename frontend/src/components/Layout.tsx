@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import { FaHome, FaUser } from 'react-icons/fa'
@@ -44,7 +44,6 @@ function LanguageSwitcher() {
 
 export default function Layout() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
 

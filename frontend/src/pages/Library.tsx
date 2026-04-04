@@ -1,70 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
-import { ITEM_TYPES, COLOR_ITEM_TYPES, TYPE_ICONS, Field, ColorPicker, LibraryItemForm, MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
-
-import { ColorMultiSelect } from '../components/ColorMultiSelect'
-import { itemSummary, typeLabel } from '../utils/libraryUtils'
-
-function libraryDisplayImageUrl(item: { images?: { storedName: string; isMain: boolean }[] }) {
-  const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
-  return main?.storedName
-}
-
-function isImageUrl(url: string) {
-  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url)
-}
-
-function fileTypeIcon(url: string) {
-  if (/\.pdf$/i.test(url)) return '📄'
-  if (/\.(doc|docx)$/i.test(url)) return '📝'
-  return '📎'
-}
-
+import { ITEM_TYPES, TYPE_ICONS, Field, ColorPicker, LibraryItemForm, MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT, COLOR_ITEM_TYPES } from '../components/LibraryItemForm'
+import { LibraryFilterBar } from '../components/LibraryFilterBar'
+import { itemSummary, typeLabel, libraryItemImageUrl, isImageUrl, fileTypeIconFromUrl } from '../utils/libraryUtils'
+import { useLibraryFilter } from '../hooks/useLibraryFilter'
+import { resolveColorDisplay } from '../colors'
+import { useAsyncData } from '../hooks/useAsyncData'
 
 export default function Library() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { showToast } = useToast()
   const { confirm } = useConfirmDialog()
-  const [items, setItems] = useState<LibraryItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: items, setData: setItems, loading } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
-  const [filterType, setFilterType] = useState<LibraryItemType | null>(null)
-  const [filterColors, setFilterColors] = useState<string[]>([])
-  const [search, setSearch] = useState('')
 
-  useEffect(() => {
-    libraryApi.getAll().then(setItems).finally(() => setLoading(false))
-  }, [])
-
-  // Show color filter only when type filter is yarn/fabric or no type filter (but items with colors exist)
-  const showColorFilter = filterType === null || COLOR_ITEM_TYPES.includes(filterType)
-
-  // Collect colors that actually exist in filtered-by-type items
-  const colorableItems = items.filter(i => COLOR_ITEM_TYPES.includes(i.itemType as LibraryItemType))
-  const availableColors = Array.from(
-    new Set(colorableItems.flatMap(i => i.colors ?? []))
-  )
-
-  const q = search.toLowerCase()
-  const filtered = items.filter(i => {
-    if (filterType && i.itemType !== filterType) return false
-    if (filterColors.length > 0 && !filterColors.some(c => (i.colors ?? []).includes(c))) return false
-    if (!q) return true
-    return [
-      i.name,
-      i.yarnBrand,
-      i.yarnMaterial,
-      i.needleSizeMm,
-      i.hookSizeMm,
-      i.fabricLengthCm != null ? String(i.fabricLengthCm) : null,
-      i.fabricWidthCm != null ? String(i.fabricWidthCm) : null,
-    ].some(v => v?.toLowerCase().includes(q))
-  })
+  const { filterType, setFilterType, filterColors, setFilterColors, search, setSearch, showColorFilter, availableColors, filtered } = useLibraryFilter(items)
 
   const grouped = ITEM_TYPES.map(type => ({
     type,
@@ -104,62 +59,16 @@ export default function Library() {
         </button>
       </div>
 
-      {/* Filter bar */}
-      <div className="space-y-2">
-        {/* Type filter */}
-        <div className="flex gap-1.5 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setFilterType(null)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filterType === null ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
-            }`}
-          >
-            {t('lib_all')}
-          </button>
-          {ITEM_TYPES.map(type => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => {
-                setFilterType(filterType === type ? null : type)
-                setFilterColors([])
-              }}
-              className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
-              }`}
-            >
-              <span className="text-sm leading-none flex-shrink-0">{TYPE_ICONS[type]}</span>
-              <span className="whitespace-nowrap">{typeLabel(type, t)}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Search + color filter side by side */}
-        <div className="flex gap-2">
-          <input
-            type="search"
-            className="input text-sm py-2 w-1/2 min-w-0"
-            placeholder={t('lib_search_placeholder')}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {showColorFilter && availableColors.length > 0 && (
-            <div className="w-1/2 flex-shrink-0">
-              <ColorMultiSelect
-                availableColors={availableColors}
-                selected={filterColors}
-                onChange={setFilterColors}
-                language={i18n.language}
-                placeholder={t('lib_filter_color')}
-                searchPlaceholder={t('lib_color_search_placeholder')}
-                noResults={t('lib_color_no_results')}
-                clearLabel={t('lib_clear_color_filter')}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+      <LibraryFilterBar
+        filterType={filterType}
+        setFilterType={setFilterType}
+        filterColors={filterColors}
+        setFilterColors={setFilterColors}
+        search={search}
+        setSearch={setSearch}
+        showColorFilter={showColorFilter}
+        availableColors={availableColors}
+      />
 
       {adding && (
         <LibraryItemForm
@@ -272,7 +181,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
     }
   }
 
-  const displayUrl = libraryDisplayImageUrl(item)
+  const displayUrl = libraryItemImageUrl(item)
 
   if (editing) {
     return (
@@ -285,7 +194,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
                 {isImageUrl(displayUrl) ? (
                   <img src={displayUrl} alt="" className="w-14 h-14 object-cover rounded-xl border-2 border-sand-green" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">{fileTypeIcon(displayUrl)}</div>
+                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">{fileTypeIconFromUrl(displayUrl)}</div>
                 )}
               </div>
             )}
@@ -294,7 +203,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
                 {isImageUrl(img.storedName) ? (
                   <img src={img.storedName} alt={img.originalName} className={`w-14 h-14 object-cover rounded-xl border-2 ${img.isMain ? 'border-sand-green' : 'border-transparent'}`} />
                 ) : (
-                  <div className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}>{fileTypeIcon(img.storedName)}</div>
+                  <div className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}>{fileTypeIconFromUrl(img.storedName)}</div>
                 )}
                 <button
                   type="button"
@@ -409,11 +318,11 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   return (
     <div className="card flex items-center gap-3">
       <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-soft-brown/20">
-        {libraryDisplayImageUrl(item) ? (
-          isImageUrl(libraryDisplayImageUrl(item)!) ? (
-            <img src={libraryDisplayImageUrl(item)!} alt={item.name} className="w-full h-full object-cover" />
+        {displayUrl ? (
+          isImageUrl(displayUrl) ? (
+            <img src={displayUrl} alt={item.name} className="w-full h-full object-cover" />
           ) : (
-            <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIcon(libraryDisplayImageUrl(item)!)}</span>
+            <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIconFromUrl(displayUrl)}</span>
           )
         ) : (
           <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
@@ -426,9 +335,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
         {(item.colors ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {(item.colors ?? []).map(name => {
-              const hex = COLOR_MAP[name] ?? '#ccc'
-              const colorEntry = COLOR_MAP_BY_HEX[hex]
-              const displayName = colorEntry ? getColorName(colorEntry, i18n.language) : name
+              const { hex, displayName } = resolveColorDisplay(name, i18n.language)
               return (
                 <span
                   key={name}

@@ -89,3 +89,9 @@ export function getColorNameByHex(hex: string, lang: string): string {
   if (!color) return hex
   return getColorName(color, lang)
 }
+
+export function resolveColorDisplay(name: string, lang: string): { hex: string; displayName: string } {
+  const hex = COLOR_MAP[name] ?? '#ccc'
+  const colorEntry = COLOR_MAP_BY_HEX[hex]
+  return { hex, displayName: colorEntry ? getColorName(colorEntry, lang) : name }
+}
