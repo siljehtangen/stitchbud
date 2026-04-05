@@ -223,6 +223,13 @@
   "profile_heading": "Profile",
   "profile_sign_out": "Sign out",
 
+  "reset_data_heading": "Reset data",
+  "reset_data_description": "Permanently deletes all your projects, materials, and uploaded files, but keeps your account. This cannot be undone.",
+  "reset_data_btn": "Reset my data",
+  "reset_data_confirm_warning": "Are you sure? All your projects and library items will be permanently deleted.",
+  "reset_data_confirm_btn": "Yes, reset everything",
+  "resetting": "Resetting...",
+
   "delete_account_heading": "Delete account",
   "delete_account_description": "Permanently deletes all your projects, materials, and uploaded files. This cannot be undone.",
   "delete_account_btn": "Delete my account",

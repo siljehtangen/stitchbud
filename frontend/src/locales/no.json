@@ -223,6 +223,13 @@
   "profile_heading": "Profil",
   "profile_sign_out": "Logg ut",
 
+  "reset_data_heading": "Nullstill data",
+  "reset_data_description": "Sletter permanent alle prosjekter, materialer og opplastede filer, men beholder kontoen din. Dette kan ikke angres.",
+  "reset_data_btn": "Nullstill dataene mine",
+  "reset_data_confirm_warning": "Er du sikker? Alle prosjekter og bibliotekselementer vil bli slettet permanent.",
+  "reset_data_confirm_btn": "Ja, nullstill alt",
+  "resetting": "Nullstiller...",
+
   "delete_account_heading": "Slett konto",
   "delete_account_description": "Sletter permanent alle prosjekter, materialer og opplastede filer. Dette kan ikke angres.",
   "delete_account_btn": "Slett kontoen min",

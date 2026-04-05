@@ -179,4 +179,5 @@ export const fileUrl = (projectId: number, storedName: string) =>
 
 export const accountApi = {
   deleteAccount: () => api.delete('/projects/account'),
+  resetData: () => api.delete('/projects/account/data'),
 }
