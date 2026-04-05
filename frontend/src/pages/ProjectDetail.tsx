@@ -264,7 +264,7 @@ export default function ProjectDetail() {
             <Field label={t('start_date_label')}>
               <input type="date" className="input" value={startDate} onChange={e => handleInfoChange('startDate', e.target.value)} />
             </Field>
-            <Field label={`${t('end_date_label')} (${t('optional')})`}>
+            <Field label={`${t('end_date_label')}`}>
               <input type="date" className="input" value={endDate} onChange={e => handleInfoChange('endDate', e.target.value)} />
             </Field>
           </div>

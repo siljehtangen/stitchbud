@@ -283,7 +283,7 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
         </Field>
       )}
 
-      <Field label={`${t('lib_name')} (${t('optional')})`}>
+      <Field label={`${t('lib_name')}`}>
         <input
           className="input text-sm py-1.5"
           value={name}
