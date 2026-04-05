@@ -1,58 +1,87 @@
 # Stitchbud
 
-A mobile-first web app for tracking knitting, crochet, and sewing projects. Features include project management, materials tracking with color pickers, a row counter, and an interactive pattern grid.
+A mobile-first web app for tracking knitting, crochet, and sewing projects. Users can manage projects with materials, row counters, pattern grids, and file attachments, as well as browse a shared library.
 
 ## Stack
 
-- **Backend**: Kotlin + Spring Boot 3, Gradle (Kotlin DSL), H2 in-memory DB
-- **Frontend**: React + TypeScript + Vite, Tailwind CSS, React Router v6, Axios
+| Layer | Technology |
+|---|---|
+| Backend | Kotlin · Spring Boot 3 · Spring Security (JWT) · JPA/Hibernate |
+| Database | PostgreSQL via Supabase (connection pooling) |
+| Auth | Supabase Auth (JWT RS256) |
+| Storage | Supabase Storage (image and file uploads) |
+| Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 |
+| Build | Gradle 8 (Kotlin DSL) · npm |
 
 ---
 
-## Running the Backend
+## Prerequisites
 
-### Prerequisites
-- JDK 21 (e.g. [Temurin](https://adoptium.net/))
-- Gradle 8.x (or use the wrapper after initializing it — see below)
+- **JDK 21** — e.g. [Eclipse Temurin](https://adoptium.net/)
+- **Node.js 18+**
+- A [Supabase](https://supabase.com/) project with:
+  - A PostgreSQL database
+  - Auth enabled
+  - A storage bucket named `stitchbud-files` (or your chosen name)
 
-### First-time setup (generate the Gradle wrapper)
+---
 
-If you have Gradle installed globally:
+## Configuration
+
+### Backend
+
+Copy the example config and fill in your values:
 
 ```bash
-cd backend
-gradle wrapper --gradle-version 8.6
+cp backend/src/main/resources/application.properties.example \
+   backend/src/main/resources/application.properties
 ```
 
-Or download [Gradle 8.6](https://gradle.org/releases/) and run:
+Required values:
 
-```bash
-cd backend
-gradle wrapper
+| Property | Description |
+|---|---|
+| `DB_PASSWORD` | Supabase database password |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key (for storage operations) |
+
+Optional values (defaults shown in the example file):
+
+| Property | Default |
+|---|---|
+| `DB_URL` | Supabase pooler connection string |
+| `DB_USERNAME` | `postgres.<project-ref>` |
+| `SUPABASE_JWKS_URI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` |
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `STORAGE_BUCKET` | `stitchbud-files` |
+| `PORT` | `8080` |
+| `UPLOAD_DIR` | `./uploads` |
+
+> **Never commit `application.properties`.** It is git-ignored. Only `application.properties.example` should be committed.
+
+### Frontend
+
+Create `frontend/.env.local`:
+
+```env
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-### Start the backend
+---
+
+## Running Locally
+
+### Backend
 
 ```bash
 cd backend
-./gradlew bootRun        # macOS/Linux
+./gradlew bootRun        # macOS / Linux
 gradlew.bat bootRun      # Windows
 ```
 
 The API will be available at `http://localhost:8080`.
 
-H2 console (in-browser DB viewer): `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:stitchbud`
-- Username: `sa`, Password: (empty)
-
----
-
-## Running the Frontend
-
-### Prerequisites
-- Node.js 18+
-
-### Install and start
+### Frontend
 
 ```bash
 cd frontend
@@ -62,59 +91,24 @@ npm run dev
 
 The app will be available at `http://localhost:5173`.
 
-The Vite dev server proxies `/api` requests to the backend at `http://localhost:8080`, so both must be running simultaneously.
+The Vite dev server proxies `/api` requests to `http://localhost:8080`, so both services must be running simultaneously.
 
 ---
 
-## Project Structure
-
-```
-stitchbud/
-├── backend/
-│   ├── build.gradle.kts
-│   ├── settings.gradle.kts
-│   └── src/main/kotlin/com/stitchbud/
-│       ├── StitchbudApplication.kt
-│       ├── controller/ProjectController.kt
-│       ├── dto/ProjectDtos.kt
-│       ├── model/
-│       │   ├── Project.kt
-│       │   ├── Material.kt
-│       │   ├── RowCounter.kt
-│       │   └── PatternGrid.kt
-│       ├── repository/
-│       │   ├── ProjectRepository.kt
-│       │   └── MaterialRepository.kt
-│       └── service/ProjectService.kt
-└── frontend/
-    ├── src/
-    │   ├── App.tsx
-    │   ├── api.ts
-    │   ├── types.ts
-    │   ├── index.css
-    │   ├── main.tsx
-    │   ├── components/
-    │   │   └── Layout.tsx
-    │   └── pages/
-    │       ├── Dashboard.tsx
-    │       ├── Projects.tsx
-    │       ├── NewProject.tsx
-    │       └── ProjectDetail.tsx
-    ├── index.html
-    ├── package.json
-    ├── tailwind.config.js
-    ├── vite.config.ts
-    └── tsconfig.json
-```
-
 ## Features
 
-- **Dashboard** — overview with category counts, recent projects, progress bars
-- **Projects list** — filterable by category (Knitting, Crochet, Sewing)
-- **New project** — category selector, name, description, tags
+- **Dashboard** — category counts, recent projects, progress overview
+- **Projects** — filterable list; create with category, name, description, and tags
 - **Project detail** with four tabs:
-  - **Info** — auto-saving name, description, notes, tags
-  - **Materials** — add/remove yarn/fabric with color swatches
-  - **Counter** — tap +/− to track row progress with a visual bar
-  - **Pattern** — paint/erase grid cells with a color palette (Knitting + Crochet only)
-- Mobile-first, earthy design (sand green + sand blue palette)
+  - **Info** — auto-saving name, description, notes, and tags
+  - **Materials** — add/remove yarn or fabric entries with color swatches
+  - **Counter** — tap +/− to track row progress with a visual progress bar
+  - **Pattern** — paint/erase grid cells with a color palette (Knitting and Crochet only)
+- **File attachments** — upload images and PDFs per project, stored in Supabase Storage
+- **Material library** — browse and filter a shared catalog of materials with images
+- **Authentication** — sign up, log in, and manage account via Supabase Auth
+- **i18n** — internationalization support
+- **PDF export** — generate a printable project summary
+
+---
+
