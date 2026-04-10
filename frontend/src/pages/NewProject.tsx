@@ -117,7 +117,7 @@ export default function NewProject() {
 
         {/* Category selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')} <span className="text-red-500">*</span></label>
           <div className="grid grid-cols-3 gap-2">
             {CATEGORIES.map(cat => (
               <button
@@ -140,7 +140,7 @@ export default function NewProject() {
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            {t('project_name_label')} <span className="text-red-400">*</span>
+            {t('project_name_label')} <span className="text-red-500">*</span>
           </label>
           <input
             className="input"
@@ -164,7 +164,7 @@ export default function NewProject() {
 
         {/* Start date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('start_date_label')}</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('start_date_label')} <span className="text-red-500">*</span></label>
           <input
             type="date"
             className="input"

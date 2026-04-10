@@ -1,4 +1,9 @@
-import { Document, Page, Text, View, StyleSheet, Image, Link } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Image, Link, Font } from '@react-pdf/renderer'
+
+Font.register({
+  family: 'NotoSans',
+  src: 'https://fonts.gstatic.com/s/notosans/v36/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7du2xxN0E.ttf',
+})
 import type { Project, PatternCell } from '../types'
 import { COLOR_MAP_BY_HEX, getColorName } from '../colors'
 import { fileUrl } from '../api'
@@ -30,7 +35,8 @@ const S = StyleSheet.create({
   recipeImage: { width: '100%', height: 250, objectFit: 'contain', marginBottom: 8 },
   attachment: { fontSize: 9, color: '#888', marginBottom: 3 },
   attachmentLink: { fontSize: 9, color: '#6FA8BC', marginBottom: 3, textDecoration: 'underline' },
-  pCell: { width: 13, height: 13, borderWidth: 0.5, borderColor: '#e0e0e0', borderStyle: 'solid' },
+  pCell: { width: 13, height: 13, borderWidth: 0.5, borderColor: '#e0e0e0', borderStyle: 'solid', alignItems: 'center', justifyContent: 'center' },
+  pCellSymbol: { fontSize: 7, fontFamily: 'NotoSans', lineHeight: 1 },
   gridRow: { flexDirection: 'row' },
   clipNote: { fontSize: 8, color: '#999', fontStyle: 'italic', marginTop: 4 },
   footer: { fontSize: 7, color: '#bbb', borderTopWidth: 1, borderTopColor: '#eee', borderTopStyle: 'solid', paddingTop: 8, marginTop: 20 },
@@ -83,7 +89,7 @@ export function ProjectOverviewPdf({
     if (project.category === 'SEWING' || !project.patternGrids?.length) return []
     return project.patternGrids.map(pg => {
       const cells: PatternCell[] = (() => { try { return JSON.parse(pg.cellData) } catch { return [] } })()
-      const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c.color]))
+      const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
       const clippedRows = pg.rows > MAX_PATTERN_ROWS
       const clippedCols = pg.cols > MAX_PATTERN_COLS
       return {
@@ -174,13 +180,18 @@ export function ProjectOverviewPdf({
                   <Text style={S.clipNote}>{labels.gridNumber(i + 1)}</Text>
                 )}
                 {Array.from({ length: gridData.rows }, (_, r) => (
-                  <View key={r} style={S.gridRow}>
-                    {Array.from({ length: gridData.cols }, (_, c) => (
-                      <View
-                        key={c}
-                        style={[S.pCell, { backgroundColor: gridData.cellMap.get(`${r},${c}`) ?? '#F5F0E8' }]}
-                      />
-                    ))}
+                  <View key={r} style={S.gridRow} wrap={false}>
+                    {Array.from({ length: gridData.cols }, (_, c) => {
+                      const cell = gridData.cellMap.get(`${r},${c}`)
+                      return (
+                        <View
+                          key={c}
+                          style={[S.pCell, { backgroundColor: cell?.color ?? '#F5F0E8' }]}
+                        >
+                          {cell?.symbol ? <Text style={S.pCellSymbol}>{cell.symbol}</Text> : null}
+                        </View>
+                      )
+                    })}
                   </View>
                 ))}
                 {gridData.clipped && (
