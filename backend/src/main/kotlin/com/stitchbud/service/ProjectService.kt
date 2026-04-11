@@ -73,8 +73,7 @@ class ProjectService(
         return projectRepository.save(project).toDto()
     }
 
-    fun deleteProject(id: Long, userId: String) {
-        val project = findProject(id, userId)
+    private fun cleanupProjectStorage(project: Project) {
         project.images.forEach { img ->
             try { storageService.deleteByUrl(img.storedName) }
             catch (e: Exception) { logger.warn("Failed to delete image ${img.storedName}: ${e.message}") }
@@ -83,22 +82,18 @@ class ProjectService(
             if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
             else deleteFileFromDisk(project.id, file.storedName)
         }
+    }
+
+    fun deleteProject(id: Long, userId: String) {
+        val project = findProject(id, userId)
+        cleanupProjectStorage(project)
         projectRepository.deleteById(id)
     }
 
     fun deleteAllUserData(userId: String) {
         // Clean up storage files before removing DB records
         val projects = projectRepository.findByUserIdOrderByUpdatedAtDesc(userId)
-        projects.forEach { project ->
-            project.images.forEach { img ->
-                try { storageService.deleteByUrl(img.storedName) }
-                catch (e: Exception) { logger.warn("Failed to delete image ${img.storedName}: ${e.message}") }
-            }
-            project.files.forEach { file ->
-                if (file.storedName.startsWith("http")) storageService.deleteByUrl(file.storedName)
-                else deleteFileFromDisk(project.id, file.storedName)
-            }
-        }
+        projects.forEach { cleanupProjectStorage(it) }
 
         projectImageRepository.deleteAllByProjectUserId(userId)
         materialRepository.deleteAllByProjectUserId(userId)
