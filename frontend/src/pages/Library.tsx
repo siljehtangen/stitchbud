@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { useConfirmDialog } from '../context/ConfirmDialogContext'
@@ -143,6 +143,23 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   const [needleSize, setNeedleSize] = useState(item.needleSizeMm ?? '')
   const [circularLength, setCircularLength] = useState(item.circularLengthCm?.toString() ?? '')
   const [hookSize, setHookSize] = useState(item.hookSizeMm ?? '')
+
+  // Sync edit fields when the parent updates the item (e.g. after image upload),
+  // but only when the user is not actively editing to avoid overwriting their changes.
+  useEffect(() => {
+    if (editing) return
+    setName(item.name)
+    setColors(item.colors ?? [])
+    setYarnBrand(item.yarnBrand ?? '')
+    setYarnMaterial(item.yarnMaterial ?? '')
+    setYarnAmountG(item.yarnAmountG?.toString() ?? '')
+    setYarnAmountM(item.yarnAmountM?.toString() ?? '')
+    setFabricLength(item.fabricLengthCm?.toString() ?? '')
+    setFabricWidth(item.fabricWidthCm?.toString() ?? '')
+    setNeedleSize(item.needleSizeMm ?? '')
+    setCircularLength(item.circularLengthCm?.toString() ?? '')
+    setHookSize(item.hookSizeMm ?? '')
+  }, [item, editing])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]

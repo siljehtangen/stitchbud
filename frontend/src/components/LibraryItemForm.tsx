@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
+import { typeLabel } from '../utils/libraryUtils'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
 
@@ -158,19 +159,11 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
   }
 
   function autoName() {
-    if (selectedType === 'KNITTING_NEEDLE' && needleSize) return `${needleSize} mm strikkepinne`
-    if (selectedType === 'CROCHET_HOOK' && hookSize) return `${hookSize} mm heklenål`
-    if (selectedType === 'YARN') return [yarnBrand, yarnMaterial].filter(Boolean).join(' ') || 'Garn'
-    if (selectedType === 'FABRIC') return 'Stoff'
+    if (selectedType === 'KNITTING_NEEDLE' && needleSize) return `${needleSize} mm ${t('lib_knitting_needle')}`
+    if (selectedType === 'CROCHET_HOOK' && hookSize) return `${hookSize} mm ${t('lib_crochet_hook')}`
+    if (selectedType === 'YARN') return [yarnBrand, yarnMaterial].filter(Boolean).join(' ') || t('lib_yarn')
+    if (selectedType === 'FABRIC') return t('lib_fabric')
     return ''
-  }
-
-  const typeLabel = (type: LibraryItemType) => {
-    if (type === 'YARN') return t('lib_yarn')
-    if (type === 'FABRIC') return t('lib_fabric')
-    if (type === 'KNITTING_NEEDLE') return t('lib_knitting_needle')
-    if (type === 'CROCHET_HOOK') return t('lib_crochet_hook')
-    return type
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -231,7 +224,7 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
             }`}
           >
             <span>{TYPE_ICONS[type]}</span>
-            <span>{typeLabel(type)}</span>
+            <span>{typeLabel(type, t)}</span>
           </button>
         ))}
       </div>
