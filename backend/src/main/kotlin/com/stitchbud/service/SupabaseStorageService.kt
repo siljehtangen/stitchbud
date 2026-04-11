@@ -1,5 +1,6 @@
 package com.stitchbud.service
 
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.net.URI
@@ -14,6 +15,7 @@ class SupabaseStorageService(
     @Value("\${app.storage-bucket}") private val bucket: String
 ) {
     private val client = HttpClient.newHttpClient()
+    private val logger = LoggerFactory.getLogger(SupabaseStorageService::class.java)
 
     /**
      * Deletes a file from Supabase Storage asynchronously.
@@ -30,7 +32,15 @@ class SupabaseStorageService(
                 .DELETE()
                 .build()
             client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-        } catch (_: Exception) {}
+                .whenComplete { res, ex ->
+                    when {
+                        ex != null -> logger.warn("Storage delete failed for $path: ${ex.message}")
+                        res.statusCode() >= 400 -> logger.warn("Storage delete returned ${res.statusCode()} for $path")
+                    }
+                }
+        } catch (e: Exception) {
+            logger.warn("Storage delete request could not be built for $path: ${e.message}")
+        }
     }
 
     fun deleteUser(userId: String) {

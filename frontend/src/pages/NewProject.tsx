@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { projectsApi } from '../api'
@@ -27,6 +27,14 @@ export default function NewProject() {
   const [error, setError] = useState('')
   const coverRef = useRef<HTMLInputElement>(null)
 
+  // Revoke all blob preview URLs when the component unmounts
+  useEffect(() => {
+    return () => {
+      coverImages.forEach(img => URL.revokeObjectURL(img.preview))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || coverImages.length >= MAX_LIBRARY_PHOTOS) return
@@ -41,6 +49,7 @@ export default function NewProject() {
 
   function removeImage(index: number) {
     setCoverImages(prev => {
+      URL.revokeObjectURL(prev[index].preview)
       const wasMain = prev[index].isMain
       const updated = prev.filter((_, i) => i !== index)
       if (wasMain && updated.length > 0) updated[0] = { ...updated[0], isMain: true }
@@ -74,7 +83,7 @@ export default function NewProject() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2 text-warm-gray">
+        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2 text-warm-gray" aria-label={t('go_back')}>
           ←
         </button>
         <h2 className="text-xl font-semibold text-gray-800">{t('new_project')}</h2>

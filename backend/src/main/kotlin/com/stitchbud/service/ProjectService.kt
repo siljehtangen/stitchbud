@@ -168,6 +168,8 @@ class ProjectService(
     }
 
     fun updatePatternGrid(projectId: Long, gridId: Long, req: UpdatePatternGridRequest, userId: String): ProjectDto {
+        if (req.rows < 1 || req.rows > 200 || req.cols < 1 || req.cols > 200)
+            throw BadRequestException("Grid dimensions must be between 1 and 200")
         val project = findProject(projectId, userId)
         val grid = project.patternGrids.find { it.id == gridId } ?: throw NotFoundException("Grid not found")
         grid.rows = req.rows

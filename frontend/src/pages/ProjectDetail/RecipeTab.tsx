@@ -29,6 +29,8 @@ export function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChan
       const updated = await projectsApi.uploadProjectFile(projectId, file)
       onUpdate(updated)
       showToast(t('attachment_added_toast'))
+    } catch {
+      showToast(t('upload_failed'), 'info')
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -42,6 +44,9 @@ export function RecipeTab({ recipeText, files, projectId, onUpdate, onRecipeChan
     try {
       const updated = await projectsApi.replaceFile(projectId, replacingId, file)
       onUpdate(updated)
+      showToast(t('attachment_added_toast'))
+    } catch {
+      showToast(t('upload_failed'), 'info')
     } finally {
       setUploading(false)
       setReplacingId(null)
