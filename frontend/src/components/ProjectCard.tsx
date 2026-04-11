@@ -1,10 +1,10 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Project } from '../types'
 import { projectCoverImageUrls } from '../projectOverviewMedia'
 import { CATEGORY_ICONS, categoryBadgeClass } from '../constants/categories'
 
-export default function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
   const { t } = useTranslation()
   const checkedStitches = useMemo(() => {
     try { return JSON.parse(project.rowCounter?.checkedStitches || '[]') }
@@ -61,3 +61,5 @@ export default function ProjectCard({ project, onClick }: { project: Project; on
     </button>
   )
 }
+
+export default memo(ProjectCard)

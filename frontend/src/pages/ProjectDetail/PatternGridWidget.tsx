@@ -145,7 +145,7 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
     onSave(trimmed, newRows, newCols)
   }
 
-  const usedSymbols = new Set(cells.map(c => c.symbol).filter(Boolean))
+  const usedSymbols = useMemo(() => new Set(cells.map(c => c.symbol).filter(Boolean)), [cells])
 
   return (
     <div className="space-y-3">

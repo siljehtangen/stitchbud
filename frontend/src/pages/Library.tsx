@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { useConfirmDialog } from '../context/ConfirmDialogContext'
@@ -21,13 +21,12 @@ export default function Library() {
 
   const { filterType, setFilterType, filterColors, setFilterColors, search, setSearch, showColorFilter, availableColors, filtered } = useLibraryFilter(items)
 
-  const grouped = ITEM_TYPES.map(type => ({
+  const grouped = useMemo(() => ITEM_TYPES.map(type => ({
     type,
     items: filtered.filter(i => i.itemType === type),
-  })).filter(g => g.items.length > 0)
+  })).filter(g => g.items.length > 0), [filtered])
 
-
-  async function handleDelete(id: number) {
+  const handleDelete = useCallback(async (id: number) => {
     const ok = await confirm({
       message: t('lib_delete_confirm'),
       confirmLabel: t('delete'),
@@ -37,7 +36,7 @@ export default function Library() {
     await libraryApi.delete(id)
     setItems(prev => prev.filter(i => i.id !== id))
     showToast(t('lib_item_deleted_toast'))
-  }
+  }, [confirm, t, showToast, setItems])
 
   function handleCreated(item: LibraryItem) {
     setItems(prev => [item, ...prev])
@@ -45,9 +44,9 @@ export default function Library() {
     showToast(t('lib_item_created_toast'))
   }
 
-  function handleUpdated(item: LibraryItem) {
+  const handleUpdated = useCallback((item: LibraryItem) => {
     setItems(prev => prev.map(i => i.id === item.id ? item : i))
-  }
+  }, [setItems])
 
 
   return (
@@ -101,8 +100,8 @@ export default function Library() {
                     key={item.id}
                     item={item}
                     subtitle={itemSummary(item)}
-                    onDelete={() => handleDelete(item.id)}
-                    onImageUploaded={updated => setItems(prev => prev.map(i => i.id === updated.id ? updated : i))}
+                    onDelete={handleDelete}
+                    onImageUploaded={handleUpdated}
                     onUpdated={handleUpdated}
                   />
                 ))}
@@ -115,10 +114,10 @@ export default function Library() {
   )
 }
 
-function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
+const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
   item: LibraryItem
   subtitle: string
-  onDelete: () => void
+  onDelete: (id: number) => void
   onImageUploaded: (updated: LibraryItem) => void
   onUpdated: (updated: LibraryItem) => void
 }) {
@@ -374,10 +373,10 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
         title={t('edit')}
       >✎</button>
       <button
-        onClick={onDelete}
+        onClick={() => onDelete(item.id)}
         className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
       >×</button>
     </div>
   )
-}
+})
 

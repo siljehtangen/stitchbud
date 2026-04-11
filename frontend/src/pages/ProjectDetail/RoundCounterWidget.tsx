@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Field } from '../../components/LibraryItemForm'
 
@@ -23,6 +23,10 @@ export function RoundCounterWidget({ counter, onSave }: {
   const sprRef = useRef(spr)
   const roundsRef = useRef(rounds)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
+  }, [])
 
   useEffect(() => {
     const newSpr = counter.stitchesPerRound
@@ -84,9 +88,11 @@ export function RoundCounterWidget({ counter, onSave }: {
 
   const totalStitches = spr * rounds
   const doneCount = checked.size
-  const completedRounds = Array.from({ length: rounds }, (_, r) =>
-    Array.from({ length: spr }, (_, s) => r * spr + s).every(i => checked.has(i))
-  ).filter(Boolean).length
+  const completedRounds = useMemo(() =>
+    Array.from({ length: rounds }, (_, r) =>
+      Array.from({ length: spr }, (_, s) => r * spr + s).every(i => checked.has(i))
+    ).filter(Boolean).length
+  , [rounds, spr, checked])
   const progress = totalStitches > 0 ? Math.round((doneCount / totalStitches) * 100) : 0
 
   return (
