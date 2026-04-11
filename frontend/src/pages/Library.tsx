@@ -15,7 +15,7 @@ export default function Library() {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { confirm } = useConfirmDialog()
-  const { data: items, setData: setItems, loading } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
+  const { data: items, setData: setItems, loading, error } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
 
@@ -81,6 +81,8 @@ export default function Library() {
 
       {loading ? (
         <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
+      ) : error ? (
+        <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
       ) : filtered.length === 0 && !adding ? (
         <div className="card text-center py-10">
           <p className="text-warm-gray text-sm">{t('library_empty')}</p>
@@ -190,7 +192,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
             {(item.images ?? []).length === 0 && displayUrl && (
               <div className="flex-shrink-0" title={t('main_image')}>
                 {isImageUrl(displayUrl) ? (
-                  <img src={displayUrl} alt="" className="w-14 h-14 object-cover rounded-xl border-2 border-sand-green" />
+                  <img src={displayUrl} alt="" className="w-14 h-14 object-cover rounded-xl border-2 border-sand-green" loading="lazy" />
                 ) : (
                   <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">{fileTypeIconFromUrl(displayUrl)}</div>
                 )}
@@ -199,7 +201,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
             {(item.images ?? []).map(img => (
               <div key={img.id} className="relative group flex-shrink-0">
                 {isImageUrl(img.storedName) ? (
-                  <img src={img.storedName} alt={img.originalName} className={`w-14 h-14 object-cover rounded-xl border-2 ${img.isMain ? 'border-sand-green' : 'border-transparent'}`} />
+                  <img src={img.storedName} alt={img.originalName} className={`w-14 h-14 object-cover rounded-xl border-2 ${img.isMain ? 'border-sand-green' : 'border-transparent'}`} loading="lazy" />
                 ) : (
                   <div className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}>{fileTypeIconFromUrl(img.storedName)}</div>
                 )}
@@ -317,7 +319,7 @@ function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
       <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden border-2 border-soft-brown/20">
         {displayUrl ? (
           isImageUrl(displayUrl) ? (
-            <img src={displayUrl} alt={item.name} className="w-full h-full object-cover" />
+            <img src={displayUrl} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
           ) : (
             <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIconFromUrl(displayUrl)}</span>
           )

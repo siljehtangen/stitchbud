@@ -82,16 +82,23 @@ export default function ProjectDetail() {
   const [coverImageError, setCoverImageError] = useState('')
   const MAX_COVER_IMAGES = 3
 
+  // Refs always hold the latest field values so the debounced save never reads stale closures
+  const nameRef = useRef(name)
+  const descriptionRef = useRef(description)
+  const notesRef = useRef(notes)
+  const tagsRef = useRef(tags)
+  const recipeTextRef = useRef(recipeText)
+
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     projectsApi.getOne(projectId).then(p => {
       setProject(p)
-      setName(p.name)
-      setDescription(p.description)
-      setNotes(p.notes)
-      setTags(p.tags)
-      setRecipeText(p.recipeText)
+      setName(p.name); nameRef.current = p.name
+      setDescription(p.description); descriptionRef.current = p.description
+      setNotes(p.notes); notesRef.current = p.notes
+      setTags(p.tags); tagsRef.current = p.tags
+      setRecipeText(p.recipeText); recipeTextRef.current = p.recipeText
       try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch { setCraftDetails({}) }
       setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
       setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
@@ -111,11 +118,11 @@ export default function ProjectDetail() {
   }, [projectId, showToast, t])
 
   function handleInfoChange(field: string, value: string) {
-    if (field === 'name') setName(value)
-    if (field === 'description') setDescription(value)
-    if (field === 'notes') setNotes(value)
-    if (field === 'tags') setTags(value)
-    if (field === 'recipeText') setRecipeText(value)
+    if (field === 'name') { setName(value); nameRef.current = value }
+    if (field === 'description') { setDescription(value); descriptionRef.current = value }
+    if (field === 'notes') { setNotes(value); notesRef.current = value }
+    if (field === 'tags') { setTags(value); tagsRef.current = value }
+    if (field === 'recipeText') { setRecipeText(value); recipeTextRef.current = value }
     if (field === 'startDate') {
       setStartDate(value)
       autoSave({ startDate: value ? new Date(value).getTime() : undefined })
@@ -126,7 +133,14 @@ export default function ProjectDetail() {
       autoSave(value ? { endDate: new Date(value).getTime() } : { clearEndDate: true })
       return
     }
-    autoSave({ name, description, notes, tags, recipeText, [field]: value })
+    autoSave({
+      name: nameRef.current,
+      description: descriptionRef.current,
+      notes: notesRef.current,
+      tags: tagsRef.current,
+      recipeText: recipeTextRef.current,
+      [field]: value,
+    })
   }
 
   async function handleCoverImageUpload(e: ChangeEvent<HTMLInputElement>) {
@@ -210,6 +224,7 @@ export default function ProjectDetail() {
                     src={img.storedName}
                     alt={img.originalName}
                     className={`w-24 h-24 object-cover rounded-xl border-2 transition-colors ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
+                    loading="lazy"
                   />
                   <button
                     onClick={async () => setProject(await projectsApi.setCoverImageMain(projectId, img.id))}
@@ -402,6 +417,7 @@ function MaterialsTab({ project, projectId, onUpdate }: {
                     src={thumbSrc}
                     alt={mainImg?.originalName ?? m.name}
                     className="w-12 h-12 object-cover rounded-lg flex-shrink-0 pointer-events-none select-none"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-soft-brown/20 flex items-center justify-center text-warm-gray flex-shrink-0 text-base pointer-events-none select-none" aria-hidden>
@@ -483,32 +499,36 @@ function MaterialsTab({ project, projectId, onUpdate }: {
           {filtered.length === 0 ? (
             <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
           ) : (
-            filtered.map(item => (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
-              >
-                {libraryItemImageUrl(item) ? (
-                  <img src={libraryItemImageUrl(item)} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
-                    {TYPE_ICONS[item.itemType]}
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
-                  {itemSummary(item) && <p className="truncate text-xs text-warm-gray">{itemSummary(item)}</p>}
-                </div>
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => handleLibraryClick(item)}
-                  className="btn-primary flex-shrink-0 whitespace-nowrap py-2 px-3 text-xs"
+            filtered.map(item => {
+              const imgUrl = libraryItemImageUrl(item)
+              const summary = itemSummary(item)
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
                 >
-                  {t('add_library_to_project')}
-                </button>
-              </div>
-            ))
+                  {imgUrl ? (
+                    <img src={imgUrl} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" loading="lazy" />
+                  ) : (
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
+                      {TYPE_ICONS[item.itemType]}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
+                    {summary && <p className="truncate text-xs text-warm-gray">{summary}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleLibraryClick(item)}
+                    className="btn-primary flex-shrink-0 whitespace-nowrap py-2 px-3 text-xs"
+                  >
+                    {t('add_library_to_project')}
+                  </button>
+                </div>
+              )
+            })
           )}
         </div>
         <div className="border-t border-soft-brown/20 pt-2.5">
@@ -1435,10 +1455,12 @@ function PatternGridReadOnly({ rows, cols, cellDataJson, showSymbols = true }: {
   rows: number; cols: number; cellDataJson: string; showSymbols?: boolean
 }) {
   const { t } = useTranslation()
-  const cells: PatternCell[] = (() => { try { return JSON.parse(cellDataJson) } catch { return [] } })()
-  const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
-  const usedSymbols = new Set(cells.map(c => c.symbol).filter(Boolean))
-  const legendSymbols = STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol))
+  const cells = useMemo<PatternCell[]>(() => {
+    try { return JSON.parse(cellDataJson) } catch { return [] }
+  }, [cellDataJson])
+  const cellMap = useMemo(() => new Map(cells.map(c => [`${c.row},${c.col}`, c])), [cells])
+  const usedSymbols = useMemo(() => new Set(cells.map(c => c.symbol).filter(Boolean)), [cells])
+  const legendSymbols = useMemo(() => STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol)), [usedSymbols])
 
   return (
     <div className="flex gap-4 items-start">

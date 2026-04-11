@@ -42,7 +42,7 @@ export default function ProjectCard({ project, onClick }: { project: Project; on
           )}
         </div>
         {cover ? (
-          <img src={cover} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+          <img src={cover} alt={project.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
         ) : (
           <span className="text-2xl flex-shrink-0">{CATEGORY_ICONS[project.category]}</span>
         )}

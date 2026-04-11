@@ -229,5 +229,6 @@
   "deleting": "Sletter...",
   "upload_failed": "Opplasting feilet. Prøv igjen",
   "save_failed": "Kunne ikke lagre endringer. Prøv igjen",
-  "delete_failed": "Kunne ikke slette. Prøv igjen"
+  "delete_failed": "Kunne ikke slette. Prøv igjen",
+  "load_failed": "Kunne ikke laste data. Prøv igjen"
 }

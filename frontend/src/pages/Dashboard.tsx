@@ -10,7 +10,7 @@ import { useProjectFilter } from '../hooks/useProjectFilter'
 
 
 export default function Dashboard() {
-  const { data: projects, loading } = useAsyncData(() => projectsApi.getAll(), [])
+  const { data: projects, loading, error } = useAsyncData(() => projectsApi.getAll(), [])
   const { filter, setFilter, filtered, counts, newProjectPath } = useProjectFilter(projects)
   const navigate = useNavigate()
   const { t } = useTranslation()
@@ -66,6 +66,8 @@ export default function Dashboard() {
 
         {loading ? (
           <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
         ) : filtered.length === 0 ? (
           <div className="card text-center py-10">
             <p className="text-warm-gray text-sm">{t('no_projects_yet')}</p>
