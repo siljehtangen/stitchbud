@@ -35,6 +35,13 @@ class ProjectService(
     companion object {
         private const val MAX_IMAGES = 3
         private val logger = LoggerFactory.getLogger(ProjectService::class.java)
+        private val ALLOWED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
+        private val ALLOWED_FILE_TYPES = setOf(
+            "image/jpeg", "image/png", "image/webp", "image/gif",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
     }
 
     private fun findProject(id: Long, userId: String): Project =
@@ -251,6 +258,8 @@ class ProjectService(
     }
 
     fun uploadCoverImage(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
+        val contentType = file.contentType ?: ""
+        if (contentType !in ALLOWED_IMAGE_TYPES) throw BadRequestException("Unsupported image type: $contentType")
         val project = findProject(projectId, userId)
         val coverImages = project.images.filter { it.section == "cover" }
         if (coverImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES cover images allowed")
@@ -276,6 +285,8 @@ class ProjectService(
     }
 
     fun uploadFile(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
+        val contentType = file.contentType ?: ""
+        if (contentType !in ALLOWED_FILE_TYPES) throw BadRequestException("Unsupported file type: $contentType")
         val project = findProject(projectId, userId)
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
@@ -337,14 +348,16 @@ class ProjectService(
         fun toImgDto(it: ProjectImage) =
             ProjectImageDto(it.id, it.storedName, it.originalName, it.section, it.materialId, it.isMain, id)
         val coverRows = images.filter { it.section == "cover" }.sortedBy { it.id }
+        // Group material images once (O(M)) so the per-material lookup is O(1) instead of O(M) each
+        val materialImagesByMatId = images
+            .filter { it.section == "material" }
+            .groupBy { it.materialId }
         return ProjectDto(
             id = id, name = name, description = description, category = category,
             tags = tags, notes = notes, recipeText = recipeText, craftDetails = craftDetails,
             coverImages = coverRows.map(::toImgDto),
             materials = materials.map { m ->
-                val matImages = images
-                    .filter { it.section == "material" && it.materialId == m.id }
-                    .sortedBy { it.id }
+                val matImages = (materialImagesByMatId[m.id] ?: emptyList()).sortedBy { it.id }
                 MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit,
                     images = matImages.map(::toImgDto)
                 )

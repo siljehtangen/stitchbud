@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fileUrl } from '../../api'
 import { projectCoverImageUrls, materialImageUrls, uniqueImageUrls } from '../../projectOverviewMedia'
@@ -49,8 +50,19 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
   craftDetails: Record<string, string>; projectId: number
 }) {
   const { t, i18n } = useTranslation()
+  const [exporting, setExporting] = useState(false)
 
   async function downloadOverview() {
+    if (exporting) return
+    setExporting(true)
+    try {
+      await doDownloadOverview()
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  async function doDownloadOverview() {
     const [{ pdf }, { ProjectOverviewPdf }, { fileUrl: fUrl }] = await Promise.all([
       import('@react-pdf/renderer'),
       import('../ProjectPdf'),
@@ -120,8 +132,8 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
   return (
     <div className="space-y-5">
       <div className="flex justify-end">
-        <button onClick={downloadOverview} className="btn-secondary text-sm flex items-center gap-2">
-          <span>↓</span> {t('download_overview')}
+        <button onClick={downloadOverview} disabled={exporting} className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60">
+          <span>↓</span> {exporting ? t('exporting') : t('download_overview')}
         </button>
       </div>
       <Section title={t('section_info')}>

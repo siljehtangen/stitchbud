@@ -5,14 +5,18 @@ import { supabase } from './supabase'
 
 const STORAGE_BUCKET = 'stitchbud-files'
 
-const api = axios.create({ baseURL: '/api' })
+const api = axios.create({ baseURL: '/api', timeout: 15000 })
 
 const projectRes = (p: Project) => normalizeProject(p)
 
 api.interceptors.request.use(async config => {
-  const { data } = await supabase.auth.getSession()
-  if (data.session?.access_token) {
-    config.headers.Authorization = `Bearer ${data.session.access_token}`
+  try {
+    const { data } = await supabase.auth.getSession()
+    if (data.session?.access_token) {
+      config.headers.Authorization = `Bearer ${data.session.access_token}`
+    }
+  } catch {
+    // Session retrieval failed — proceed without auth token; server will 401
   }
   return config
 })
@@ -24,10 +28,14 @@ api.interceptors.response.use(
     const original = error.config
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
-      const { data } = await supabase.auth.refreshSession()
-      if (data.session?.access_token) {
-        original.headers.Authorization = `Bearer ${data.session.access_token}`
-        return api(original)
+      try {
+        const { data } = await supabase.auth.refreshSession()
+        if (data.session?.access_token) {
+          original.headers.Authorization = `Bearer ${data.session.access_token}`
+          return api(original)
+        }
+      } catch {
+        // Refresh threw — fall through to sign-out
       }
       // Refresh failed — sign the user out so they land on the login page
       await supabase.auth.signOut()

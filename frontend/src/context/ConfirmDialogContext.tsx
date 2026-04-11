@@ -46,13 +46,16 @@ function ConfirmDialogModal({
     }
   }, [])
 
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onDismiss()
+      if (e.key === 'Escape') onDismissRef.current()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onDismiss])
+  }, [])
 
   useEffect(() => {
     panelRef.current?.focus()

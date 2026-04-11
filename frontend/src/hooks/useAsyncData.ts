@@ -1,10 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export function useAsyncData<T>(fetchFn: () => Promise<T>, initial: T) {
   const [data, setData] = useState<T>(initial)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const fn = useRef(fetchFn)
+  // Always keep the ref pointing to the latest function so refetch uses fresh closures
+  fn.current = fetchFn
+
+  const [tick, setTick] = useState(0)
+  const refetch = useCallback(() => setTick(t => t + 1), [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -21,7 +26,7 @@ export function useAsyncData<T>(fetchFn: () => Promise<T>, initial: T) {
         if (!controller.signal.aborted) setLoading(false)
       })
     return () => controller.abort()
-  }, [])
+  }, [tick])
 
-  return { data, setData, loading, error }
+  return { data, setData, loading, error, refetch }
 }

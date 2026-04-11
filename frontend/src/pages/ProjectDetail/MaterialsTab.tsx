@@ -18,6 +18,8 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
   const { showToast } = useToast()
   const confirmDelete = useConfirmDelete()
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([])
+  const [libraryLoading, setLibraryLoading] = useState(true)
+  const [libraryError, setLibraryError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [creatingInLib, setCreatingInLib] = useState(false)
   const [newLibType, setNewLibType] = useState<LibraryItemType>('YARN')
@@ -26,7 +28,12 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
   const { filterType, setFilterType, filterColors, setFilterColors, search, setSearch, showColorFilter, availableColors, filtered } = useLibraryFilter(libraryItems)
 
   useEffect(() => {
-    libraryApi.getAll().then(setLibraryItems)
+    setLibraryLoading(true)
+    setLibraryError(false)
+    libraryApi.getAll()
+      .then(setLibraryItems)
+      .catch(() => setLibraryError(true))
+      .finally(() => setLibraryLoading(false))
   }, [])
 
   function handleLibraryClick(item: LibraryItem) {
@@ -184,7 +191,11 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
           </div>
         )}
         <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
-          {filtered.length === 0 ? (
+          {libraryLoading ? (
+            <p className="text-sm text-warm-gray text-center py-3">{t('loading')}</p>
+          ) : libraryError ? (
+            <p className="text-sm text-red-400 text-center py-3">{t('load_failed')}</p>
+          ) : filtered.length === 0 ? (
             <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
           ) : (
             filtered.map(item => {

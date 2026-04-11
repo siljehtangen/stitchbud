@@ -65,10 +65,13 @@ export default function ProjectDetail() {
     }).finally(() => setLoading(false))
   }, [projectId])
 
+  // Sequence counter ensures a slow earlier save never overwrites a newer one
+  const saveSeqRef = useRef(0)
   const autoSave = useDebouncedCallback(async (updates: object) => {
+    const seq = ++saveSeqRef.current
     try {
       const updated = await projectsApi.update(projectId, updates)
-      setProject(updated)
+      if (saveSeqRef.current === seq) setProject(updated)
     } catch {
       showToast(t('save_failed'), 'info')
     }
@@ -147,7 +150,7 @@ export default function ProjectDetail() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2">←</button>
+        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>←</button>
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
           <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>

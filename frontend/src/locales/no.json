@@ -1,4 +1,5 @@
 {
+  "go_back": "Gå tilbake",
   "nav_home": "Hjem",
   "nav_projects": "Prosjekter",
   "nav_library": "Bibliotek",
@@ -120,6 +121,7 @@
   "preset_label": "Forhåndsvalg",
 
   "download_overview": "Last ned oversikt",
+  "exporting": "Eksporterer…",
   "section_info": "Info",
   "section_materials": "Materialer",
   "section_recipe": "Oppskrift",
