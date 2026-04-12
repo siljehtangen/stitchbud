@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PatternCell } from '../../types'
+import { useAutoSave } from '../../hooks/useAutoSave'
 import { STITCH_SYMBOLS } from './constants'
 
 const PALETTE = [
@@ -27,40 +28,104 @@ const CELL_PX_MEDIUM = 20
 const CELL_PX_SMALL = 14
 const COLS_MEDIUM_THRESHOLD = 20
 const COLS_SMALL_THRESHOLD = 35
+const GAP = 1
 
-function GridCanvas({ rows, cols, cells: _cells, cellMap, editing, onCell, showSymbols, usedSymbols, t }: {
-  rows: number; cols: number; cells: PatternCell[]; cellMap: Map<string, PatternCell>
+const GRID_LINE_COLOR = '#E8DDD0'
+const DEFAULT_CELL_COLOR = '#F5F0E8'
+
+function GridCanvas({ rows, cols, cellMap, editing, onCell, showSymbols, usedSymbols, t }: {
+  rows: number; cols: number; cellMap: Map<string, PatternCell>
   editing: boolean; onCell: (r: number, c: number) => void
   showSymbols: boolean; usedSymbols: Set<string>
   t: TFn
 }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isDrawingRef = useRef(false)
+  const lastCellRef = useRef<string | null>(null)
+
   const cellPx = cols <= COLS_MEDIUM_THRESHOLD ? CELL_PX_LARGE : cols <= COLS_SMALL_THRESHOLD ? CELL_PX_MEDIUM : CELL_PX_SMALL
+  const canvasW = cols * (cellPx + GAP) - GAP + 2
+  const canvasH = rows * (cellPx + GAP) - GAP + 2
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = canvasW * dpr
+    canvas.height = canvasH * dpr
+    canvas.style.width = `${canvasW}px`
+    canvas.style.height = `${canvasH}px`
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(dpr, dpr)
+
+    // Grid line background
+    ctx.fillStyle = GRID_LINE_COLOR
+    ctx.fillRect(0, 0, canvasW, canvasH)
+
+    // Draw each cell
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = cellMap.get(`${r},${c}`)
+        const x = 1 + c * (cellPx + GAP)
+        const y = 1 + r * (cellPx + GAP)
+        ctx.fillStyle = cell?.color ?? DEFAULT_CELL_COLOR
+        ctx.fillRect(x, y, cellPx, cellPx)
+        if (cell?.symbol && cellPx >= 20) {
+          ctx.fillStyle = 'rgba(30, 20, 10, 0.75)'
+          ctx.font = `bold 9px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText(cell.symbol, x + cellPx / 2, y + cellPx / 2)
+        }
+      }
+    }
+  }, [rows, cols, cellMap, cellPx, canvasW, canvasH])
+
+  function hitCell(e: React.MouseEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left - 1
+    const y = e.clientY - rect.top - 1
+    const c = Math.floor(x / (cellPx + GAP))
+    const r = Math.floor(y / (cellPx + GAP))
+    if (r >= 0 && r < rows && c >= 0 && c < cols) return { r, c }
+    return null
+  }
+
+  function handleMouseDown(e: React.MouseEvent<HTMLCanvasElement>) {
+    isDrawingRef.current = true
+    lastCellRef.current = null
+    const hit = hitCell(e)
+    if (hit) {
+      lastCellRef.current = `${hit.r},${hit.c}`
+      onCell(hit.r, hit.c)
+    }
+  }
+
+  function handleMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
+    if (!isDrawingRef.current) return
+    const hit = hitCell(e)
+    if (hit) {
+      const key = `${hit.r},${hit.c}`
+      if (key !== lastCellRef.current) {
+        lastCellRef.current = key
+        onCell(hit.r, hit.c)
+      }
+    }
+  }
+
+  function stopDrawing() { isDrawingRef.current = false }
+
   return (
     <div className="flex gap-4 items-start">
       <div className="overflow-auto">
-        <div
-          className="inline-grid gap-px bg-soft-brown/20 border border-soft-brown/20 rounded-lg p-px"
-          style={{ gridTemplateColumns: `repeat(${cols}, ${cellPx}px)` }}
-        >
-          {Array.from({ length: rows }, (_, r) =>
-            Array.from({ length: cols }, (_, c) => {
-              const cell = cellMap.get(`${r},${c}`)
-              const inner = cell?.symbol && cellPx >= 20
-                ? <span className="text-[9px] font-bold leading-none select-none">{cell.symbol}</span>
-                : null
-              return editing ? (
-                <button key={`${r}-${c}`} onClick={() => onCell(r, c)}
-                  className="flex items-center justify-center hover:opacity-75 transition-opacity"
-                  style={{ backgroundColor: cell?.color ?? '#F5F0E8', width: cellPx, height: cellPx }}
-                >{inner}</button>
-              ) : (
-                <div key={`${r}-${c}`} className="flex items-center justify-center"
-                  style={{ backgroundColor: cell?.color ?? '#F5F0E8', width: cellPx, height: cellPx }}
-                >{inner}</div>
-              )
-            })
-          )}
-        </div>
+        <canvas
+          ref={canvasRef}
+          className={`rounded-lg block${editing ? ' cursor-crosshair' : ''}`}
+          onMouseDown={editing ? handleMouseDown : undefined}
+          onMouseMove={editing ? handleMouseMove : undefined}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+        />
       </div>
 
       {showSymbols && (editing || usedSymbols.size > 0) && (
@@ -95,36 +160,12 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
   const [selectedColor, setSelectedColor] = useState('#C6D8B8')
   const [selectedSymbol, setSelectedSymbol] = useState('O')
   const [mode, setMode] = useState<'color' | 'symbol' | 'erase'>('color')
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pendingFlush = useRef<(() => void) | null>(null)
 
-  useEffect(() => {
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-      pendingFlush.current?.()
-    }
-  }, [])
+  const [autoSave, flushSave] = useAutoSave((newCells: PatternCell[], r: number, c: number) => {
+    onSave(newCells, r, c)
+  }, 600)
 
   const cellMap = useMemo(() => new Map(cells.map(c => [`${c.row},${c.col}`, c])), [cells])
-
-  function autoSave(newCells: PatternCell[], r: number, c: number) {
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    pendingFlush.current = () => onSave(newCells, r, c)
-    saveTimer.current = setTimeout(() => {
-      onSave(newCells, r, c)
-      pendingFlush.current = null
-    }, 600)
-  }
-
-  function flushAndStopEditing() {
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current)
-      saveTimer.current = null
-    }
-    pendingFlush.current?.()
-    pendingFlush.current = null
-    setEditing(false)
-  }
 
   function handleCell(row: number, col: number) {
     if (!editing) return
@@ -134,13 +175,18 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
       next = cells.filter(c => !(c.row === row && c.col === col))
     } else if (mode === 'symbol') {
       next = cells.filter(c => !(c.row === row && c.col === col))
-      next.push({ row, col, color: existing?.color ?? '#F5F0E8', symbol: selectedSymbol })
+      next.push({ row, col, color: existing?.color ?? DEFAULT_CELL_COLOR, symbol: selectedSymbol })
     } else {
       next = cells.filter(c => !(c.row === row && c.col === col))
       next.push({ row, col, color: selectedColor, symbol: existing?.symbol ?? '' })
     }
     setCells(next)
     autoSave(next, rows, cols)
+  }
+
+  function flushAndStopEditing() {
+    flushSave()
+    setEditing(false)
   }
 
   function applyResize(newRows: number, newCols: number) {
@@ -226,7 +272,7 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
       )}
 
       <GridCanvas
-        rows={rows} cols={cols} cells={cells} cellMap={cellMap}
+        rows={rows} cols={cols} cellMap={cellMap}
         editing={editing} onCell={handleCell}
         showSymbols={showSymbols} usedSymbols={usedSymbols}
         t={t}

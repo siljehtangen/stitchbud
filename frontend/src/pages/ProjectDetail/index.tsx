@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo, type ChangeEvent } from 'react'
+import { useEffect, useState, useRef, useMemo, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
@@ -32,33 +32,28 @@ export default function ProjectDetail() {
   const [tab, setTab] = useState<Tab>('info')
   const projectId = parseInt(id!)
 
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [notes, setNotes] = useState('')
-  const [tags, setTags] = useState('')
-  const [recipeText, setRecipeText] = useState('')
+
+  const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '' })
+  const textRef = useRef(textFields)
+
   const [craftDetails, setCraftDetails] = useState<Record<string, string>>({})
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const coverImageRef = useRef<HTMLInputElement>(null)
-  const [uploadingCover, setUploadingCover] = useState(false)
-  const [coverImageError, setCoverImageError] = useState('')
+  const [coverState, setCoverState] = useState({ uploading: false, error: '' })
 
-  // Refs always hold the latest field values so the debounced save never reads stale closures
-  const nameRef = useRef(name)
-  const descriptionRef = useRef(description)
-  const notesRef = useRef(notes)
-  const tagsRef = useRef(tags)
-  const recipeTextRef = useRef(recipeText)
+  function setTextField(field: keyof typeof textFields, value: string) {
+    const next = { ...textRef.current, [field]: value }
+    textRef.current = next
+    setTextFields(next)
+  }
 
   useEffect(() => {
     projectsApi.getOne(projectId).then(p => {
+      const fields = { name: p.name, description: p.description, notes: p.notes, tags: p.tags, recipeText: p.recipeText }
+      textRef.current = fields
+      setTextFields(fields)
       setProject(p)
-      setName(p.name); nameRef.current = p.name
-      setDescription(p.description); descriptionRef.current = p.description
-      setNotes(p.notes); notesRef.current = p.notes
-      setTags(p.tags); tagsRef.current = p.tags
-      setRecipeText(p.recipeText); recipeTextRef.current = p.recipeText
       try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch { setCraftDetails({}) }
       setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
       setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
@@ -78,11 +73,6 @@ export default function ProjectDetail() {
   }, 800)
 
   function handleInfoChange(field: string, value: string) {
-    if (field === 'name') { setName(value); nameRef.current = value }
-    if (field === 'description') { setDescription(value); descriptionRef.current = value }
-    if (field === 'notes') { setNotes(value); notesRef.current = value }
-    if (field === 'tags') { setTags(value); tagsRef.current = value }
-    if (field === 'recipeText') { setRecipeText(value); recipeTextRef.current = value }
     if (field === 'startDate') {
       setStartDate(value)
       autoSave({ startDate: value ? new Date(value).getTime() : undefined })
@@ -93,29 +83,22 @@ export default function ProjectDetail() {
       autoSave(value ? { endDate: new Date(value).getTime() } : { clearEndDate: true })
       return
     }
-    autoSave({
-      name: nameRef.current,
-      description: descriptionRef.current,
-      notes: notesRef.current,
-      tags: tagsRef.current,
-      recipeText: recipeTextRef.current,
-      [field]: value,
-    })
+    setTextField(field as keyof typeof textFields, value)
+    autoSave({ ...textRef.current, [field]: value })
   }
 
   async function handleCoverImageUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setCoverImageError('')
-    setUploadingCover(true)
+    setCoverState({ uploading: true, error: '' })
     try {
       const updated = await projectsApi.uploadCoverImage(projectId, file)
       setProject(updated)
       showToast(t('cover_added_toast'))
     } catch {
-      setCoverImageError(t('upload_failed'))
+      setCoverState(s => ({ ...s, error: t('upload_failed') }))
     } finally {
-      setUploadingCover(false)
+      setCoverState(s => ({ ...s, uploading: false }))
       if (coverImageRef.current) coverImageRef.current.value = ''
     }
   }
@@ -179,7 +162,7 @@ export default function ProjectDetail() {
             <CoverImageGallery
               items={(project.coverImages ?? []).map(img => ({ key: img.id, src: img.storedName, name: img.originalName, isMain: img.isMain }))}
               max={MAX_LIBRARY_PHOTOS}
-              uploading={uploadingCover}
+              uploading={coverState.uploading}
               onSetMain={async key => setProject(await projectsApi.setCoverImageMain(projectId, key as number))}
               onRemove={key => confirmDelete(
                 t('delete_cover_image_confirm'),
@@ -190,15 +173,15 @@ export default function ProjectDetail() {
               )}
               onAdd={() => coverImageRef.current?.click()}
             />
-            {coverImageError && <p className="text-xs text-red-500">{coverImageError}</p>}
+            {coverState.error && <p className="text-xs text-red-500">{coverState.error}</p>}
             <input ref={coverImageRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleCoverImageUpload} className="hidden" />
           </div>
 
           <Field label={t('field_name')}>
-            <input className="input" value={name} onChange={e => handleInfoChange('name', e.target.value)} />
+            <input className="input" value={textFields.name} onChange={e => handleInfoChange('name', e.target.value)} />
           </Field>
           <Field label={t('field_description')}>
-            <textarea className="textarea" rows={4} value={description} onChange={e => handleInfoChange('description', e.target.value)} placeholder={t('describe_project')} />
+            <textarea className="textarea" rows={4} value={textFields.description} onChange={e => handleInfoChange('description', e.target.value)} placeholder={t('describe_project')} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('start_date_label')}>
@@ -218,7 +201,7 @@ export default function ProjectDetail() {
 
       {tab === 'recipe' && (
         <RecipeTab
-          recipeText={recipeText}
+          recipeText={textFields.recipeText}
           files={project.files}
           projectId={projectId}
           onUpdate={setProject}
@@ -233,7 +216,7 @@ export default function ProjectDetail() {
       {tab === 'overview' && (
         <OverviewTab
           project={project}
-          name={name} description={description} recipeText={recipeText}
+          name={textFields.name} description={textFields.description} recipeText={textFields.recipeText}
           craftDetails={craftDetails}
           projectId={projectId}
         />

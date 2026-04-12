@@ -75,18 +75,10 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
       })
       const newMat = updated.materials.reduce((a, b) => (a.id > b.id ? a : b))
       if (libImgs.length > 0) {
-        updated = await projectsApi.registerMaterialImageByUrl(
-          projectId,
-          newMat.id,
-          libImgs[0].storedName,
-          libImgs[0].originalName || 'image',
-        )
-        if (libImgs.length > 1) {
-          await Promise.all(libImgs.slice(1).map(img =>
-            projectsApi.registerMaterialImageByUrl(projectId, newMat.id, img.storedName, img.originalName || 'image')
-          ))
-          updated = await projectsApi.getOne(projectId)
-        }
+        await Promise.all(libImgs.map(img =>
+          projectsApi.registerMaterialImageByUrl(projectId, newMat.id, img.storedName, img.originalName || 'image')
+        ))
+        updated = await projectsApi.getOne(projectId)
       }
       onUpdate(updated)
       setPendingItem(null)
