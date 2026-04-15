@@ -112,6 +112,7 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
           gridNumber: (n) => t('pdf_grid_number', { number: n }),
           gridClipped: (rows, cols) => t('pdf_grid_clipped', { rows, cols }),
           footer: t('pdf_footer'),
+          createdBy: t('pdf_created_by'),
         }}
       />
     )

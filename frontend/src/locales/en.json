@@ -137,6 +137,7 @@
   "section_pattern_grid": "Pattern Grid",
   "pdf_grid_number": "Grid {{number}}",
   "pdf_grid_clipped": "Grid clipped to {{rows}}×{{cols}} for PDF.",
+  "pdf_created_by": "Created by",
   "pdf_footer": "Exported from Stitchbud",
 
   "field_name": "Name",

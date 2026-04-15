@@ -137,6 +137,7 @@
   "section_pattern_grid": "Mønsterrutenett",
   "pdf_grid_number": "Rutenett {{number}}",
   "pdf_grid_clipped": "Rutenett begrenset til {{rows}}×{{cols}} for PDF.",
+  "pdf_created_by": "Lagd av",
   "pdf_footer": "Eksportert fra Stitchbud",
 
   "field_name": "Navn",

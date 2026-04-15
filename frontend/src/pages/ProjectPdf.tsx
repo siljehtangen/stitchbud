@@ -53,6 +53,7 @@ export interface PdfLabels {
   gridNumber: (n: number) => string
   gridClipped: (rows: number, cols: number) => string
   footer: string
+  createdBy: string
 }
 
 export interface PdfProps {
@@ -105,8 +106,18 @@ export function ProjectOverviewPdf({
   return (
     <Document>
       <Page size="A4" style={S.page}>
-        <Text style={S.h1}>{name}</Text>
-        <Text style={S.meta}>{categoryLabel}{ownerLabel ? `  ·  ${ownerLabel}` : ''}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1 }}>
+            <Text style={S.h1}>{name}</Text>
+            <Text style={S.meta}>{categoryLabel}</Text>
+          </View>
+          {ownerLabel && (
+            <View style={{ alignItems: 'flex-end', paddingLeft: 12 }}>
+              <Text style={{ fontSize: 7.5, color: '#aaa', fontFamily: 'Helvetica' }}>{labels.createdBy}</Text>
+              <Text style={{ fontSize: 9, color: '#555', fontFamily: 'Helvetica-Bold' }}>{ownerLabel}</Text>
+            </View>
+          )}
+        </View>
 
         <View style={S.coverImages}>
           {coverUrls.map((url, i) => (
