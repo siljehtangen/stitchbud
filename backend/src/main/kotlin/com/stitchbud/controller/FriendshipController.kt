@@ -64,4 +64,8 @@ class FriendshipController(private val friendshipService: FriendshipService) {
     @GetMapping("/{friendUserId}/projects")
     fun getFriendProjects(@PathVariable friendUserId: String) =
         friendshipService.getFriendPublicProjects(userId(), friendUserId)
+
+    @GetMapping("/{friendUserId}/projects/{projectId}")
+    fun getFriendProject(@PathVariable friendUserId: String, @PathVariable projectId: Long) =
+        friendshipService.getFriendProject(userId(), friendUserId, projectId)
 }

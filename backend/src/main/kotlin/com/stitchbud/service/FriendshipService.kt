@@ -1,10 +1,13 @@
 package com.stitchbud.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.stitchbud.controller.BadRequestException
 import com.stitchbud.controller.NotFoundException
 import com.stitchbud.dto.*
 import com.stitchbud.model.Friendship
 import com.stitchbud.model.FriendshipStatus
+import com.stitchbud.model.ProjectImage
 import com.stitchbud.model.UserProfile
 import com.stitchbud.repository.FriendshipRepository
 import com.stitchbud.repository.ProjectRepository
@@ -17,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional
 class FriendshipService(
     private val friendshipRepository: FriendshipRepository,
     private val userProfileRepository: UserProfileRepository,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val objectMapper: ObjectMapper
 ) {
     fun upsertProfile(userId: String, email: String, displayName: String?): UserProfileDto {
         val profile = userProfileRepository.findById(userId).orElse(
@@ -94,26 +98,45 @@ class FriendshipService(
 
     @Transactional(readOnly = true)
     fun getFriendPublicProjects(requesterId: String, friendUserId: String): List<ProjectDto> {
-        // Verify they are friends
-        val friendship = friendshipRepository.findBetween(requesterId, friendUserId)
-            .orElseThrow { BadRequestException("Dere er ikke venner.") }
-        if (friendship.status != FriendshipStatus.ACCEPTED) throw BadRequestException("Vennskapet er ikke akseptert.")
-
+        verifyFriendship(requesterId, friendUserId)
         return projectRepository.findPublicProjectsByUserId(friendUserId).map { it.toPublicDto() }
     }
 
+    @Transactional(readOnly = true)
+    fun getFriendProject(requesterId: String, friendUserId: String, projectId: Long): ProjectDto {
+        verifyFriendship(requesterId, friendUserId)
+        val project = projectRepository.findById(projectId)
+            .orElseThrow { NotFoundException("Prosjektet finnes ikke.") }
+        if (project.userId != friendUserId) throw NotFoundException("Prosjektet finnes ikke.")
+        if (!project.isPublic) throw BadRequestException("Prosjektet er ikke offentlig.")
+        return project.toPublicDto()
+    }
+
+    private fun verifyFriendship(requesterId: String, friendUserId: String) {
+        val friendship = friendshipRepository.findBetween(requesterId, friendUserId)
+            .orElseThrow { BadRequestException("Dere er ikke venner.") }
+        if (friendship.status != FriendshipStatus.ACCEPTED) throw BadRequestException("Vennskapet er ikke akseptert.")
+    }
+
     private fun com.stitchbud.model.Project.toPublicDto(): ProjectDto {
-        val coverImages = images.filter { it.section == "cover" }.sortedBy { it.id }.map { img ->
+        fun toImgDto(img: ProjectImage) =
             ProjectImageDto(img.id, img.storedName, img.originalName, img.section, img.materialId, img.isMain, id)
-        }
+        val coverImages = images.filter { it.section == "cover" }.sortedBy { it.id }.map(::toImgDto)
+        val materialImagesByMatId = images.filter { it.section == "material" }.groupBy { it.materialId }
         return ProjectDto(
             id = id, name = name, description = description, category = category,
-            tags = tags, notes = "", recipeText = "",
-            pinterestBoardUrls = emptyList(),
+            tags = tags, notes = "", recipeText = recipeText,
+            pinterestBoardUrls = runCatching { objectMapper.readValue<List<String>>(pinterestBoardUrls) }.getOrDefault(emptyList()),
             craftDetails = craftDetails,
             coverImages = coverImages,
-            materials = emptyList(), files = emptyList(),
-            rowCounter = null, patternGrids = emptyList(),
+            materials = materials.map { m ->
+                val matImages = (materialImagesByMatId[m.id] ?: emptyList()).sortedBy { it.id }
+                MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit,
+                    images = matImages.map(::toImgDto))
+            },
+            files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
+            rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
+            patternGrids = patternGrids.sortedBy { it.id }.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
             startDate = startDate, endDate = endDate,
             isPublic = isPublic,
             createdAt = createdAt, updatedAt = updatedAt,
