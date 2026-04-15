@@ -30,6 +30,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('info')
+  const [isPublic, setIsPublic] = useState(false)
   const projectId = parseInt(id!)
 
 
@@ -55,6 +56,7 @@ export default function ProjectDetail() {
       setPinterestBoardUrls(p.pinterestBoardUrls ?? [])
       textRef.current = fields
       setTextFields(fields)
+      setIsPublic(p.isPublic ?? false)
       setProject(p)
       try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch { setCraftDetails({}) }
       setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
@@ -145,6 +147,23 @@ export default function ProjectDetail() {
           <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
           <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
         </div>
+        <button
+          onClick={async () => {
+            const next = !isPublic
+            setIsPublic(next)
+            try {
+              const updated = await projectsApi.update(projectId, { isPublic: next })
+              setProject(updated)
+            } catch {
+              setIsPublic(!next)
+            }
+          }}
+          title={isPublic ? t('project_public') : t('project_private')}
+          className="text-xl px-1 py-1 text-warm-gray hover:text-gray-700 transition-colors"
+          aria-label={isPublic ? t('project_public') : t('project_private')}
+        >
+          {isPublic ? '🌍' : '🔒'}
+        </button>
         <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">{t('delete')}</button>
       </div>
 

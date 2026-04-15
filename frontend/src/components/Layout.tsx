@@ -14,6 +14,7 @@ export default function Layout() {
     { to: '/home', label: t('nav_home'), icon: <FaHome />, exact: true },
     { to: '/projects', label: t('nav_projects'), icon: <GrProjects />, exact: false },
     { to: '/library', label: t('nav_library'), icon: <ImBooks />, exact: false },
+    { to: '/friends', label: t('nav_friends'), icon: <LiaUserFriendsSolid />, exact: false },
     { to: '/profile', label: t('nav_profile'), icon: <FaUser />, exact: false },
   ]
 

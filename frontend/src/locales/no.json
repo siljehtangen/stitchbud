@@ -237,5 +237,27 @@
   "upload_failed": "Opplasting feilet. Prøv igjen",
   "save_failed": "Kunne ikke lagre endringer. Prøv igjen",
   "delete_failed": "Kunne ikke slette. Prøv igjen",
-  "load_failed": "Kunne ikke laste data. Prøv igjen"
+  "load_failed": "Kunne ikke laste data. Prøv igjen",
+
+  "project_private": "Privat – kun synlig for deg",
+  "project_public": "Offentlig – synlig for venner",
+
+  "nav_friends": "Venner",
+
+  "friends_add_heading": "Legg til venn",
+  "friends_add_hint": "Skriv inn e-postadressen til en Stitchbud-bruker for å sende en venneforespørsel.",
+  "friends_email_placeholder": "venn@eksempel.no",
+  "friends_send_btn": "Send forespørsel",
+  "friends_sending": "Sender...",
+  "friends_request_sent": "Venneforespørsel sendt!",
+  "friends_request_failed": "Kunne ikke sende forespørsel. Prøv igjen.",
+  "friends_requests_heading": "Venneforespørsler",
+  "friends_accept": "Godta",
+  "friends_decline": "Avslå",
+  "friends_accepted": "Venn lagt til!",
+  "friends_action_failed": "Noe gikk galt. Prøv igjen.",
+  "friends_list_heading": "Venner",
+  "friends_empty": "Du har ingen venner ennå. Send en forespørsel ovenfor!",
+  "friends_remove": "Fjern venn",
+  "friends_no_public_projects": "Denne vennen har ingen offentlige prosjekter ennå."
 }

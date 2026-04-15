@@ -91,8 +91,25 @@ export interface Project {
   patternGrids: PatternGrid[]
   startDate?: number
   endDate?: number
+  isPublic: boolean
+  userId?: string
   createdAt: number
   updatedAt: number
+}
+
+export interface Friend {
+  friendshipId: number
+  userId: string
+  displayName: string | null
+  email: string
+}
+
+export interface FriendRequest {
+  friendshipId: number
+  requesterId: string
+  requesterDisplayName: string | null
+  requesterEmail: string
+  createdAt: number
 }
 
 export interface PatternCell {

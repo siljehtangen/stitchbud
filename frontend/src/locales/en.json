@@ -237,5 +237,27 @@
   "upload_failed": "Upload failed. Please try again",
   "save_failed": "Could not save changes. Please try again",
   "delete_failed": "Could not delete. Please try again",
-  "load_failed": "Could not load data. Please try again"
+  "load_failed": "Could not load data. Please try again",
+
+  "project_private": "Private – only visible to you",
+  "project_public": "Public – visible to friends",
+
+  "nav_friends": "Friends",
+
+  "friends_add_heading": "Add a friend",
+  "friends_add_hint": "Enter the email address of a Stitchbud user to send them a friend request.",
+  "friends_email_placeholder": "friend@example.com",
+  "friends_send_btn": "Send request",
+  "friends_sending": "Sending...",
+  "friends_request_sent": "Friend request sent!",
+  "friends_request_failed": "Could not send request. Please try again.",
+  "friends_requests_heading": "Friend requests",
+  "friends_accept": "Accept",
+  "friends_decline": "Decline",
+  "friends_accepted": "Friend added!",
+  "friends_action_failed": "Something went wrong. Please try again.",
+  "friends_list_heading": "Friends",
+  "friends_empty": "You have no friends yet. Send a request above!",
+  "friends_remove": "Remove friend",
+  "friends_no_public_projects": "This friend has no public projects yet."
 }

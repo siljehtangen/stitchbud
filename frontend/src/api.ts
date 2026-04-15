@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { Project, ProjectCategory, LibraryItem } from './types'
+import type { Project, ProjectCategory, LibraryItem, Friend, FriendRequest } from './types'
 import { normalizeProject } from './projectOverviewMedia'
 import { supabase } from './supabase'
 
@@ -69,7 +69,7 @@ export const projectsApi = {
     return projectRes(r.data)
   },
 
-  update: async (id: number, data: Partial<{ name: string; description: string; tags: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean }>): Promise<Project> => {
+  update: async (id: number, data: Partial<{ name: string; description: string; tags: string; notes: string; recipeText: string; craftDetails: string; startDate: number; endDate: number; clearEndDate: boolean; isPublic: boolean }>): Promise<Project> => {
     const r = await api.put<Project>(`/projects/${id}`, data)
     return projectRes(r.data)
   },
@@ -218,4 +218,32 @@ export const fileUrl = (projectId: number, storedName: string) =>
 export const accountApi = {
   deleteAccount: () => api.delete('/projects/account'),
   resetData: () => api.delete('/projects/account/data'),
+}
+
+export const usersApi = {
+  syncMe: () => api.put('/users/me'),
+}
+
+export const friendsApi = {
+  getFriends: async (): Promise<Friend[]> => {
+    const r = await api.get<Friend[]>('/friends')
+    return r.data
+  },
+  getPendingRequests: async (): Promise<FriendRequest[]> => {
+    const r = await api.get<FriendRequest[]>('/friends/requests')
+    return r.data
+  },
+  sendRequest: async (email: string): Promise<Friend> => {
+    const r = await api.post<Friend>('/friends/request', { email })
+    return r.data
+  },
+  acceptRequest: async (friendshipId: number): Promise<Friend> => {
+    const r = await api.put<Friend>(`/friends/${friendshipId}/accept`)
+    return r.data
+  },
+  remove: (friendshipId: number) => api.delete(`/friends/${friendshipId}`),
+  getFriendProjects: async (friendUserId: string): Promise<Project[]> => {
+    const r = await api.get<Project[]>(`/friends/${friendUserId}/projects`)
+    return r.data.map(p => normalizeProject(p))
+  },
 }

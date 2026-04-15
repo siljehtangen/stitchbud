@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
+import { usersApi } from '../api'
 
 interface AuthContextType {
   user: User | null
@@ -28,6 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) {
+        // Sync user profile to backend so friend requests by email work
+        usersApi.syncMe().catch(() => {})
+      }
     })
 
     return () => subscription.unsubscribe()
