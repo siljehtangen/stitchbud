@@ -45,9 +45,9 @@ async function fetchAsJpegDataUri(url: string): Promise<string> {
   })
 }
 
-export function OverviewTab({ project, name, description, recipeText, craftDetails, projectId }: {
+export function OverviewTab({ project, name, description, recipeText, craftDetails, projectId, ownerLabel }: {
   project: Project; name: string; description: string; recipeText: string
-  craftDetails: Record<string, string>; projectId: number
+  craftDetails: Record<string, string>; projectId: number; ownerLabel?: string
 }) {
   const { t, i18n } = useTranslation()
   const [exporting, setExporting] = useState(false)
@@ -103,6 +103,7 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
         categoryLabel={t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])}
         language={i18n.language}
         imageData={imageData}
+        ownerLabel={ownerLabel}
         labels={{
           info: t('section_info'),
           materials: t('section_materials'),

@@ -8,7 +8,7 @@ import type { Project, ProjectFile } from '../../types'
 import { Field } from '../../components/LibraryItemForm'
 import { FilePreviewModal } from './FilePreviewModal'
 
-function PinterestBoardEmbed({ url }: { url: string }) {
+export function PinterestBoardEmbed({ url }: { url: string }) {
   const embedRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
