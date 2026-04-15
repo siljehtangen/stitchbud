@@ -12,6 +12,9 @@ interface ProjectRepository : JpaRepository<Project, Long> {
     fun findByUserIdAndCategory(userId: String, category: ProjectCategory): List<Project>
     fun findByIdAndUserId(id: Long, userId: String): Optional<Project>
 
+    @Query("SELECT p FROM Project p WHERE p.userId = :userId AND p.isPublic = true ORDER BY p.updatedAt DESC")
+    fun findPublicProjectsByUserId(userId: String): List<Project>
+
     @Modifying
     @Query("DELETE FROM Project p WHERE p.userId = :userId")
     fun deleteAllByUserId(userId: String)
