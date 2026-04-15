@@ -246,4 +246,8 @@ export const friendsApi = {
     const r = await api.get<Project[]>(`/friends/${friendUserId}/projects`)
     return r.data.map(p => normalizeProject(p))
   },
+  getFriendProject: async (friendUserId: string, projectId: number): Promise<Project> => {
+    const r = await api.get<Project>(`/friends/${friendUserId}/projects/${projectId}`)
+    return normalizeProject(r.data)
+  },
 }

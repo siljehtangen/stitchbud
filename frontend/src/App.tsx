@@ -16,6 +16,7 @@ const Library = lazy(() => import('./pages/Library'))
 const AuthPage = lazy(() => import('./pages/AuthPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const FriendsPage = lazy(() => import('./pages/FriendsPage'))
+const FriendProjectDetail = lazy(() => import('./pages/FriendProjectDetail'))
 
 function PageLoader() {
   return <div className="flex items-center justify-center min-h-screen"><div className="w-6 h-6 border-2 border-sand-green border-t-transparent rounded-full animate-spin" /></div>
@@ -47,6 +48,7 @@ export default function App() {
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/library" element={<Library />} />
                 <Route path="/friends" element={<FriendsPage />} />
+                <Route path="/friends/:friendUserId/projects/:projectId" element={<FriendProjectDetail />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
             </Routes>
