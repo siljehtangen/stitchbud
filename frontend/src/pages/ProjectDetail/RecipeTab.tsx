@@ -42,9 +42,11 @@ function PinterestBoardEmbed({ url }: { url: string }) {
   )
 }
 
-export function RecipeTab({ recipeText, pinterestBoardUrl, files, projectId, onUpdate, onRecipeChange, onPinterestChange }: {
-  recipeText: string; pinterestBoardUrl: string; files: ProjectFile[]; projectId: number
-  onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void; onPinterestChange: (v: string) => void
+const MAX_PINTEREST_BOARDS = 3
+
+export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, onUpdate, onRecipeChange, onPinterestChange }: {
+  recipeText: string; pinterestBoardUrls: string[]; files: ProjectFile[]; projectId: number
+  onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void; onPinterestChange: (urls: string[]) => void
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
@@ -109,18 +111,50 @@ export function RecipeTab({ recipeText, pinterestBoardUrl, files, projectId, onU
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">{t('pinterest_label')}</span>
+          {pinterestBoardUrls.length < MAX_PINTEREST_BOARDS && (
+            <button
+              onClick={() => onPinterestChange([...pinterestBoardUrls, ''])}
+              className="btn-secondary text-xs py-1.5 px-3"
+            >
+              {t('pinterest_add')}
+            </button>
+          )}
         </div>
-        <input
-          className="input"
-          type="url"
-          value={pinterestBoardUrl}
-          onChange={e => onPinterestChange(e.target.value)}
-          placeholder={t('pinterest_placeholder')}
-        />
-        {pinterestBoardUrl && (
-          <div className="mt-3">
-            <PinterestBoardEmbed url={pinterestBoardUrl} />
-            <p className="text-xs text-warm-gray mt-1">{t('pinterest_hint')}</p>
+
+        {pinterestBoardUrls.length === 0 ? (
+          <div className="text-center py-6 border-2 border-dashed border-soft-brown/30 rounded-xl">
+            <p className="text-sm text-warm-gray">{t('pinterest_empty')}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {pinterestBoardUrls.map((url, i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex gap-2 items-center">
+                  <input
+                    className="input flex-1"
+                    type="url"
+                    value={url}
+                    onChange={e => {
+                      const next = [...pinterestBoardUrls]
+                      next[i] = e.target.value
+                      onPinterestChange(next)
+                    }}
+                    placeholder={t('pinterest_placeholder')}
+                  />
+                  <button
+                    onClick={() => onPinterestChange(pinterestBoardUrls.filter((_, j) => j !== i))}
+                    className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+                    title={t('delete')}
+                  >×</button>
+                </div>
+                {url && (
+                  <div>
+                    <PinterestBoardEmbed url={url} />
+                    <p className="text-xs text-warm-gray mt-1">{t('pinterest_hint')}</p>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

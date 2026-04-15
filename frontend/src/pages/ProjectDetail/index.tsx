@@ -33,7 +33,8 @@ export default function ProjectDetail() {
   const projectId = parseInt(id!)
 
 
-  const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '', pinterestBoardUrl: '' })
+  const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '' })
+  const [pinterestBoardUrls, setPinterestBoardUrls] = useState<string[]>([])
   const textRef = useRef(textFields)
 
   const [craftDetails, setCraftDetails] = useState<Record<string, string>>({})
@@ -50,7 +51,8 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     projectsApi.getOne(projectId).then(p => {
-      const fields = { name: p.name, description: p.description, notes: p.notes, tags: p.tags, recipeText: p.recipeText, pinterestBoardUrl: p.pinterestBoardUrl ?? '' }
+      const fields = { name: p.name, description: p.description, notes: p.notes, tags: p.tags, recipeText: p.recipeText }
+      setPinterestBoardUrls(p.pinterestBoardUrls ?? [])
       textRef.current = fields
       setTextFields(fields)
       setProject(p)
@@ -71,6 +73,11 @@ export default function ProjectDetail() {
       showToast(t('save_failed'), 'info')
     }
   }, 800)
+
+  function handlePinterestChange(urls: string[]) {
+    setPinterestBoardUrls(urls)
+    autoSave({ pinterestBoardUrls: urls })
+  }
 
   function handleInfoChange(field: string, value: string) {
     if (field === 'startDate') {
@@ -202,12 +209,12 @@ export default function ProjectDetail() {
       {tab === 'recipe' && (
         <RecipeTab
           recipeText={textFields.recipeText}
-          pinterestBoardUrl={textFields.pinterestBoardUrl}
+          pinterestBoardUrls={pinterestBoardUrls}
           files={project.files}
           projectId={projectId}
           onUpdate={setProject}
           onRecipeChange={v => handleInfoChange('recipeText', v)}
-          onPinterestChange={v => handleInfoChange('pinterestBoardUrl', v)}
+          onPinterestChange={handlePinterestChange}
         />
       )}
 

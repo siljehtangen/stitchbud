@@ -83,7 +83,7 @@ export interface Project {
   coverImages: ProjectImage[]
   notes: string
   recipeText: string
-  pinterestBoardUrl: string
+  pinterestBoardUrls: string[]
   craftDetails: string
   materials: Material[]
   files: ProjectFile[]

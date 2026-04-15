@@ -77,9 +77,11 @@
 
   "recipe_label": "Recipe and notes",
   "recipe_placeholder": "Write here...",
-  "pinterest_label": "Pinterest board",
+  "pinterest_label": "Pinterest boards",
   "pinterest_placeholder": "Paste a Pinterest board URL, e.g. https://www.pinterest.com/username/boardname/",
   "pinterest_hint": "Click any pin to open it on Pinterest in a new tab.",
+  "pinterest_add": "+ Add board",
+  "pinterest_empty": "No boards added yet. Add up to 3 Pinterest boards.",
   "attachments_label": "Attachments",
   "uploading": "Uploading...",
   "upload_file": "+ Upload file",

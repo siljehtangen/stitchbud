@@ -77,9 +77,11 @@
 
   "recipe_label": "Oppskrift og notater",
   "recipe_placeholder": "Skriv her...",
-  "pinterest_label": "Pinterest-brett",
-  "pinterest_placeholder": "Lim inn en Pinterest-brett-URL, f.eks. https://www.pinterest.com/brukernavn/brettnavn/",
+  "pinterest_label": "Pinterest tavle",
+  "pinterest_placeholder": "Lim inn en Pinterest URL, f.eks. https://www.pinterest.com/brukernavn/tavlenavn/",
   "pinterest_hint": "Klikk på et bilde for å åpne det på Pinterest i en ny fane.",
+  "pinterest_add": "+ Legg til tavle",
+  "pinterest_empty": "Ingen tavler lagt til ennå. Du kan legge til opptil 3 Pinterest tavler.",
   "attachments_label": "Vedlegg",
   "uploading": "Laster opp...",
   "upload_file": "+ Last opp fil",
