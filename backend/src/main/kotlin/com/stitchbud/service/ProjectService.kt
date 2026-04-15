@@ -357,7 +357,7 @@ class ProjectService(
             .groupBy { it.materialId }
         return ProjectDto(
             id = id, name = name, description = description, category = category,
-            tags = tags, notes = notes, recipeText = recipeText, pinterestBoardUrl = pinterestBoardUrl, craftDetails = craftDetails,
+            tags = tags, notes = notes, recipeText = recipeText, pinterestBoardUrl = pinterestBoardUrl ?: "", craftDetails = craftDetails,
             coverImages = coverRows.map(::toImgDto),
             materials = materials.map { m ->
                 val matImages = (materialImagesByMatId[m.id] ?: emptyList()).sortedBy { it.id }

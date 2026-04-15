@@ -22,7 +22,7 @@ data class Project(
     var tags: String = "",
     var notes: String = "",
     var recipeText: String = "",
-    var pinterestBoardUrl: String = "",
+    var pinterestBoardUrl: String? = null,
     @Column(columnDefinition = "TEXT")
     var craftDetails: String = "{}",
     @OneToMany(mappedBy = "project", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)

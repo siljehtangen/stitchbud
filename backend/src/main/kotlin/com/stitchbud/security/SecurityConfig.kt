@@ -41,10 +41,10 @@ class SecurityConfig {
     }
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    fun filterChain(http: HttpSecurity, corsConfigurationSource: CorsConfigurationSource): SecurityFilterChain {
         http
             .csrf { it.disable() }
-            .cors { it.configurationSource(corsConfigurationSource()) }
+            .cors { it.configurationSource(corsConfigurationSource) }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
                 it.requestMatchers("/api/library-images/**").permitAll()
