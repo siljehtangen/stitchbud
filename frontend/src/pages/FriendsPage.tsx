@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { TFunction } from 'i18next'
 import { useToast } from '../context/ToastContext'
 import { friendsApi } from '../api'
-import type { Friend, FriendRequest, Project } from '../types'
-import { categoryLabel } from '../constants/categories'
-import { projectCoverImageUrls } from '../projectOverviewMedia'
+import type { Friend, FriendRequest } from '../types'
 
 export default function FriendsPage() {
   const { t } = useTranslation()
@@ -18,10 +15,6 @@ export default function FriendsPage() {
   const [emailInput, setEmailInput] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
-
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
-  const [friendProjects, setFriendProjects] = useState<Project[]>([])
-  const [loadingProjects, setLoadingProjects] = useState(false)
 
   useEffect(() => {
     Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
@@ -72,25 +65,8 @@ export default function FriendsPage() {
     try {
       await friendsApi.remove(friend.friendshipId)
       setFriends(f => f.filter(f => f.friendshipId !== friend.friendshipId))
-      if (selectedFriend?.friendshipId === friend.friendshipId) {
-        setSelectedFriend(null)
-        setFriendProjects([])
-      }
     } catch {
       showToast(t('friend_action_failed'), 'info')
-    }
-  }
-
-  async function handleSelectFriend(friend: Friend) {
-    setSelectedFriend(friend)
-    setLoadingProjects(true)
-    try {
-      const projects = await friendsApi.getFriendProjects(friend.userId)
-      setFriendProjects(projects)
-    } catch {
-      setFriendProjects([])
-    } finally {
-      setLoadingProjects(false)
     }
   }
 
@@ -165,70 +141,25 @@ export default function FriendsPage() {
           <p className="text-sm text-warm-gray">{t('friends_empty')}</p>
         ) : (
           friends.map(friend => (
-            <div key={friend.friendshipId} className="space-y-0">
-              <div
-                className={`card flex items-center gap-3 cursor-pointer transition-colors ${selectedFriend?.friendshipId === friend.friendshipId ? 'ring-2 ring-sand-green/50' : ''}`}
-                onClick={() => handleSelectFriend(friend)}
-              >
-                <div className="w-10 h-10 rounded-full bg-sand-blue flex items-center justify-center text-gray-700 font-semibold text-sm flex-shrink-0">
-                  {(friend.displayName ?? friend.email).slice(0, 2).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  {friend.displayName && (
-                    <p className="text-sm font-medium text-gray-800 truncate">{friend.displayName}</p>
-                  )}
-                  <p className="text-xs text-warm-gray truncate">{friend.email}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs text-warm-gray">
-                    {selectedFriend?.friendshipId === friend.friendshipId ? '▲' : '▼'}
-                  </span>
-                  <button
-                    onClick={e => { e.stopPropagation(); handleRemove(friend) }}
-                    className="text-xs text-red-400 hover:text-red-600 px-1"
-                    title={t('friends_remove')}
-                  >
-                    ✕
-                  </button>
-                </div>
+            <div key={friend.friendshipId} className="card flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-sand-blue flex items-center justify-center text-gray-700 font-semibold text-sm flex-shrink-0">
+                {(friend.displayName ?? friend.email).slice(0, 2).toUpperCase()}
               </div>
-
-              {/* Friend's public projects */}
-              {selectedFriend?.friendshipId === friend.friendshipId && (
-                <div className="ml-4 mt-1 space-y-2 pb-1">
-                  {loadingProjects ? (
-                    <p className="text-xs text-warm-gray py-2">{t('loading')}</p>
-                  ) : friendProjects.length === 0 ? (
-                    <p className="text-xs text-warm-gray py-2">{t('friends_no_public_projects')}</p>
-                  ) : (
-                    friendProjects.map(p => <FriendProjectCard key={p.id} project={p} t={t as TFunction} />)
-                  )}
-                </div>
-              )}
+              <div className="flex-1 min-w-0">
+                {friend.displayName && (
+                  <p className="text-sm font-medium text-gray-800 truncate">{friend.displayName}</p>
+                )}
+                <p className="text-xs text-warm-gray truncate">{friend.email}</p>
+              </div>
+              <button
+                onClick={() => handleRemove(friend)}
+                className="text-xs text-red-400 hover:text-red-600 px-1 flex-shrink-0"
+                title={t('friends_remove')}
+              >
+                ✕
+              </button>
             </div>
           ))
-        )}
-      </div>
-    </div>
-  )
-}
-
-function FriendProjectCard({ project, t }: { project: Project; t: TFunction }) {
-  const coverUrls = projectCoverImageUrls(project)
-  return (
-    <div className="card flex items-center gap-3">
-      {coverUrls[0] ? (
-        <img src={coverUrls[0]} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy" />
-      ) : (
-        <div className="w-12 h-12 rounded-xl bg-sand-blue/30 flex items-center justify-center text-2xl flex-shrink-0">
-          {project.category === 'KNITTING' ? '🧶' : project.category === 'CROCHET' ? '🪡' : '🧵'}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 truncate">{project.name}</p>
-        <p className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</p>
-        {project.description && (
-          <p className="text-xs text-gray-600 truncate mt-0.5">{project.description}</p>
         )}
       </div>
     </div>
