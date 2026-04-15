@@ -10,6 +10,8 @@ import com.stitchbud.repository.ProjectFileRepository
 import com.stitchbud.repository.ProjectImageRepository
 import com.stitchbud.repository.ProjectRepository
 import com.stitchbud.repository.RowCounterRepository
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -30,6 +32,7 @@ class ProjectService(
     private val rowCounterRepository: RowCounterRepository,
     private val storageService: SupabaseStorageService,
     private val libraryService: LibraryService,
+    private val objectMapper: ObjectMapper,
     @Value("\${app.upload-dir:./uploads}") private val uploadDir: String
 ) {
     companion object {
@@ -72,7 +75,10 @@ class ProjectService(
         req.tags?.let { project.tags = it }
         req.notes?.let { project.notes = it }
         req.recipeText?.let { project.recipeText = it }
-        req.pinterestBoardUrl?.let { project.pinterestBoardUrl = it }
+        req.pinterestBoardUrls?.let { urls ->
+            val sanitized = urls.filter { it.isNotBlank() }.take(3)
+            project.pinterestBoardUrls = objectMapper.writeValueAsString(sanitized)
+        }
         req.craftDetails?.let { project.craftDetails = it }
         req.startDate?.let { project.startDate = it }
         req.endDate?.let { project.endDate = it }
@@ -357,7 +363,9 @@ class ProjectService(
             .groupBy { it.materialId }
         return ProjectDto(
             id = id, name = name, description = description, category = category,
-            tags = tags, notes = notes, recipeText = recipeText, pinterestBoardUrl = pinterestBoardUrl ?: "", craftDetails = craftDetails,
+            tags = tags, notes = notes, recipeText = recipeText,
+            pinterestBoardUrls = runCatching { objectMapper.readValue<List<String>>(pinterestBoardUrls) }.getOrDefault(emptyList()),
+            craftDetails = craftDetails,
             coverImages = coverRows.map(::toImgDto),
             materials = materials.map { m ->
                 val matImages = (materialImagesByMatId[m.id] ?: emptyList()).sortedBy { it.id }
