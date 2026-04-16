@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiChevronRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { Friend, Project } from '../types'
@@ -150,9 +151,7 @@ function FriendProjectCard({ project, onClick, friendName }: { project: Project;
         )}
       </div>
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-soft-brown/10 group-hover:bg-soft-brown/20 flex items-center justify-center transition-colors ml-1">
-        <svg className="w-3.5 h-3.5 text-warm-gray group-hover:text-gray-700 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
+        <FiChevronRight className="w-3.5 h-3.5 text-warm-gray group-hover:text-gray-700 transition-colors" />
       </div>
     </div>
   )
