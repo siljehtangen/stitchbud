@@ -108,7 +108,7 @@ The Vite dev server proxies `/api` requests to `http://localhost:8080`, so both 
 - **Material library** — browse and filter a shared catalog of materials with images
 - **Authentication** — sign up, log in, and manage account via Supabase Auth
 - **i18n** — internationalization support
-- **PDF export** — generate a printable project summary; when viewing a friend's project the PDF includes a "Created by / Lagd av" attribution in the top right corner
+- **PDF export** — generate a printable project summary; when viewing a friend's project the PDF includes a "Created by" attribution in the top right corner
 - **Friends** — send/accept friend requests and browse friends' public projects in read-only mode
 
 ---
