@@ -64,7 +64,6 @@ export default function FriendProjectDetail() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>←</button>
         <div className="flex-1 min-w-0">
@@ -77,7 +76,6 @@ export default function FriendProjectDetail() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-sand-blue/20 p-1 rounded-xl">
         {tabs.map(t_ => (
           <button
@@ -93,7 +91,6 @@ export default function FriendProjectDetail() {
         ))}
       </div>
 
-      {/* Info tab */}
       {tab === 'info' && (
         <div className="space-y-4">
           {coverUrls.length > 0 && (
@@ -132,7 +129,6 @@ export default function FriendProjectDetail() {
         </div>
       )}
 
-      {/* Materials tab */}
       {tab === 'materials' && (
         <div className="space-y-4">
           {project.materials.length === 0 ? (
@@ -161,7 +157,6 @@ export default function FriendProjectDetail() {
         </div>
       )}
 
-      {/* Recipe tab */}
       {tab === 'recipe' && (
         <div className="space-y-4">
           {project.recipeText && (
@@ -211,7 +206,6 @@ export default function FriendProjectDetail() {
         </div>
       )}
 
-      {/* Knit/Crochet tab */}
       {tab === 'knit' && project.category !== 'SEWING' && (
         <div className="space-y-6">
           {project.rowCounter && project.rowCounter.totalRounds > 0 && (
@@ -254,7 +248,6 @@ export default function FriendProjectDetail() {
         </div>
       )}
 
-      {/* Overview tab */}
       {tab === 'overview' && (
         <OverviewTab
           project={project}

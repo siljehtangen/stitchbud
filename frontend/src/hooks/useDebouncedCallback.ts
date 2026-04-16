@@ -14,10 +14,8 @@ export function useDebouncedCallback<T extends unknown[]>(
   const callbackRef = useRef(callback)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Keep the ref current without triggering a new debounced fn
   useEffect(() => { callbackRef.current = callback })
 
-  // Clear timer on unmount
   useEffect(() => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [])

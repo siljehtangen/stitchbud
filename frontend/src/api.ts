@@ -7,7 +7,7 @@ const STORAGE_BUCKET = 'stitchbud-files'
 
 const api = axios.create({ baseURL: '/api', timeout: 15000 })
 
-const projectRes = (p: Project) => normalizeProject(p)
+const projectRes = normalizeProject
 
 api.interceptors.request.use(async config => {
   try {
