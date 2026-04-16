@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiChevronRight } from 'react-icons/fi'
+import { FiChevronRight, FiChevronDown } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { Friend, Project } from '../types'
@@ -62,7 +62,7 @@ export function FriendsProjectsView({
           className="input flex items-center justify-between w-full text-sm text-left"
         >
           <span className={selectedFriend ? 'text-gray-800' : 'text-warm-gray'}>{selectedLabel}</span>
-          <span className="text-warm-gray ml-2 flex-shrink-0">▾</span>
+          <FiChevronDown className="w-4 h-4 text-warm-gray ml-2 flex-shrink-0" />
         </button>
 
         {dropdownOpen && (
