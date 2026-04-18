@@ -8,7 +8,7 @@ A mobile-first web app for tracking knitting, crochet, and sewing projects. User
 |---|---|
 | Backend | Kotlin · Spring Boot 3 · Spring Security (JWT) · JPA/Hibernate |
 | Database | PostgreSQL via Supabase (connection pooling) |
-| Auth | Supabase Auth (JWT RS256) |
+| Auth | Supabase Auth · Google OAuth 2.0 (JWT RS256) |
 | Storage | Supabase Storage (image and file uploads) |
 | Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 |
 | Build | Gradle 8 (Kotlin DSL) · npm |
@@ -57,6 +57,22 @@ Optional values (defaults shown in the example file):
 | `UPLOAD_DIR` | `./uploads` |
 
 > **Never commit `application.properties`.** It is git-ignored. Only `application.properties.example` should be committed.
+
+### Google OAuth
+
+Authentication is handled through **Supabase Auth with Google as the OAuth provider**. Users log in with their Google email address — no separate password is required.
+
+To enable this in your own Supabase project:
+
+1. Go to **Authentication → Providers → Google** in the Supabase dashboard.
+2. Enable the Google provider and enter your **Google OAuth Client ID** and **Client Secret** (obtained from [Google Cloud Console](https://console.cloud.google.com/) under *APIs & Services → Credentials*).
+3. Add your app's callback URL to the **Authorised redirect URIs** in Google Cloud Console:
+   ```
+   https://<project-ref>.supabase.co/auth/v1/callback
+   ```
+4. In the Supabase dashboard, add your frontend origin (e.g. `http://localhost:5173`) to **Authentication → URL Configuration → Redirect URLs**.
+
+The frontend calls `supabase.auth.signInWithOAuth({ provider: 'google' })`, which redirects the user to Google's consent screen. On return, Supabase issues a JWT that the backend validates using the JWKS endpoint configured in `application.properties`.
 
 ### Frontend
 
@@ -142,7 +158,7 @@ Tests cover `libraryUtils` and the `useProjectFilter`, `useLibraryFilter`, and `
   - **Pattern** — paint/erase grid cells with a color palette (Knitting and Crochet only)
 - **File attachments** — upload images and PDFs per project, stored in Supabase Storage
 - **Material library** — browse and filter a shared catalog of materials with images
-- **Authentication** — sign up, log in, and manage account via Supabase Auth
+- **Authentication** — sign up and log in via Google OAuth (using your Google email address), powered by Supabase Auth; account management is handled through the Supabase Auth session
 - **i18n** — internationalization support
 - **PDF export** — generate a printable project summary; when viewing a friend's project the PDF includes a "Created by" attribution in the top right corner
 - **Friends** — send/accept friend requests and browse friends' public projects in read-only mode
