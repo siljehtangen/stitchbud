@@ -95,6 +95,42 @@ The Vite dev server proxies `/api` requests to `http://localhost:8080`, so both 
 
 ---
 
+## Testing
+
+### Backend
+
+Unit tests cover the core service layer business logic. No database or Spring context is required — all dependencies are mocked with [mockito-kotlin](https://github.com/mockito/mockito-kotlin).
+
+#### Run the tests
+
+```bash
+cd backend
+./gradlew test        # macOS / Linux
+gradlew.bat test      # Windows
+```
+
+Test reports are written to `backend/build/reports/tests/test/index.html`.
+
+Tests cover `FriendshipService`, `ProjectService`, and `LibraryService`.
+
+---
+
+### Frontend
+
+Frontend tests use [Vitest](https://vitest.dev/) with [Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and run in a [jsdom](https://github.com/jsdom/jsdom) environment — no browser required.
+
+#### Run the tests
+
+```bash
+cd frontend
+npm test              # run once and exit
+npm run test:ui       # open the Vitest browser UI
+```
+
+Tests cover `libraryUtils` and the `useProjectFilter`, `useLibraryFilter`, and `useDebouncedCallback` hooks.
+
+---
+
 ## Features
 
 - **Dashboard** — category counts, recent projects, progress overview
