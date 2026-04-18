@@ -3,14 +3,19 @@ package com.stitchbud.service
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.stitchbud.controller.BadRequestException
 import com.stitchbud.controller.NotFoundException
+import com.stitchbud.dto.AddMaterialRequest
+import com.stitchbud.dto.RegisterProjectFileRequest
 import com.stitchbud.dto.RegisterProjectImageRequest
 import com.stitchbud.dto.UpdatePatternGridRequest
 import com.stitchbud.dto.UpdateProjectRequest
+import com.stitchbud.dto.UpdateRowCounterRequest
 import com.stitchbud.model.Material
 import com.stitchbud.model.PatternGrid
 import com.stitchbud.model.Project
 import com.stitchbud.model.ProjectCategory
+import com.stitchbud.model.ProjectFile
 import com.stitchbud.model.ProjectImage
+import com.stitchbud.model.RowCounter
 import com.stitchbud.repository.MaterialRepository
 import com.stitchbud.repository.PatternGridRepository
 import com.stitchbud.repository.ProjectFileRepository
@@ -22,7 +27,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.thenAnswer
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.whenever
 import java.util.Optional
 import kotlin.test.assertEquals
@@ -75,7 +80,7 @@ class ProjectServiceTest {
     /** Stubs findByIdAndUserId and save so the project is returned as-is. */
     private fun stubFindProject(project: Project) {
         whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(Optional.of(project))
-        whenever(projectRepo.save(any<Project>())).thenAnswer { it.arguments[0] as Project }
+        whenever(projectRepo.save(any<Project>())).doAnswer { it.arguments[0] as Project }
     }
 
     // ──────── updatePatternGrid – dimension validation ────────
@@ -386,5 +391,187 @@ class ProjectServiceTest {
         service.updateProject(PROJECT_ID, UpdateProjectRequest(isPublic = true), USER_ID)
 
         assertTrue(project.isPublic)
+    }
+
+    // ──────── addMaterial ────────
+
+    @Test
+    fun `addMaterial adds a material to the project`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        val req = AddMaterialRequest(name = "Merino Wool", type = "YARN")
+        val dto = service.addMaterial(PROJECT_ID, req, USER_ID)
+
+        assertEquals(1, dto.materials.size)
+        assertEquals("Merino Wool", dto.materials.single().name)
+        assertEquals("YARN", dto.materials.single().type)
+    }
+
+    // ──────── deleteMaterial ────────
+
+    @Test
+    fun `deleteMaterial removes the material and its images from the project`() {
+        val project = makeProject()
+        val material = Material(id = 7L, name = "Yarn", type = "YARN", project = project)
+        project.materials.add(material)
+        project.images.add(ProjectImage(id = 1L, storedName = "http://img", originalName = "img.jpg", section = "material", materialId = 7L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://cover", originalName = "cover.jpg", section = "cover", isMain = true, project = project))
+        stubFindProject(project)
+
+        val dto = service.deleteMaterial(PROJECT_ID, 7L, USER_ID)
+
+        assertTrue(dto.materials.isEmpty())
+        // cover image must survive; material image must be gone
+        assertEquals(1, dto.coverImages.size)
+        assertTrue(dto.materials.none { it.id == 7L })
+    }
+
+    // ──────── updateRowCounter ────────
+
+    @Test
+    fun `updateRowCounter updates an existing row counter`() {
+        val project = makeProject()
+        project.rowCounter = RowCounter(id = 1L, stitchesPerRound = 10, totalRounds = 5, checkedStitches = "[]", project = project)
+        stubFindProject(project)
+
+        val req = UpdateRowCounterRequest(stitchesPerRound = 20, totalRounds = 10, checkedStitches = "[1,2]")
+        val dto = service.updateRowCounter(PROJECT_ID, req, USER_ID)
+
+        assertEquals(20, dto.rowCounter!!.stitchesPerRound)
+        assertEquals(10, dto.rowCounter!!.totalRounds)
+        assertEquals("[1,2]", dto.rowCounter!!.checkedStitches)
+    }
+
+    @Test
+    fun `updateRowCounter creates a new row counter when none exists`() {
+        val project = makeProject()
+        // rowCounter is null by default
+        stubFindProject(project)
+
+        val req = UpdateRowCounterRequest(stitchesPerRound = 8, totalRounds = 3, checkedStitches = "[]")
+        val dto = service.updateRowCounter(PROJECT_ID, req, USER_ID)
+
+        assertEquals(8, dto.rowCounter!!.stitchesPerRound)
+        assertEquals(3, dto.rowCounter!!.totalRounds)
+    }
+
+    // ──────── createPatternGrid ────────
+
+    @Test
+    fun `createPatternGrid adds a new grid to the project`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        val dto = service.createPatternGrid(PROJECT_ID, USER_ID)
+
+        assertEquals(1, dto.patternGrids.size)
+    }
+
+    // ──────── deletePatternGrid ────────
+
+    @Test
+    fun `deletePatternGrid removes the grid from the project`() {
+        val project = makeProject()
+        val grid = PatternGrid(id = 42L, project = project)
+        project.patternGrids.add(grid)
+        stubFindProject(project)
+
+        val dto = service.deletePatternGrid(PROJECT_ID, 42L, USER_ID)
+
+        assertTrue(dto.patternGrids.none { it.id == 42L })
+    }
+
+    // ──────── setMaterialImageMain – missing error case ────────
+
+    @Test
+    fun `setMaterialImageMain throws NotFoundException when image not found`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        assertThrows<NotFoundException> { service.setMaterialImageMain(PROJECT_ID, 999L, USER_ID) }
+    }
+
+    // ──────── deleteMaterialImage – missing cases ────────
+
+    @Test
+    fun `deleteMaterialImage does not change main when a non-main image is deleted`() {
+        val project = makeProject()
+        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = "material", materialId = 5L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = "material", materialId = 5L, isMain = false, project = project))
+        stubFindProject(project)
+
+        service.deleteMaterialImage(PROJECT_ID, 2L, USER_ID)
+
+        val remaining = project.images.filter { it.section == "material" && it.materialId == 5L }
+        assertEquals(1, remaining.size)
+        assertTrue(remaining.single().isMain)
+        assertEquals(1L, remaining.single().id)
+    }
+
+    @Test
+    fun `deleteMaterialImage throws NotFoundException when image not found`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        assertThrows<NotFoundException> { service.deleteMaterialImage(PROJECT_ID, 999L, USER_ID) }
+    }
+
+    // ──────── deleteFile ────────
+
+    @Test
+    fun `deleteFile throws NotFoundException when file not found`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        assertThrows<NotFoundException> { service.deleteFile(PROJECT_ID, 999L, USER_ID) }
+    }
+
+    // ──────── registerFile ────────
+
+    @Test
+    fun `registerFile adds file with correct fileType for pdf`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        val req = RegisterProjectFileRequest(originalName = "pattern.pdf", fileUrl = "http://storage/pattern.pdf", mimeType = "application/pdf")
+        val dto = service.registerFile(PROJECT_ID, req, USER_ID)
+
+        val file = dto.files.single()
+        assertEquals("pdf", file.fileType)
+        assertEquals("pattern.pdf", file.originalName)
+    }
+
+    @Test
+    fun `registerFile adds file with correct fileType for word document`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        val req = RegisterProjectFileRequest(originalName = "notes.docx", fileUrl = "http://storage/notes.docx", mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        val dto = service.registerFile(PROJECT_ID, req, USER_ID)
+
+        assertEquals("word", dto.files.single().fileType)
+    }
+
+    @Test
+    fun `registerFile adds file with correct fileType for image`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        val req = RegisterProjectFileRequest(originalName = "photo.jpg", fileUrl = "http://storage/photo.jpg", mimeType = "image/jpeg")
+        val dto = service.registerFile(PROJECT_ID, req, USER_ID)
+
+        assertEquals("image", dto.files.single().fileType)
+    }
+
+    @Test
+    fun `registerFile adds file with fileType other for unknown mimeType`() {
+        val project = makeProject()
+        stubFindProject(project)
+
+        val req = RegisterProjectFileRequest(originalName = "data.csv", fileUrl = "http://storage/data.csv", mimeType = "text/csv")
+        val dto = service.registerFile(PROJECT_ID, req, USER_ID)
+
+        assertEquals("other", dto.files.single().fileType)
     }
 }

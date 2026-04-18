@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.thenAnswer
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.Optional
@@ -51,7 +51,7 @@ class FriendshipServiceTest {
     fun `upsertProfile creates new profile when none exists`() {
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.empty())
         val savedProfile = UserProfile(userId = USER_A, email = EMAIL_A, displayName = "Alice")
-        whenever(userProfileRepo.save(any())).thenReturn(savedProfile)
+        whenever(userProfileRepo.save(any<UserProfile>())).thenReturn(savedProfile)
 
         val result = service.upsertProfile(USER_A, EMAIL_A, "Alice")
 
@@ -64,7 +64,7 @@ class FriendshipServiceTest {
     fun `upsertProfile updates email and displayName on existing profile`() {
         val existing = UserProfile(userId = USER_A, email = "old@test.com", displayName = "Old")
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(existing))
-        whenever(userProfileRepo.save(any())).thenAnswer { it.arguments[0] as UserProfile }
+        whenever(userProfileRepo.save(any<UserProfile>())).doAnswer { it.arguments[0] as UserProfile }
 
         val result = service.upsertProfile(USER_A, EMAIL_A, "New Name")
 
@@ -76,7 +76,7 @@ class FriendshipServiceTest {
     fun `upsertProfile preserves existing displayName when null is passed`() {
         val existing = UserProfile(userId = USER_A, email = EMAIL_A, displayName = "Preserved")
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(existing))
-        whenever(userProfileRepo.save(any())).thenAnswer { it.arguments[0] as UserProfile }
+        whenever(userProfileRepo.save(any<UserProfile>())).doAnswer { it.arguments[0] as UserProfile }
 
         val result = service.upsertProfile(USER_A, EMAIL_A, null)
 
@@ -179,7 +179,7 @@ class FriendshipServiceTest {
         whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(Optional.of(profileB))
         whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.empty())
         val saved = Friendship(id = 5L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.PENDING)
-        whenever(friendshipRepo.save(any())).thenReturn(saved)
+        whenever(friendshipRepo.save(any<Friendship>())).thenReturn(saved)
 
         val result = service.sendFriendRequest(USER_A, EMAIL_B)
 

@@ -14,7 +14,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.thenAnswer
+import org.mockito.kotlin.doAnswer
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.Optional
 import kotlin.test.assertEquals
@@ -55,7 +56,7 @@ class LibraryServiceTest {
     /** Stubs findByIdAndUserId and save so the item is returned as-is. */
     private fun stubFindItem(item: LibraryItem) {
         whenever(libraryItemRepo.findByIdAndUserId(item.id, item.userId)).thenReturn(Optional.of(item))
-        whenever(libraryItemRepo.save(any<LibraryItem>())).thenAnswer { it.arguments[0] as LibraryItem }
+        whenever(libraryItemRepo.save(any<LibraryItem>())).doAnswer { it.arguments[0] as LibraryItem }
     }
 
     // ──────── registerLibraryImage ────────
@@ -191,7 +192,7 @@ class LibraryServiceTest {
     fun `create joins colors list with comma separator`() {
         val req = CreateLibraryItemRequest(itemType = "YARN", name = "Rainbow Yarn", colors = listOf("red", "blue", "green"))
         val saved = LibraryItem(id = 1L, userId = USER_ID, itemType = "YARN", name = "Rainbow Yarn", colors = "red,blue,green")
-        whenever(libraryItemRepo.save(any())).thenReturn(saved)
+        whenever(libraryItemRepo.save(any<LibraryItem>())).thenReturn(saved)
 
         val dto = service.create(req, USER_ID)
 
@@ -202,7 +203,7 @@ class LibraryServiceTest {
     fun `create handles null colors gracefully`() {
         val req = CreateLibraryItemRequest(itemType = "NEEDLE", name = "5mm Needle", colors = null)
         val saved = LibraryItem(id = 2L, userId = USER_ID, itemType = "NEEDLE", name = "5mm Needle", colors = null)
-        whenever(libraryItemRepo.save(any())).thenReturn(saved)
+        whenever(libraryItemRepo.save(any<LibraryItem>())).thenReturn(saved)
 
         val dto = service.create(req, USER_ID)
 
@@ -245,5 +246,24 @@ class LibraryServiceTest {
         assertThrows<NotFoundException> {
             service.update(ITEM_ID, UpdateLibraryItemRequest(name = "Hack"), USER_ID)
         }
+    }
+
+    // ──────── delete ────────
+
+    @Test
+    fun `delete throws NotFoundException when item does not exist`() {
+        whenever(libraryItemRepo.findByIdAndUserId(ITEM_ID, USER_ID)).thenReturn(Optional.empty())
+
+        assertThrows<NotFoundException> { service.delete(ITEM_ID, USER_ID) }
+    }
+
+    @Test
+    fun `delete calls deleteById when item exists`() {
+        val item = makeItem()
+        stubFindItem(item)
+
+        service.delete(ITEM_ID, USER_ID)
+
+        verify(libraryItemRepo).deleteById(ITEM_ID)
     }
 }
