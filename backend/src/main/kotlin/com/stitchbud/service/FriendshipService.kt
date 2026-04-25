@@ -1,13 +1,10 @@
 package com.stitchbud.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.stitchbud.controller.BadRequestException
 import com.stitchbud.controller.NotFoundException
 import com.stitchbud.dto.*
 import com.stitchbud.model.Friendship
 import com.stitchbud.model.FriendshipStatus
-import com.stitchbud.model.ProjectImage
 import com.stitchbud.model.UserProfile
 import com.stitchbud.repository.FriendshipRepository
 import com.stitchbud.repository.ProjectRepository
@@ -21,7 +18,7 @@ class FriendshipService(
     private val friendshipRepository: FriendshipRepository,
     private val userProfileRepository: UserProfileRepository,
     private val projectRepository: ProjectRepository,
-    private val objectMapper: ObjectMapper
+    private val projectMapper: ProjectMapper
 ) {
     fun upsertProfile(userId: String, email: String, displayName: String?): UserProfileDto {
         val profile = userProfileRepository.findById(userId).orElse(
@@ -36,19 +33,19 @@ class FriendshipService(
 
     fun sendFriendRequest(requesterId: String, targetEmail: String): FriendDto {
         val requester = userProfileRepository.findById(requesterId)
-            .orElseThrow { BadRequestException("Profilen din er ikke registrert. Prøv igjen.") }
+            .orElseThrow { BadRequestException("Profile not found. Please try again.") }
 
         if (requester.email.equals(targetEmail, ignoreCase = true))
-            throw BadRequestException("Du kan ikke legge til deg selv som venn.")
+            throw BadRequestException("You cannot add yourself as a friend.")
 
         val target = userProfileRepository.findByEmail(targetEmail)
-            .orElseThrow { NotFoundException("Ingen bruker funnet med e-posten $targetEmail") }
+            .orElseThrow { NotFoundException("No user found with email $targetEmail") }
 
         val existing = friendshipRepository.findBetween(requesterId, target.userId)
         if (existing.isPresent) {
             val f = existing.get()
-            if (f.status == FriendshipStatus.ACCEPTED) throw BadRequestException("Dere er allerede venner.")
-            if (f.requesterId == requesterId) throw BadRequestException("Du har allerede sendt en venneforespørsel til denne personen.")
+            if (f.status == FriendshipStatus.ACCEPTED) throw BadRequestException("You are already friends.")
+            if (f.requesterId == requesterId) throw BadRequestException("You have already sent a friend request to this person.")
             // The other person sent a request to us — auto-accept
             f.status = FriendshipStatus.ACCEPTED
             friendshipRepository.save(f)
@@ -79,9 +76,9 @@ class FriendshipService(
 
     fun acceptFriendRequest(friendshipId: Long, userId: String): FriendDto {
         val friendship = friendshipRepository.findById(friendshipId)
-            .orElseThrow { NotFoundException("Venneforespørselen finnes ikke.") }
-        if (friendship.recipientId != userId) throw BadRequestException("Du kan ikke godta denne forespørselen.")
-        if (friendship.status == FriendshipStatus.ACCEPTED) throw BadRequestException("Allerede akseptert.")
+            .orElseThrow { NotFoundException("Friend request not found.") }
+        if (friendship.recipientId != userId) throw BadRequestException("You cannot accept this request.")
+        if (friendship.status == FriendshipStatus.ACCEPTED) throw BadRequestException("Already accepted.")
         friendship.status = FriendshipStatus.ACCEPTED
         friendshipRepository.save(friendship)
         val profile = userProfileRepository.findById(friendship.requesterId).orElse(null)
@@ -90,57 +87,31 @@ class FriendshipService(
 
     fun removeFriendship(friendshipId: Long, userId: String) {
         val friendship = friendshipRepository.findById(friendshipId)
-            .orElseThrow { NotFoundException("Vennskapet finnes ikke.") }
+            .orElseThrow { NotFoundException("Friendship not found.") }
         if (friendship.requesterId != userId && friendship.recipientId != userId)
-            throw BadRequestException("Du har ikke tilgang.")
+            throw BadRequestException("Access denied.")
         friendshipRepository.deleteById(friendshipId)
     }
 
     @Transactional(readOnly = true)
     fun getFriendPublicProjects(requesterId: String, friendUserId: String): List<ProjectDto> {
         verifyFriendship(requesterId, friendUserId)
-        return projectRepository.findPublicProjectsByUserId(friendUserId).map { it.toPublicDto() }
+        return projectRepository.findPublicProjectsByUserId(friendUserId).map { projectMapper.toDto(it, includeNotes = false) }
     }
 
     @Transactional(readOnly = true)
     fun getFriendProject(requesterId: String, friendUserId: String, projectId: Long): ProjectDto {
         verifyFriendship(requesterId, friendUserId)
         val project = projectRepository.findById(projectId)
-            .orElseThrow { NotFoundException("Prosjektet finnes ikke.") }
-        if (project.userId != friendUserId) throw NotFoundException("Prosjektet finnes ikke.")
-        if (!project.isPublic) throw BadRequestException("Prosjektet er ikke offentlig.")
-        return project.toPublicDto()
+            .orElseThrow { NotFoundException("Project not found.") }
+        if (project.userId != friendUserId) throw NotFoundException("Project not found.")
+        if (!project.isPublic) throw BadRequestException("This project is not public.")
+        return projectMapper.toDto(project, includeNotes = false)
     }
 
     private fun verifyFriendship(requesterId: String, friendUserId: String) {
         val friendship = friendshipRepository.findBetween(requesterId, friendUserId)
-            .orElseThrow { BadRequestException("Dere er ikke venner.") }
-        if (friendship.status != FriendshipStatus.ACCEPTED) throw BadRequestException("Vennskapet er ikke akseptert.")
-    }
-
-    private fun com.stitchbud.model.Project.toPublicDto(): ProjectDto {
-        fun toImgDto(img: ProjectImage) =
-            ProjectImageDto(img.id, img.storedName, img.originalName, img.section, img.materialId, img.isMain, id)
-        val coverImages = images.filter { it.section == "cover" }.sortedBy { it.id }.map(::toImgDto)
-        val materialImagesByMatId = images.filter { it.section == "material" }.groupBy { it.materialId }
-        return ProjectDto(
-            id = id, name = name, description = description, category = category,
-            tags = tags, notes = "", recipeText = recipeText,
-            pinterestBoardUrls = runCatching { objectMapper.readValue<List<String>>(pinterestBoardUrls) }.getOrDefault(emptyList()),
-            craftDetails = craftDetails,
-            coverImages = coverImages,
-            materials = materials.map { m ->
-                val matImages = (materialImagesByMatId[m.id] ?: emptyList()).sortedBy { it.id }
-                MaterialDto(m.id, m.name, m.type, m.itemType, m.color, m.colorHex, m.amount, m.unit,
-                    images = matImages.map(::toImgDto))
-            },
-            files = files.map { ProjectFileDto(it.id, it.originalName, it.storedName, it.mimeType, it.fileType, it.uploadedAt, id) },
-            rowCounter = rowCounter?.let { RowCounterDto(it.id, it.stitchesPerRound, it.totalRounds, it.checkedStitches) },
-            patternGrids = patternGrids.sortedBy { it.id }.map { PatternGridDto(it.id, it.rows, it.cols, it.cellData) },
-            startDate = startDate, endDate = endDate,
-            isPublic = isPublic,
-            createdAt = createdAt, updatedAt = updatedAt,
-            userId = userId
-        )
+            .orElseThrow { BadRequestException("You are not friends.") }
+        if (friendship.status != FriendshipStatus.ACCEPTED) throw BadRequestException("Friendship is not accepted.")
     }
 }
