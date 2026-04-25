@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { friendsApi, fileUrl } from '../../api'
-import type { Project, ProjectCategory } from '../../types'
+import { parseCraftDetails } from '../../utils/projectUtils'
+import type { Project } from '../../types'
 import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
@@ -39,7 +40,7 @@ export default function FriendProjectDetail() {
 
   const craftDetails = useMemo<Record<string, string>>(() => {
     if (!project) return {}
-    try { return JSON.parse(project.craftDetails || '{}') } catch (e) { console.error('Malformed craftDetails:', e); return {} }
+    return parseCraftDetails(project.craftDetails)
   }, [project])
 
   const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => {
