@@ -16,10 +16,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.UUID
 
 @Service
 @Transactional
@@ -39,13 +36,6 @@ class ProjectService(
     companion object {
         private const val MAX_IMAGES = 3
         private val logger = LoggerFactory.getLogger(ProjectService::class.java)
-        private val ALLOWED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
-        private val ALLOWED_FILE_TYPES = setOf(
-            "image/jpeg", "image/png", "image/webp", "image/gif",
-            "application/pdf",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
     }
 
     private fun findProject(id: Long, userId: String): Project =
@@ -241,39 +231,6 @@ class ProjectService(
         catch (e: Exception) { logger.warn("Failed to delete $section image ${img.storedName}: ${e.message}") }
         project.images.removeIf { it.id == imageId }
         if (wasMain) project.images.firstOrNull { it.section == section && it.materialId == materialId }?.isMain = true
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
-    }
-
-    fun uploadCoverImage(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
-        val contentType = file.contentType ?: ""
-        if (contentType !in ALLOWED_IMAGE_TYPES) throw BadRequestException("Unsupported image type: $contentType")
-        val project = findProject(projectId, userId)
-        val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
-        val storedName = "cover_${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
-        val dir = Paths.get(uploadDir, projectId.toString())
-        Files.createDirectories(dir)
-        file.transferTo(dir.resolve(storedName).toFile())
-        return doRegisterImage(project, "cover", null, "/api/files/$projectId/$storedName", file.originalFilename ?: storedName)
-    }
-
-    fun uploadFile(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
-        val contentType = file.contentType ?: ""
-        if (contentType !in ALLOWED_FILE_TYPES) throw BadRequestException("Unsupported file type: $contentType")
-        val project = findProject(projectId, userId)
-        val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
-        val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
-        val dir = Paths.get(uploadDir, projectId.toString())
-        Files.createDirectories(dir)
-        file.transferTo(dir.resolve(storedName).toFile())
-        val pf = ProjectFile(
-            originalName = file.originalFilename ?: storedName,
-            storedName = storedName,
-            mimeType = file.contentType ?: "application/octet-stream",
-            fileType = detectFileType(file.contentType ?: "", ext),
-            project = project
-        )
-        project.files.add(pf)
         project.updatedAt = System.currentTimeMillis()
         return projectMapper.toDto(projectRepository.save(project))
     }

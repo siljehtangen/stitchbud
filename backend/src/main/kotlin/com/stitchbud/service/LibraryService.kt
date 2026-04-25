@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.UUID
 
 @Service
 @Transactional
@@ -109,31 +106,6 @@ class LibraryService(
             val next = item.images.firstOrNull()
             next?.isMain = true
         }
-        return libraryItemRepository.save(item).toDto()
-    }
-
-    fun uploadImage(id: Long, file: MultipartFile, userId: String): LibraryItemDto {
-        val item = findItem(id, userId)
-        migrateLegacyImageIfNeeded(item)
-        if (item.images.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES images per library item")
-        item.imageStoredName?.let { deleteImageFromDisk(it) }
-        val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
-        val storedName = "${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
-        val dir = Paths.get(uploadDir, "library").toAbsolutePath()
-        Files.createDirectories(dir)
-        file.transferTo(dir.resolve(storedName).toFile())
-        item.imageStoredName = storedName
-        val publicPath = "/api/library-images/$storedName"
-        // Treat as adding a new gallery image and making it main.
-        item.images.forEach { it.isMain = false }
-        item.images.add(
-            LibraryItemImage(
-                storedName = publicPath,
-                originalName = file.originalFilename ?: storedName,
-                isMain = true,
-                libraryItem = item
-            )
-        )
         return libraryItemRepository.save(item).toDto()
     }
 
