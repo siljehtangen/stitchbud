@@ -51,8 +51,11 @@ class SupabaseStorageService(
                 .header("apikey", serviceKey)
                 .DELETE()
                 .build()
-            client.send(request, HttpResponse.BodyHandlers.discarding())
-        } catch (_: Exception) {}
+            val res = client.send(request, HttpResponse.BodyHandlers.discarding())
+            if (res.statusCode() >= 400) logger.warn("Supabase user delete returned ${res.statusCode()} for $userId")
+        } catch (e: Exception) {
+            logger.warn("Failed to delete Supabase user $userId: ${e.message}")
+        }
     }
 
     private fun extractPath(url: String): String? {
