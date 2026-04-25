@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ProjectCard from './ProjectCard'
+import { projectCoverImageUrls } from '../projectOverviewMedia'
 import type { Project } from '../types'
 
 vi.mock('react-i18next', () => ({
@@ -14,6 +15,8 @@ vi.mock('react-i18next', () => ({
 vi.mock('../projectOverviewMedia', () => ({
   projectCoverImageUrls: vi.fn(() => []),
 }))
+
+beforeEach(() => vi.clearAllMocks())
 
 function makeProject(overrides: Partial<Project> = {}): Project {
   return {
@@ -83,41 +86,42 @@ describe('ProjectCard', () => {
     expect(screen.getByText('50%')).toBeInTheDocument()
   })
 
-  it('shows 0% progress when no stitches are checked', () => {
+  it('shows 0% when no stitches are checked', () => {
     const project = makeProject({
-      rowCounter: {
-        id: 1,
-        stitchesPerRound: 10,
-        totalRounds: 10,
-        checkedStitches: '[]',
-      },
+      rowCounter: { id: 1, stitchesPerRound: 10, totalRounds: 10, checkedStitches: '[]' },
     })
     render(<ProjectCard project={project} onClick={vi.fn()} />)
     expect(screen.getByText('0%')).toBeInTheDocument()
   })
 
-  it('hides progress bar when no row counter', () => {
-    const { container } = render(<ProjectCard project={makeProject()} onClick={vi.fn()} />)
-    expect(container.querySelector('.bg-sand-green-dark')).not.toBeInTheDocument()
+  it('hides the progress section when there is no row counter', () => {
+    render(<ProjectCard project={makeProject()} onClick={vi.fn()} />)
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument()
   })
 
-  it('hides progress bar when totalRounds is 0', () => {
+  it('hides the progress section when totalRounds is 0', () => {
     const project = makeProject({
       rowCounter: { id: 1, stitchesPerRound: 10, totalRounds: 0, checkedStitches: '[]' },
     })
-    const { container } = render(<ProjectCard project={project} onClick={vi.fn()} />)
-    expect(container.querySelector('.bg-sand-green-dark')).not.toBeInTheDocument()
+    render(<ProjectCard project={project} onClick={vi.fn()} />)
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument()
   })
 
-  it('fires onClick when the card button is clicked', async () => {
+  it('renders the cover image when one is available', () => {
+    vi.mocked(projectCoverImageUrls).mockReturnValueOnce(['https://example.com/cover.jpg'])
+    render(<ProjectCard project={makeProject({ name: 'My Scarf' })} onClick={vi.fn()} />)
+    expect(screen.getByRole('img', { name: 'My Scarf' })).toBeInTheDocument()
+  })
+
+  it('shows the category icon placeholder when there is no cover image', () => {
+    render(<ProjectCard project={makeProject()} onClick={vi.fn()} />)
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('fires onClick when the card is clicked', async () => {
     const onClick = vi.fn()
     render(<ProjectCard project={makeProject()} onClick={onClick} />)
     await userEvent.click(screen.getByRole('button'))
     expect(onClick).toHaveBeenCalledOnce()
-  })
-
-  it('shows icon placeholder when there is no cover image', () => {
-    const { container } = render(<ProjectCard project={makeProject()} onClick={vi.fn()} />)
-    expect(container.querySelector('img')).not.toBeInTheDocument()
   })
 })
