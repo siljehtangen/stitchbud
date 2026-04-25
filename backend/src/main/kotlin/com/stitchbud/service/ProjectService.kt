@@ -249,27 +249,12 @@ class ProjectService(
         val contentType = file.contentType ?: ""
         if (contentType !in ALLOWED_IMAGE_TYPES) throw BadRequestException("Unsupported image type: $contentType")
         val project = findProject(projectId, userId)
-        val coverImages = project.images.filter { it.section == "cover" }
-        if (coverImages.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES cover images allowed")
         val ext = file.originalFilename?.substringAfterLast('.', "") ?: ""
         val storedName = "cover_${UUID.randomUUID()}${if (ext.isNotEmpty()) ".$ext" else ""}"
         val dir = Paths.get(uploadDir, projectId.toString())
         Files.createDirectories(dir)
         file.transferTo(dir.resolve(storedName).toFile())
-        val publicUrl = "/api/files/$projectId/$storedName"
-        val isFirst = coverImages.isEmpty()
-        project.images.add(
-            ProjectImage(
-                storedName = publicUrl,
-                originalName = file.originalFilename ?: storedName,
-                section = "cover",
-                materialId = null,
-                isMain = isFirst,
-                project = project
-            )
-        )
-        project.updatedAt = System.currentTimeMillis()
-        return projectMapper.toDto(projectRepository.save(project))
+        return doRegisterImage(project, "cover", null, "/api/files/$projectId/$storedName", file.originalFilename ?: storedName)
     }
 
     fun uploadFile(projectId: Long, file: MultipartFile, userId: String): ProjectDto {
