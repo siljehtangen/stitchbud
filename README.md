@@ -41,20 +41,22 @@ Required values:
 
 | Property | Description |
 |---|---|
-| `DB_PASSWORD` | Supabase database password |
-| `SUPABASE_SERVICE_KEY` | Supabase service role key (for storage operations) |
+| `SPRING_DATASOURCE_URL` | Supabase pooler connection string |
+| `SPRING_DATASOURCE_USERNAME` | `postgres.<project-ref>` |
+| `SPRING_DATASOURCE_PASSWORD` | Supabase database password |
+| `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` |
+| `APP_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `APP_SUPABASE_SERVICE_KEY` | Supabase service role key (for storage operations) |
 
-Optional values (defaults shown in the example file):
+Optional values (defaults shown):
 
 | Property | Default |
 |---|---|
-| `DB_URL` | Supabase pooler connection string |
-| `DB_USERNAME` | `postgres.<project-ref>` |
-| `SUPABASE_JWKS_URI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` |
-| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| `STORAGE_BUCKET` | `stitchbud-files` |
-| `PORT` | `8080` |
-| `UPLOAD_DIR` | `./uploads` |
+| `DDL_AUTO` | `update` (use `validate` in production) |
+| `CORS_ORIGINS` | `http://localhost:5173,...` (set to your Vercel URL in production) |
+| `APP_STORAGE_BUCKET` | `stitchbud-files` |
+| `APP_UPLOAD_DIR` | `./uploads` |
+| `PORT` | `8080` (Railway sets this automatically) |
 
 > **Never commit `application.properties`.** It is git-ignored. Only `application.properties.example` should be committed.
 
@@ -144,6 +146,65 @@ npm run test:ui       # open the Vitest browser UI
 ```
 
 Tests cover `libraryUtils` and the `useProjectFilter`, `useLibraryFilter`, and `useDebouncedCallback` hooks.
+
+---
+
+## Deployment
+
+The app is deployed with **Railway** (Spring Boot backend) and **Vercel** (React frontend). Both connect to the same Supabase project used locally.
+
+### Architecture
+
+```
+Vercel  ──(API calls)──▶  Railway  ──(DB / Auth / Storage)──▶  Supabase
+(frontend)                (backend)                             (PostgreSQL + Auth + Storage)
+```
+
+### Railway (backend)
+
+1. Create a free account at [railway.app](https://railway.app) and sign in with GitHub.
+2. New Project → Deploy from GitHub repo → select this repo.
+3. Set **Root Directory** to `backend` in the service settings.
+4. Go to the **Variables** tab and add the following environment variables (copy the actual values from your local `application.properties`):
+
+| Variable | Where to find the value |
+|---|---|
+| `SPRING_DATASOURCE_URL` | `spring.datasource.url` in your local `application.properties` |
+| `SPRING_DATASOURCE_USERNAME` | `spring.datasource.username` |
+| `SPRING_DATASOURCE_PASSWORD` | `spring.datasource.password` |
+| `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI` | `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` |
+| `APP_SUPABASE_URL` | `app.supabase-url` |
+| `APP_SUPABASE_SERVICE_KEY` | `app.supabase-service-key` |
+| `DDL_AUTO` | `validate` |
+| `CORS_ORIGINS` | your Vercel URL, e.g. `https://stitchbud.vercel.app` (add after Vercel deploy) |
+
+Railway sets `PORT` automatically — no need to add it.
+
+5. Deploy. Railway will build the Gradle project and start the jar using `railway.toml`.
+6. Copy the Railway service URL (e.g. `https://stitchbud-production.up.railway.app`) for the next step.
+
+### Vercel (frontend)
+
+1. Create a free account at [vercel.com](https://vercel.com) and sign in with GitHub.
+2. New Project → import this repo.
+3. Set **Root Directory** to `frontend` in the project settings.
+4. Go to **Environment Variables** and add:
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | `https://<your-railway-url>/api` |
+| `VITE_SUPABASE_URL` | same as in your local `frontend/.env.local` |
+| `VITE_SUPABASE_ANON_KEY` | same as in your local `frontend/.env.local` |
+
+5. Deploy.
+6. Copy the Vercel URL and go back to Railway → Variables → update `CORS_ORIGINS` to match it.
+
+### Google OAuth — production redirect URLs
+
+After deploying, add your Vercel URL to the allowed redirect URLs in two places:
+
+- **Supabase dashboard** → Authentication → URL Configuration → Redirect URLs → add `https://your-app.vercel.app`
+- **Google Cloud Console** → APIs & Services → Credentials → your OAuth client → Authorised redirect URIs → add `https://<project-ref>.supabase.co/auth/v1/callback` (already there if you set up local auth) and `https://your-app.vercel.app`
 
 ---
 
