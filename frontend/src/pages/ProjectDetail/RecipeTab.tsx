@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useToast } from '../../context/ToastContext'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
+import { useFileUpload } from '../../hooks/useFileUpload'
 import { projectsApi, fileUrl } from '../../api'
 import { fileTypeIcon } from '../../utils/libraryUtils'
 import type { Project, ProjectFile } from '../../types'
@@ -49,45 +49,27 @@ export function RecipeTab({ recipeText, pinterestBoardUrls, files, projectId, on
   onUpdate: (p: Project) => void; onRecipeChange: (v: string) => void; onPinterestChange: (urls: string[]) => void
 }) {
   const { t } = useTranslation()
-  const { showToast } = useToast()
   const confirmDelete = useConfirmDelete()
-  const [uploading, setUploading] = useState(false)
   const [replacingId, setReplacingId] = useState<number | null>(null)
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const { uploading, ref: fileRef, execute } = useFileUpload()
   const replaceRef = useRef<HTMLInputElement>(null)
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    setUploading(true)
-    try {
-      const updated = await projectsApi.uploadProjectFile(projectId, file)
-      onUpdate(updated)
-      showToast(t('attachment_added_toast'))
-    } catch {
-      showToast(t('upload_failed'), 'info')
-    } finally {
-      setUploading(false)
-      if (fileRef.current) fileRef.current.value = ''
-    }
+    await execute(() => projectsApi.uploadProjectFile(projectId, file), onUpdate, fileRef)
   }
 
   async function handleReplace(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || replacingId === null) return
-    setUploading(true)
-    try {
-      const updated = await projectsApi.replaceFile(projectId, replacingId, file)
-      onUpdate(updated)
-      showToast(t('attachment_added_toast'))
-    } catch {
-      showToast(t('upload_failed'), 'info')
-    } finally {
-      setUploading(false)
-      setReplacingId(null)
-      if (replaceRef.current) replaceRef.current.value = ''
-    }
+    await execute(
+      () => projectsApi.replaceFile(projectId, replacingId, file),
+      onUpdate,
+      replaceRef,
+      () => setReplacingId(null),
+    )
   }
 
   function startReplace(fileId: number) {
