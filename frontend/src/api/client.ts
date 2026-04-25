@@ -39,8 +39,9 @@ api.interceptors.response.use(
 )
 
 export async function uploadFile(file: File, folder: string): Promise<string> {
-  const ext = file.name.split('.').pop()
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const dotIdx = file.name.lastIndexOf('.')
+  const ext = dotIdx !== -1 ? file.name.slice(dotIdx) : ''
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true })
   if (error) throw error
   return supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path).data.publicUrl
