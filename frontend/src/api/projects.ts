@@ -110,7 +110,7 @@ export const projectsApi = {
   },
 
   replaceFile: async (id: number, fileId: number, file: File): Promise<Project> => {
-    await api.delete(`/projects/${id}/files/${fileId}`)
-    return projectsApi.uploadProjectFile(id, file)
+    await projectsApi.uploadProjectFile(id, file)
+    return projectsApi.deleteFile(id, fileId)
   },
 }
