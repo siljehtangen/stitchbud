@@ -79,14 +79,6 @@ class ProjectController(private val projectService: ProjectService) {
     fun deletePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long) =
         projectService.deletePatternGrid(id, gridId, userId())
 
-    @PostMapping("/{id}/cover-image", consumes = ["multipart/form-data"])
-    fun uploadCoverImage(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
-        projectService.uploadCoverImage(id, file, userId())
-
-    @PostMapping("/{id}/files", consumes = ["multipart/form-data"])
-    fun uploadFile(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
-        projectService.uploadFile(id, file, userId())
-
     @PostMapping("/{id}/files/register")
     fun registerFile(@PathVariable id: Long, @RequestBody req: RegisterProjectFileRequest) =
         projectService.registerFile(id, req, userId())

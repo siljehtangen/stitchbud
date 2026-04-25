@@ -10,7 +10,6 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/library")
@@ -26,10 +25,6 @@ class LibraryController(private val libraryService: LibraryService) {
 
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @RequestBody req: UpdateLibraryItemRequest) = libraryService.update(id, req, userId())
-
-    @PostMapping("/{id}/image", consumes = ["multipart/form-data"])
-    fun uploadImage(@PathVariable id: Long, @RequestParam("file") file: MultipartFile) =
-        libraryService.uploadImage(id, file, userId())
 
     @PostMapping("/{id}/images/register")
     fun registerLibraryImage(@PathVariable id: Long, @RequestBody req: RegisterLibraryImageRequest) =
