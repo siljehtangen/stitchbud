@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/library")
-@CrossOrigin(origins = ["http://localhost:5173"])
 class LibraryController(private val libraryService: LibraryService) {
 
     private fun userId() = SecurityContextHolder.getContext().authentication.name
@@ -53,7 +52,6 @@ class LibraryController(private val libraryService: LibraryService) {
 
 @RestController
 @RequestMapping("/api/library-images")
-@CrossOrigin(origins = ["http://localhost:5173"])
 class LibraryImageController(private val libraryService: LibraryService) {
     @GetMapping("/{storedName}")
     fun serveImage(@PathVariable storedName: String): ResponseEntity<FileSystemResource> {
