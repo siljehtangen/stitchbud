@@ -53,7 +53,7 @@ export default function ProjectDetail() {
       setTextFields(fields)
       setIsPublic(p.isPublic ?? false)
       setProject(p)
-      try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch { setCraftDetails({}) }
+      try { setCraftDetails(JSON.parse(p.craftDetails || '{}')) } catch (e) { console.error('Malformed craftDetails:', e); setCraftDetails({}) }
       setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
       setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
     }).finally(() => setLoading(false))
