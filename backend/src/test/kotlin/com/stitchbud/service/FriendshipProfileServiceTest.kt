@@ -37,7 +37,7 @@ class FriendshipProfileServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service = FriendshipService(friendshipRepo, userProfileRepo, projectRepo, jacksonObjectMapper())
+        service = FriendshipService(friendshipRepo, userProfileRepo, projectRepo, ProjectMapper(jacksonObjectMapper()))
     }
 
     // ──────── upsertProfile ────────

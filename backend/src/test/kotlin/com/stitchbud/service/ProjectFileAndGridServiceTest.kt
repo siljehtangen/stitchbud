@@ -41,6 +41,7 @@ class ProjectFileAndGridServiceTest {
     private val rowCounterRepo: RowCounterRepository = mock()
     private val storageService: SupabaseStorageService = mock()
     private val libraryService: LibraryService = mock()
+    private val projectMapper = ProjectMapper(jacksonObjectMapper())
 
     private lateinit var service: ProjectService
 
@@ -60,6 +61,7 @@ class ProjectFileAndGridServiceTest {
             rowCounterRepository = rowCounterRepo,
             storageService = storageService,
             libraryService = libraryService,
+            projectMapper = projectMapper,
             objectMapper = jacksonObjectMapper(),
             uploadDir = "/tmp/test-uploads"
         )

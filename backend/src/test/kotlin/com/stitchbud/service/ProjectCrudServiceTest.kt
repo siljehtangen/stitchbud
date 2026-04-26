@@ -38,6 +38,7 @@ class ProjectCrudServiceTest {
     private val storageService: SupabaseStorageService = mock()
     private val libraryService: LibraryService = mock()
     private val objectMapper = jacksonObjectMapper()
+    private val projectMapper = ProjectMapper(objectMapper)
 
     private lateinit var service: ProjectService
 
@@ -57,6 +58,7 @@ class ProjectCrudServiceTest {
             rowCounterRepository = rowCounterRepo,
             storageService = storageService,
             libraryService = libraryService,
+            projectMapper = projectMapper,
             objectMapper = objectMapper,
             uploadDir = "/tmp/test-uploads"
         )

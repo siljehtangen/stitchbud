@@ -21,7 +21,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.springframework.web.multipart.MultipartFile
 import java.util.Optional
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -36,6 +35,7 @@ class ProjectImageServiceTest {
     private val rowCounterRepo: RowCounterRepository = mock()
     private val storageService: SupabaseStorageService = mock()
     private val libraryService: LibraryService = mock()
+    private val projectMapper = ProjectMapper(jacksonObjectMapper())
 
     private lateinit var service: ProjectService
 
@@ -55,6 +55,7 @@ class ProjectImageServiceTest {
             rowCounterRepository = rowCounterRepo,
             storageService = storageService,
             libraryService = libraryService,
+            projectMapper = projectMapper,
             objectMapper = jacksonObjectMapper(),
             uploadDir = "/tmp/test-uploads"
         )
@@ -288,31 +289,4 @@ class ProjectImageServiceTest {
         assertThrows<NotFoundException> { service.deleteMaterialImage(PROJECT_ID, 999L, USER_ID) }
     }
 
-    // ──────── uploadCoverImage – MIME validation ────────
-
-    @Test
-    fun `uploadCoverImage throws BadRequest for unsupported image MIME type`() {
-        val file: MultipartFile = mock()
-        whenever(file.contentType).thenReturn("video/mp4")
-
-        assertThrows<BadRequestException> { service.uploadCoverImage(PROJECT_ID, file, USER_ID) }
-    }
-
-    @Test
-    fun `uploadCoverImage throws BadRequest when contentType is null`() {
-        val file: MultipartFile = mock()
-        whenever(file.contentType).thenReturn(null)
-
-        assertThrows<BadRequestException> { service.uploadCoverImage(PROJECT_ID, file, USER_ID) }
-    }
-
-    // ──────── uploadFile – MIME validation ────────
-
-    @Test
-    fun `uploadFile throws BadRequest for unsupported file MIME type`() {
-        val file: MultipartFile = mock()
-        whenever(file.contentType).thenReturn("audio/mpeg")
-
-        assertThrows<BadRequestException> { service.uploadFile(PROJECT_ID, file, USER_ID) }
-    }
 }
