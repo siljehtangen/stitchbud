@@ -36,7 +36,13 @@ interface LibraryItemFormProps {
   hideImageUpload?: boolean
 }
 
-export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCancel, hideImageUpload }: LibraryItemFormProps) {
+export function LibraryItemForm({
+  selectedType,
+  onTypeChange,
+  onCreated,
+  onCancel,
+  hideImageUpload,
+}: LibraryItemFormProps) {
   const { t } = useTranslation()
   const photoRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
@@ -99,7 +105,7 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
     setSaving(true)
     try {
       const finalName = name.trim() || autoName()
-      let item = await libraryApi.create({
+      const item = await libraryApi.create({
         itemType: selectedType,
         name: finalName,
         colors: hasColors && colors.length > 0 ? colors : undefined,
@@ -135,39 +141,53 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
   return (
     <form onSubmit={handleSubmit} className="space-y-3 pt-1">
       <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('lib_item_type')}<span className="text-red-500 ml-0.5">*</span></label>
-      <div className="flex gap-1.5 flex-wrap">
-        {ITEM_TYPES.map(type => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => {
-              onTypeChange(type)
-              setColors([])
-              clearLibraryPhotos()
-            }}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-              selectedType === type ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
-            }`}
-          >
-            <span>{TYPE_ICONS[type]}</span>
-            <span>{typeLabel(type, t)}</span>
-          </button>
-        ))}
-      </div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          {t('lib_item_type')}
+          <span className="text-red-500 ml-0.5">*</span>
+        </label>
+        <div className="flex gap-1.5 flex-wrap">
+          {ITEM_TYPES.map(type => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => {
+                onTypeChange(type)
+                setColors([])
+                clearLibraryPhotos()
+              }}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                selectedType === type
+                  ? 'bg-sand-green text-gray-800'
+                  : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+              }`}
+            >
+              <span>{TYPE_ICONS[type]}</span>
+              <span>{typeLabel(type, t)}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <LibraryItemTypeFields
         itemType={selectedType}
-        yarnBrand={yarnBrand} setYarnBrand={setYarnBrand}
-        yarnMaterial={yarnMaterial} setYarnMaterial={setYarnMaterial}
-        yarnAmountG={yarnAmountG} setYarnAmountG={setYarnAmountG}
-        yarnAmountM={yarnAmountM} setYarnAmountM={setYarnAmountM}
-        fabricLength={fabricLength} setFabricLength={setFabricLength}
-        fabricWidth={fabricWidth} setFabricWidth={setFabricWidth}
-        needleSize={needleSize} setNeedleSize={setNeedleSize}
-        circularLength={circularLength} setCircularLength={setCircularLength}
-        hookSize={hookSize} setHookSize={setHookSize}
+        yarnBrand={yarnBrand}
+        setYarnBrand={setYarnBrand}
+        yarnMaterial={yarnMaterial}
+        setYarnMaterial={setYarnMaterial}
+        yarnAmountG={yarnAmountG}
+        setYarnAmountG={setYarnAmountG}
+        yarnAmountM={yarnAmountM}
+        setYarnAmountM={setYarnAmountM}
+        fabricLength={fabricLength}
+        setFabricLength={setFabricLength}
+        fabricWidth={fabricWidth}
+        setFabricWidth={setFabricWidth}
+        needleSize={needleSize}
+        setNeedleSize={setNeedleSize}
+        circularLength={circularLength}
+        setCircularLength={setCircularLength}
+        hookSize={hookSize}
+        setHookSize={setHookSize}
       />
 
       {hasColors && (
@@ -201,12 +221,16 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
                   onClick={() => setPhotoMain(i)}
                   className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
                   title={img.isMain ? t('main_image') : t('set_as_main')}
-                >★</button>
+                >
+                  ★
+                </button>
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
                   className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
-                >×</button>
+                >
+                  ×
+                </button>
               </div>
             ))}
             {libraryPhotos.length < MAX_LIBRARY_PHOTOS && (
@@ -220,7 +244,13 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
               </button>
             )}
           </div>
-          <input ref={photoRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handlePhotoChange} className="hidden" />
+          <input
+            ref={photoRef}
+            type="file"
+            accept={LIBRARY_PHOTO_ACCEPT}
+            onChange={handlePhotoChange}
+            className="hidden"
+          />
         </div>
       )}
 
@@ -228,7 +258,9 @@ export function LibraryItemForm({ selectedType, onTypeChange, onCreated, onCance
         <button type="submit" disabled={saving} className="btn-primary text-sm flex-1">
           {saving ? t('saving') : t('lib_add_item')}
         </button>
-        <button type="button" onClick={onCancel} className="btn-ghost text-sm">{t('cancel')}</button>
+        <button type="button" onClick={onCancel} className="btn-ghost text-sm">
+          {t('cancel')}
+        </button>
       </div>
     </form>
   )

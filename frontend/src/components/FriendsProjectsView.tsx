@@ -46,9 +46,7 @@ export function FriendsProjectsView({
     .flatMap(fp => fp.projects.map(p => ({ friend: fp.friend, project: p })))
 
   const selectedFriend = friendFilter ? friends.find(f => f.userId === friendFilter) : null
-  const selectedLabel = selectedFriend
-    ? (selectedFriend.displayName ?? selectedFriend.email)
-    : t('friends_filter_all')
+  const selectedLabel = selectedFriend ? (selectedFriend.displayName ?? selectedFriend.email) : t('friends_filter_all')
 
   const filteredFriendsForDropdown = searchQuery.trim()
     ? friends.filter(f => (f.displayName ?? f.email).toLowerCase().includes(searchQuery.toLowerCase()))
@@ -67,7 +65,12 @@ export function FriendsProjectsView({
 
         {dropdownOpen && (
           <>
-            <div className="fixed inset-0 z-[9]" onClick={() => setDropdownOpen(false)} />
+            <button
+              type="button"
+              className="fixed inset-0 z-[9]"
+              aria-label={t('close')}
+              onClick={() => setDropdownOpen(false)}
+            />
             <div className="absolute z-10 mt-1 w-full bg-white border border-soft-brown/20 rounded-xl shadow-lg overflow-hidden">
               <div className="p-2">
                 <input
@@ -82,7 +85,11 @@ export function FriendsProjectsView({
               <ul className="max-h-48 overflow-y-auto pb-1">
                 <li>
                   <button
-                    onClick={() => { onFriendFilterChange(null); setDropdownOpen(false); setSearchQuery('') }}
+                    onClick={() => {
+                      onFriendFilterChange(null)
+                      setDropdownOpen(false)
+                      setSearchQuery('')
+                    }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-soft-brown/10 transition-colors ${friendFilter === null ? 'font-semibold text-gray-800' : 'text-warm-gray'}`}
                   >
                     {t('friends_filter_all')}
@@ -91,7 +98,11 @@ export function FriendsProjectsView({
                 {filteredFriendsForDropdown.map(f => (
                   <li key={f.friendshipId}>
                     <button
-                      onClick={() => { onFriendFilterChange(f.userId); setDropdownOpen(false); setSearchQuery('') }}
+                      onClick={() => {
+                        onFriendFilterChange(f.userId)
+                        setDropdownOpen(false)
+                        setSearchQuery('')
+                      }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-soft-brown/10 transition-colors ${friendFilter === f.userId ? 'font-semibold text-gray-800' : 'text-warm-gray'}`}
                     >
                       {f.displayName ?? f.email}
@@ -117,10 +128,11 @@ export function FriendsProjectsView({
               key={`${friend.userId}-${project.id}`}
               project={project}
               friendName={friendFilter === null ? (friend.displayName ?? friend.email) : undefined}
-              onClick={() => navigate(
-                `/friends/${friend.userId}/projects/${project.id}`,
-                { state: { friendName: friend.displayName ?? friend.email } }
-              )}
+              onClick={() =>
+                navigate(`/friends/${friend.userId}/projects/${project.id}`, {
+                  state: { friendName: friend.displayName ?? friend.email },
+                })
+              }
             />
           ))}
         </div>
@@ -129,11 +141,30 @@ export function FriendsProjectsView({
   )
 }
 
-function FriendProjectCard({ project, onClick, friendName }: { project: Project; onClick?: () => void; friendName?: string }) {
+function FriendProjectCard({
+  project,
+  onClick,
+  friendName,
+}: {
+  project: Project
+  onClick?: () => void
+  friendName?: string
+}) {
   const { t } = useTranslation()
   const coverUrls = projectCoverImageUrls(project)
   return (
-    <div className="card flex items-center gap-3 cursor-pointer hover:shadow-md transition-all group" onClick={onClick}>
+    <div
+      role="button"
+      tabIndex={0}
+      className="card flex items-center gap-3 cursor-pointer hover:shadow-md transition-all group"
+      onClick={onClick}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.()
+        }
+      }}
+    >
       {coverUrls[0] ? (
         <img src={coverUrls[0]} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy" />
       ) : (
@@ -144,11 +175,10 @@ function FriendProjectCard({ project, onClick, friendName }: { project: Project;
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-800 truncate">{project.name}</p>
         <p className="text-xs text-warm-gray">
-          {categoryLabel(project.category, t)}{friendName ? ` · ${friendName}` : ''}
+          {categoryLabel(project.category, t)}
+          {friendName ? ` · ${friendName}` : ''}
         </p>
-        {project.description && (
-          <p className="text-xs text-gray-600 truncate mt-0.5">{project.description}</p>
-        )}
+        {project.description && <p className="text-xs text-gray-600 truncate mt-0.5">{project.description}</p>}
       </div>
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-soft-brown/10 group-hover:bg-soft-brown/20 flex items-center justify-center transition-colors ml-1">
         <FiChevronRight className="w-3.5 h-3.5 text-warm-gray group-hover:text-gray-700 transition-colors" />

@@ -21,8 +21,14 @@ export default function Layout() {
   return (
     <div className="min-h-screen flex flex-col max-w-2xl mx-auto">
       <header className="sticky top-0 z-10 bg-cream/90 backdrop-blur-sm border-b border-sand-blue/40 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-800 tracking-tight flex items-center gap-1.5 cursor-pointer" onClick={() => navigate('/home')}>
-          <LiaUserFriendsSolid className="text-sand-green-dark text-2xl" /> {t('app_name')}
+        <h1 className="text-xl font-semibold text-gray-800 tracking-tight">
+          <button
+            type="button"
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+          >
+            <LiaUserFriendsSolid className="text-sand-green-dark text-2xl" /> {t('app_name')}
+          </button>
         </h1>
         <div className="flex items-center gap-3">
           <ThemeColorPicker />
@@ -33,7 +39,6 @@ export default function Layout() {
       <main className="flex-1 pb-24 px-4 pt-4">
         <Outlet />
       </main>
-
 
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white/95 backdrop-blur-sm border-t border-sand-blue/30 flex justify-around py-2 z-10">
         {navItems.map(item => (
