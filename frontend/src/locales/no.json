@@ -247,6 +247,10 @@
 
   "project_private": "Privat – kun synlig for deg",
   "project_public": "Offentlig – synlig for venner",
+  "change_to_public_confirm": "Vil du gjøre prosjektet offentlig? Det vil bli synlig for vennene dine.",
+  "change_to_private_confirm": "Vil du gjøre prosjektet privat? Bare du kan se det.",
+  "make_public": "Gjør offentlig",
+  "make_private": "Gjør privat",
 
   "nav_friends": "Venner",
 

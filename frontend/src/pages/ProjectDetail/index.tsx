@@ -8,8 +8,10 @@ import { PiToolboxFill } from 'react-icons/pi'
 import { FaCircleInfo } from 'react-icons/fa6'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsStars, BsListStars } from 'react-icons/bs'
+import { HiLockClosed, HiGlobeAlt } from 'react-icons/hi2'
 import { categoryLabel } from '../../constants/categories'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
+import { useConfirmDialog } from '../../context/ConfirmDialogContext'
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback'
 import { parseCraftDetails } from '../../utils/projectUtils'
 import { InfoTab } from './InfoTab'
@@ -26,6 +28,7 @@ export default function ProjectDetail() {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const confirmDelete = useConfirmDelete()
+  const { confirm } = useConfirmDialog()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('info')
@@ -47,17 +50,28 @@ export default function ProjectDetail() {
   }
 
   useEffect(() => {
-    projectsApi.getOne(projectId).then(p => {
-      const fields = { name: p.name, description: p.description, notes: p.notes, tags: p.tags, recipeText: p.recipeText }
-      setPinterestBoardUrls(p.pinterestBoardUrls ?? [])
-      textRef.current = fields
-      setTextFields(fields)
-      setIsPublic(p.isPublic ?? false)
-      setProject(p)
-      setCraftDetails(parseCraftDetails(p.craftDetails))
-      setStartDate(p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10))
-      setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
-    }).finally(() => setLoading(false))
+    projectsApi
+      .getOne(projectId)
+      .then(p => {
+        const fields = {
+          name: p.name,
+          description: p.description,
+          notes: p.notes,
+          tags: p.tags,
+          recipeText: p.recipeText,
+        }
+        setPinterestBoardUrls(p.pinterestBoardUrls ?? [])
+        textRef.current = fields
+        setTextFields(fields)
+        setIsPublic(p.isPublic ?? false)
+        setProject(p)
+        setCraftDetails(parseCraftDetails(p.craftDetails))
+        setStartDate(
+          p.startDate ? new Date(p.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
+        )
+        setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
+      })
+      .finally(() => setLoading(false))
   }, [projectId])
 
   const saveSeqRef = useRef(0)
@@ -92,13 +106,10 @@ export default function ProjectDetail() {
   }
 
   async function handleDelete() {
-    await confirmDelete(
-      t('delete_confirm', { name: project?.name }),
-      async () => {
-        await projectsApi.delete(projectId)
-        navigate('/home')
-      },
-    )
+    await confirmDelete(t('delete_confirm', { name: project?.name }), async () => {
+      await projectsApi.delete(projectId)
+      navigate('/home')
+    })
   }
 
   const tabs = useMemo<{ id: Tab; label: string; icon: React.ReactNode }[]>(() => {
@@ -108,7 +119,15 @@ export default function ProjectDetail() {
       { id: 'info', label: t('tab_info'), icon: <FaCircleInfo /> },
       { id: 'materials', label: t('tab_materials'), icon: <PiToolboxFill /> },
       { id: 'recipe', label: t('tab_recipe'), icon: <MdOutlineMenuBook /> },
-      ...(!sewing ? [{ id: 'knit' as Tab, label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'), icon: <BsStars /> }] : []),
+      ...(!sewing
+        ? [
+            {
+              id: 'knit' as Tab,
+              label: project.category === 'KNITTING' ? t('tab_knit') : t('tab_crochet'),
+              icon: <BsStars />,
+            },
+          ]
+        : []),
       { id: 'overview', label: t('tab_overview'), icon: <BsListStars /> },
     ]
   }, [t, project])
@@ -121,7 +140,9 @@ export default function ProjectDetail() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>←</button>
+        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>
+          ←
+        </button>
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
           <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
@@ -129,6 +150,12 @@ export default function ProjectDetail() {
         <button
           onClick={async () => {
             const next = !isPublic
+            const confirmed = await confirm({
+              message: next ? t('change_to_public_confirm') : t('change_to_private_confirm'),
+              confirmLabel: next ? t('make_public') : t('make_private'),
+              tone: 'neutral',
+            })
+            if (!confirmed) return
             setIsPublic(next)
             try {
               const updated = await projectsApi.update(projectId, { isPublic: next })
@@ -138,12 +165,14 @@ export default function ProjectDetail() {
             }
           }}
           title={isPublic ? t('project_public') : t('project_private')}
-          className="text-xl px-1 py-1 text-warm-gray hover:text-gray-700 transition-colors"
+          className="px-1 py-1 text-warm-gray hover:text-gray-700 transition-colors"
           aria-label={isPublic ? t('project_public') : t('project_private')}
         >
-          {isPublic ? '🌍' : '🔒'}
+          {isPublic ? <HiGlobeAlt className="h-5 w-5" /> : <HiLockClosed className="h-5 w-5" />}
         </button>
-        <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">{t('delete')}</button>
+        <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">
+          {t('delete')}
+        </button>
       </div>
 
       <div className="flex gap-1 bg-sand-blue/20 p-1 rounded-xl">
@@ -173,9 +202,7 @@ export default function ProjectDetail() {
         />
       )}
 
-      {tab === 'materials' && (
-        <MaterialsTab project={project} projectId={projectId} onUpdate={setProject} />
-      )}
+      {tab === 'materials' && <MaterialsTab project={project} projectId={projectId} onUpdate={setProject} />}
 
       {tab === 'recipe' && (
         <RecipeTab
@@ -190,13 +217,20 @@ export default function ProjectDetail() {
       )}
 
       {tab === 'knit' && !isSewing && (
-        <KnitTab project={project} projectId={projectId} onUpdate={setProject} category={project.category as ProjectCategory} />
+        <KnitTab
+          project={project}
+          projectId={projectId}
+          onUpdate={setProject}
+          category={project.category as ProjectCategory}
+        />
       )}
 
       {tab === 'overview' && (
         <OverviewTab
           project={project}
-          name={textFields.name} description={textFields.description} recipeText={textFields.recipeText}
+          name={textFields.name}
+          description={textFields.description}
+          recipeText={textFields.recipeText}
           craftDetails={craftDetails}
           projectId={projectId}
         />

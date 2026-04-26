@@ -247,6 +247,10 @@
 
   "project_private": "Private – only visible to you",
   "project_public": "Public – visible to friends",
+  "change_to_public_confirm": "Do you want to make this project public? It will be visible to your friends.",
+  "change_to_private_confirm": "Do you want to make this project private? Only you will be able to see it.",
+  "make_public": "Make public",
+  "make_private": "Make private",
 
   "nav_friends": "Friends",
 
