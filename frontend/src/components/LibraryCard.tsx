@@ -9,7 +9,29 @@ import { libraryItemImageUrl, isImageUrl, fileTypeIconFromUrl } from '../utils/l
 import { useConfirmDelete } from '../hooks/useConfirmDelete'
 import { resolveColorDisplay } from '../colors'
 
-export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete, onImageUploaded, onUpdated }: {
+function itemToFields(item: LibraryItem) {
+  return {
+    name: item.name,
+    colors: (item.colors ?? []) as string[],
+    yarnBrand: item.yarnBrand ?? '',
+    yarnMaterial: item.yarnMaterial ?? '',
+    yarnAmountG: item.yarnAmountG?.toString() ?? '',
+    yarnAmountM: item.yarnAmountM?.toString() ?? '',
+    fabricLength: item.fabricLengthCm?.toString() ?? '',
+    fabricWidth: item.fabricWidthCm?.toString() ?? '',
+    needleSize: item.needleSizeMm ?? '',
+    circularLength: item.circularLengthCm?.toString() ?? '',
+    hookSize: item.hookSizeMm ?? '',
+  }
+}
+
+export const LibraryCard = memo(function LibraryCard({
+  item,
+  subtitle,
+  onDelete,
+  onImageUploaded,
+  onUpdated,
+}: {
   item: LibraryItem
   subtitle: string
   onDelete: (id: number) => void
@@ -26,31 +48,14 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
 
   const hasColors = COLOR_ITEM_TYPES.includes(item.itemType as LibraryItemType)
 
-  const [name, setName] = useState(item.name)
-  const [colors, setColors] = useState<string[]>(item.colors ?? [])
-  const [yarnBrand, setYarnBrand] = useState(item.yarnBrand ?? '')
-  const [yarnMaterial, setYarnMaterial] = useState(item.yarnMaterial ?? '')
-  const [yarnAmountG, setYarnAmountG] = useState(item.yarnAmountG?.toString() ?? '')
-  const [yarnAmountM, setYarnAmountM] = useState(item.yarnAmountM?.toString() ?? '')
-  const [fabricLength, setFabricLength] = useState(item.fabricLengthCm?.toString() ?? '')
-  const [fabricWidth, setFabricWidth] = useState(item.fabricWidthCm?.toString() ?? '')
-  const [needleSize, setNeedleSize] = useState(item.needleSizeMm ?? '')
-  const [circularLength, setCircularLength] = useState(item.circularLengthCm?.toString() ?? '')
-  const [hookSize, setHookSize] = useState(item.hookSizeMm ?? '')
+  const [fields, setFields] = useState(() => itemToFields(item))
+  function setField<K extends keyof ReturnType<typeof itemToFields>>(key: K, val: ReturnType<typeof itemToFields>[K]) {
+    setFields(f => ({ ...f, [key]: val }))
+  }
 
   useEffect(() => {
     if (editing) return
-    setName(item.name)
-    setColors(item.colors ?? [])
-    setYarnBrand(item.yarnBrand ?? '')
-    setYarnMaterial(item.yarnMaterial ?? '')
-    setYarnAmountG(item.yarnAmountG?.toString() ?? '')
-    setYarnAmountM(item.yarnAmountM?.toString() ?? '')
-    setFabricLength(item.fabricLengthCm?.toString() ?? '')
-    setFabricWidth(item.fabricWidthCm?.toString() ?? '')
-    setNeedleSize(item.needleSizeMm ?? '')
-    setCircularLength(item.circularLengthCm?.toString() ?? '')
-    setHookSize(item.hookSizeMm ?? '')
+    setFields(itemToFields(item))
   }, [item, editing])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -69,6 +74,19 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
   async function handleSave() {
     setSaving(true)
     try {
+      const {
+        name,
+        colors,
+        yarnBrand,
+        yarnMaterial,
+        yarnAmountG,
+        yarnAmountM,
+        fabricLength,
+        fabricWidth,
+        needleSize,
+        circularLength,
+        hookSize,
+      } = fields
       const updated = await libraryApi.update(item.id, {
         name: name.trim() || item.name,
         colors: hasColors ? colors : undefined,
@@ -101,36 +119,58 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
             {(item.images ?? []).length === 0 && displayUrl && (
               <div className="flex-shrink-0" title={t('main_image')}>
                 {isImageUrl(displayUrl) ? (
-                  <img src={displayUrl} alt="" className="w-14 h-14 object-cover rounded-xl border-2 border-sand-green" loading="lazy" />
+                  <img
+                    src={displayUrl}
+                    alt=""
+                    className="w-14 h-14 object-cover rounded-xl border-2 border-sand-green"
+                    loading="lazy"
+                  />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">{fileTypeIconFromUrl(displayUrl)}</div>
+                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">
+                    {fileTypeIconFromUrl(displayUrl)}
+                  </div>
                 )}
               </div>
             )}
             {(item.images ?? []).map(img => (
               <div key={img.id} className="relative group flex-shrink-0">
                 {isImageUrl(img.storedName) ? (
-                  <img src={img.storedName} alt={img.originalName} className={`w-14 h-14 object-cover rounded-xl border-2 ${img.isMain ? 'border-sand-green' : 'border-transparent'}`} loading="lazy" />
+                  <img
+                    src={img.storedName}
+                    alt={img.originalName}
+                    className={`w-14 h-14 object-cover rounded-xl border-2 ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
+                    loading="lazy"
+                  />
                 ) : (
-                  <div className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}>{fileTypeIconFromUrl(img.storedName)}</div>
+                  <div
+                    className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}
+                  >
+                    {fileTypeIconFromUrl(img.storedName)}
+                  </div>
                 )}
                 <button
                   type="button"
                   onClick={async () => onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))}
                   className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
                   title={img.isMain ? t('main_image') : t('set_as_main')}
-                >★</button>
+                >
+                  ★
+                </button>
                 <button
                   type="button"
-                  onClick={() => confirmDelete(
-                    t('delete_library_photo_confirm'),
-                    async () => {
-                      onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))
-                    },
-                    'library_photo_removed_toast',
-                  )}
+                  onClick={() =>
+                    confirmDelete(
+                      t('delete_library_photo_confirm'),
+                      async () => {
+                        onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))
+                      },
+                      'library_photo_removed_toast'
+                    )
+                  }
                   className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
-                >×</button>
+                >
+                  ×
+                </button>
               </div>
             ))}
             {(item.images ?? []).length < MAX_LIBRARY_PHOTOS && (
@@ -146,40 +186,57 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
               </button>
             )}
           </div>
-          <input ref={fileRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handleImageUpload} className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept={LIBRARY_PHOTO_ACCEPT}
+            onChange={handleImageUpload}
+            className="hidden"
+          />
         </div>
         <Field label={t('lib_name')}>
           <input
             className="input text-sm py-1.5 w-full"
-            value={name}
-            onChange={e => setName(e.target.value)}
+            value={fields.name}
+            onChange={e => setField('name', e.target.value)}
             placeholder={t('lib_name')}
           />
         </Field>
 
         {hasColors && (
           <Field label={t('lib_colors')}>
-            <ColorPicker selected={colors} onChange={setColors} />
+            <ColorPicker selected={fields.colors} onChange={v => setField('colors', v)} />
           </Field>
         )}
 
         <LibraryItemTypeFields
           itemType={item.itemType as LibraryItemType}
-          yarnBrand={yarnBrand} setYarnBrand={setYarnBrand}
-          yarnMaterial={yarnMaterial} setYarnMaterial={setYarnMaterial}
-          yarnAmountG={yarnAmountG} setYarnAmountG={setYarnAmountG}
-          yarnAmountM={yarnAmountM} setYarnAmountM={setYarnAmountM}
-          fabricLength={fabricLength} setFabricLength={setFabricLength}
-          fabricWidth={fabricWidth} setFabricWidth={setFabricWidth}
-          needleSize={needleSize} setNeedleSize={setNeedleSize}
-          circularLength={circularLength} setCircularLength={setCircularLength}
-          hookSize={hookSize} setHookSize={setHookSize}
+          yarnBrand={fields.yarnBrand}
+          setYarnBrand={v => setField('yarnBrand', v)}
+          yarnMaterial={fields.yarnMaterial}
+          setYarnMaterial={v => setField('yarnMaterial', v)}
+          yarnAmountG={fields.yarnAmountG}
+          setYarnAmountG={v => setField('yarnAmountG', v)}
+          yarnAmountM={fields.yarnAmountM}
+          setYarnAmountM={v => setField('yarnAmountM', v)}
+          fabricLength={fields.fabricLength}
+          setFabricLength={v => setField('fabricLength', v)}
+          fabricWidth={fields.fabricWidth}
+          setFabricWidth={v => setField('fabricWidth', v)}
+          needleSize={fields.needleSize}
+          setNeedleSize={v => setField('needleSize', v)}
+          circularLength={fields.circularLength}
+          setCircularLength={v => setField('circularLength', v)}
+          hookSize={fields.hookSize}
+          setHookSize={v => setField('hookSize', v)}
         />
         <div className="flex gap-2">
           <button onClick={handleSave} disabled={saving} className="btn-primary text-sm flex-1">
             {saving ? t('saving') : t('save')}
           </button>
-          <button onClick={() => setEditing(false)} className="btn-ghost text-sm">{t('cancel')}</button>
+          <button onClick={() => setEditing(false)} className="btn-ghost text-sm">
+            {t('cancel')}
+          </button>
         </div>
       </div>
     )
@@ -192,7 +249,9 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
           isImageUrl(displayUrl) ? (
             <img src={displayUrl} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <span className="flex items-center justify-center w-full h-full text-2xl">{fileTypeIconFromUrl(displayUrl)}</span>
+            <span className="flex items-center justify-center w-full h-full text-2xl">
+              {fileTypeIconFromUrl(displayUrl)}
+            </span>
           )
         ) : (
           <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
@@ -206,11 +265,7 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
             {(item.colors ?? []).map(name => {
               const { hex, displayName } = resolveColorDisplay(name, i18n.language)
               return (
-                <span
-                  key={name}
-                  title={displayName}
-                  className="inline-flex items-center gap-1 text-xs text-warm-gray"
-                >
+                <span key={name} title={displayName} className="inline-flex items-center gap-1 text-xs text-warm-gray">
                   <span
                     className="w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0"
                     style={{ backgroundColor: hex }}
@@ -226,11 +281,15 @@ export const LibraryCard = memo(function LibraryCard({ item, subtitle, onDelete,
         onClick={() => setEditing(true)}
         className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
         title={t('edit')}
-      >✎</button>
+      >
+        ✎
+      </button>
       <button
         onClick={() => onDelete(item.id)}
         className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
-      >×</button>
+      >
+        ×
+      </button>
     </div>
   )
 })
