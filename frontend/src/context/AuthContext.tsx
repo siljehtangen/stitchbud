@@ -22,16 +22,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => {})
+      .finally(() => setLoading(false))
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session) {
         // Sync user profile to backend so friend requests by email work
-        usersApi.syncMe().catch((e) => console.error('Profile sync failed:', e))
+        usersApi.syncMe().catch(e => console.error('Profile sync failed:', e))
       }
     })
 
@@ -39,12 +42,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{
-      user: session?.user ?? null,
-      session,
-      loading,
-      signOut: async () => { await supabase.auth.signOut() },
-    }}>
+    <AuthContext.Provider
+      value={{
+        user: session?.user ?? null,
+        session,
+        loading,
+        signOut: async () => {
+          await supabase.auth.signOut()
+        },
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )
