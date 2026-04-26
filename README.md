@@ -10,15 +10,18 @@ A mobile-first web app for tracking knitting, crochet, and sewing projects. User
 | Database | PostgreSQL via Supabase (connection pooling) |
 | Auth | Supabase Auth · Google OAuth 2.0 (JWT RS256) |
 | Storage | Supabase Storage (image and file uploads) |
-| Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 |
+| Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 · i18next |
 | Build | Gradle 8 (Kotlin DSL) · npm |
+| Testing | Vitest · React Testing Library · Playwright (E2E) |
+| Quality | ESLint · Prettier · Husky · Zod (runtime API validation) |
+| CI/CD | GitHub Actions · Railway · Vercel |
 
 ---
 
 ## Prerequisites
 
 - **JDK 21** — e.g. [Eclipse Temurin](https://adoptium.net/)
-- **Node.js 18+**
+- **Node.js 20+**
 - A [Supabase](https://supabase.com/) project with:
   - A PostgreSQL database
   - Auth enabled
@@ -135,17 +138,61 @@ Tests cover `FriendshipService`, `ProjectService`, and `LibraryService` across 7
 
 ### Frontend
 
-Frontend tests use [Vitest](https://vitest.dev/) with [Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and run in a [jsdom](https://github.com/jsdom/jsdom) environment — no browser required.
-
-#### Run the tests
+Frontend unit tests use [Vitest](https://vitest.dev/) with [Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and run in a [jsdom](https://github.com/jsdom/jsdom) environment — no browser required.
 
 ```bash
 cd frontend
-npm test              # run once and exit
-npm run test:ui       # open the Vitest browser UI
+npm test                  # watch mode
+npm run test:ui           # Vitest browser UI
+npm run test:coverage     # single run with coverage report + threshold check
 ```
 
-Tests cover `libraryUtils` and the `useProjectFilter`, `useLibraryFilter`, and `useDebouncedCallback` hooks.
+Coverage is measured with [v8](https://v8.dev/blog/javascript-code-coverage) and enforced via thresholds in `vite.config.ts`. The HTML report is written to `frontend/coverage/`.
+
+Tests cover hooks (`useAsyncData`, `useAutoSave`, `useDebouncedCallback`, `useProjectFilter`, `useLibraryFilter`), context providers (`ToastContext`, `ConfirmDialogContext`), card components (`ProjectCard`, `LibraryCard`), and utility functions (`libraryUtils`).
+
+### E2E tests
+
+End-to-end tests use [Playwright](https://playwright.dev/) and require a running dev server.
+
+```bash
+cd frontend
+npx playwright install chromium   # first time only
+npm run test:e2e
+```
+
+The smoke suite verifies that the landing page loads and that all protected routes redirect unauthenticated users to `/auth`. The dev server is started automatically if not already running.
+
+---
+
+## Code Quality
+
+```bash
+cd frontend
+npm run lint          # ESLint (TypeScript, React, jsx-a11y rules)
+npm run lint:fix      # auto-fix where possible
+npm run format        # Prettier — format all src/ files
+npm run type-check    # tsc --noEmit (no emit, just type checking)
+```
+
+A [Husky](https://typicode.com/husky) pre-commit hook runs `lint-staged` automatically on staged files before every commit — ESLint + Prettier are applied to all staged `.ts`/`.tsx` files.
+
+All API responses are validated at runtime with [Zod](https://zod.dev/) schemas defined in `src/api/schemas.ts`. Schema mismatches log a `console.warn` but never crash the UI.
+
+Run `npm run build` to generate `dist/stats.html` — a bundle size visualizer powered by [rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer).
+
+---
+
+## CI/CD
+
+GitHub Actions runs on every push and pull request to `main`:
+
+| Job | Steps |
+|---|---|
+| `frontend` | Install → Lint → Type-check → Test with coverage → Build → Playwright E2E |
+| `backend` | Gradle test → Gradle build |
+
+Both jobs must pass before a PR can be merged. Configuration: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
