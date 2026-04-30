@@ -31,7 +31,7 @@ class LibraryService(
     }
 
     private fun findItem(id: Long, userId: String): LibraryItem =
-        libraryItemRepository.findByIdAndUserId(id, userId).orElseThrow { NotFoundException("Library item not found") }
+        libraryItemRepository.findByIdAndUserId(id, userId) ?: throw NotFoundException("Library item not found")
 
     fun getAll(userId: String): List<LibraryItemDto> =
         libraryItemRepository.findByUserIdOrderByCreatedAtDesc(userId).map { it.toDto() }
@@ -56,39 +56,36 @@ class LibraryService(
     }
 
     fun update(id: Long, req: UpdateLibraryItemRequest, userId: String): LibraryItemDto {
-        val item = findItem(id, userId)
-        req.name?.let { item.name = it }
-        req.colors?.let { item.colors = it.joinToString(",") }
-        req.yarnMaterial?.let { item.yarnMaterial = it }
-        req.yarnBrand?.let { item.yarnBrand = it }
-        req.yarnAmountG?.let { item.yarnAmountG = it }
-        req.yarnAmountM?.let { item.yarnAmountM = it }
-        req.fabricWidthCm?.let { item.fabricWidthCm = it }
-        req.fabricLengthCm?.let { item.fabricLengthCm = it }
-        req.needleSizeMm?.let { item.needleSizeMm = it }
-        req.circularLengthCm?.let { item.circularLengthCm = it }
-        req.hookSizeMm?.let { item.hookSizeMm = it }
+        val item = findItem(id, userId).apply {
+            req.name?.let { name = it }
+            req.colors?.let { colors = it.joinToString(",") }
+            req.yarnMaterial?.let { yarnMaterial = it }
+            req.yarnBrand?.let { yarnBrand = it }
+            req.yarnAmountG?.let { yarnAmountG = it }
+            req.yarnAmountM?.let { yarnAmountM = it }
+            req.fabricWidthCm?.let { fabricWidthCm = it }
+            req.fabricLengthCm?.let { fabricLengthCm = it }
+            req.needleSizeMm?.let { needleSizeMm = it }
+            req.circularLengthCm?.let { circularLengthCm = it }
+            req.hookSizeMm?.let { hookSizeMm = it }
+        }
         return libraryItemRepository.save(item).toDto()
     }
 
     fun registerLibraryImage(id: Long, req: RegisterLibraryImageRequest, userId: String): LibraryItemDto {
-        val item = findItem(id, userId)
-        migrateLegacyImageIfNeeded(item)
+        val item = findItem(id, userId).also { migrateLegacyImageIfNeeded(it) }
         if (item.images.size >= MAX_IMAGES) throw BadRequestException("Maximum $MAX_IMAGES images per library item")
-        val isFirst = item.images.isEmpty()
-        val img = LibraryItemImage(
+        item.images.add(LibraryItemImage(
             storedName = req.fileUrl,
             originalName = req.originalName,
-            isMain = isFirst,
+            isMain = item.images.isEmpty(),
             libraryItem = item
-        )
-        item.images.add(img)
+        ))
         return libraryItemRepository.save(item).toDto()
     }
 
     fun setLibraryImageMain(libraryItemId: Long, imageId: Long, userId: String): LibraryItemDto {
-        val item = findItem(libraryItemId, userId)
-        migrateLegacyImageIfNeeded(item)
+        val item = findItem(libraryItemId, userId).also { migrateLegacyImageIfNeeded(it) }
         val target = item.images.find { it.id == imageId } ?: throw NotFoundException("Image not found")
         item.images.forEach { it.isMain = false }
         target.isMain = true
@@ -96,31 +93,27 @@ class LibraryService(
     }
 
     fun deleteLibraryImage(libraryItemId: Long, imageId: Long, userId: String): LibraryItemDto {
-        val item = findItem(libraryItemId, userId)
-        migrateLegacyImageIfNeeded(item)
+        val item = findItem(libraryItemId, userId).also { migrateLegacyImageIfNeeded(it) }
         val img = item.images.find { it.id == imageId } ?: throw NotFoundException("Image not found")
         val wasMain = img.isMain
         deleteStoredImage(img.storedName)
         item.images.removeIf { it.id == imageId }
-        if (wasMain) {
-            val next = item.images.firstOrNull()
-            next?.isMain = true
-        }
+        if (wasMain) item.images.firstOrNull()?.isMain = true
         return libraryItemRepository.save(item).toDto()
     }
 
     fun delete(id: Long, userId: String) {
-        val item = findItem(id, userId)
-        item.images.forEach { deleteStoredImage(it.storedName) }
-        item.imageStoredName?.let { deleteImageFromDisk(it) }
+        findItem(id, userId).also {
+            it.images.forEach { img -> deleteStoredImage(img.storedName) }
+            it.imageStoredName?.let { name -> deleteImageFromDisk(name) }
+        }
         libraryItemRepository.deleteById(id)
     }
 
     fun deleteAllForUser(userId: String) {
-        val items = libraryItemRepository.findByUserId(userId)
-        items.forEach { item ->
-            item.images.forEach { deleteStoredImage(it.storedName) }
-            item.imageStoredName?.let { deleteImageFromDisk(it) }
+        libraryItemRepository.findByUserId(userId).also { items ->
+            items.flatMap { it.images }.forEach { deleteStoredImage(it.storedName) }
+            items.forEach { it.imageStoredName?.let { name -> deleteImageFromDisk(name) } }
         }
         libraryItemImageRepository.deleteAllByLibraryItemUserId(userId)
         libraryItemRepository.deleteAllByUserId(userId)
@@ -143,23 +136,18 @@ class LibraryService(
     }
 
     private fun deleteStoredImage(storedName: String) {
-        try {
+        runCatching {
             when {
                 storedName.startsWith("http") -> storageService.deleteByUrl(storedName)
                 storedName.startsWith("/api/library-images/") ->
                     deleteImageFromDisk(storedName.removePrefix("/api/library-images/"))
             }
-        } catch (e: Exception) {
-            logger.warn("Failed to delete stored image $storedName: ${e.message}")
-        }
+        }.onFailure { logger.warn("Failed to delete stored image $storedName: ${it.message}") }
     }
 
     private fun deleteImageFromDisk(storedName: String) {
-        try {
-            Paths.get(uploadDir, "library", storedName).toFile().delete()
-        } catch (e: Exception) {
-            logger.warn("Failed to delete image from disk $storedName: ${e.message}")
-        }
+        runCatching { Paths.get(uploadDir, "library", storedName).toFile().delete() }
+            .onFailure { logger.warn("Failed to delete image from disk $storedName: ${it.message}") }
     }
 
     private fun LibraryItem.toDto(): LibraryItemDto {

@@ -13,9 +13,9 @@ class ProjectMapper(private val objectMapper: ObjectMapper) {
     fun toDto(project: Project, includeNotes: Boolean = true): ProjectDto = with(project) {
         fun toImgDto(img: ProjectImage) =
             ProjectImageDto(img.id, img.storedName, img.originalName, img.section, img.materialId, img.isMain, id)
-        val coverRows = images.filter { it.section == "cover" }.sortedBy { it.id }
+        val coverRows = images.filter { it.section == ProjectImage.COVER }.sortedBy { it.id }
         // Group material images once (O(M)) so the per-material lookup is O(1) instead of O(M) each
-        val materialImagesByMatId = images.filter { it.section == "material" }.groupBy { it.materialId }
+        val materialImagesByMatId = images.filter { it.section == ProjectImage.MATERIAL }.groupBy { it.materialId }
         ProjectDto(
             id = id, name = name, description = description, category = category,
             tags = tags, notes = if (includeNotes) notes else "",
