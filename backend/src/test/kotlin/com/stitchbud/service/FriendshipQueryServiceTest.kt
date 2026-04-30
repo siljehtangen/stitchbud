@@ -77,7 +77,7 @@ class FriendshipQueryServiceTest {
     fun `getPendingRequests returns all pending incoming requests`() {
         val f = Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.PENDING)
         whenever(friendshipRepo.findByRecipientIdAndStatus(USER_B, FriendshipStatus.PENDING)).thenReturn(listOf(f))
-        whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(UserProfile(USER_A, EMAIL_A, "Alice")))
+        whenever(userProfileRepo.findAllById(listOf(USER_A))).thenReturn(listOf(UserProfile(USER_A, EMAIL_A, "Alice")))
 
         val result = service.getPendingRequests(USER_B)
 
