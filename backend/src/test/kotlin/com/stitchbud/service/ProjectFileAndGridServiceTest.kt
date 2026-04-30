@@ -27,7 +27,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -72,7 +71,7 @@ class ProjectFileAndGridServiceTest {
     )
 
     private fun stubFindProject(project: Project) {
-        whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(Optional.of(project))
+        whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(project)
         whenever(projectRepo.save(any<Project>())).doAnswer { it.arguments[0] as Project }
     }
 
@@ -180,8 +179,8 @@ class ProjectFileAndGridServiceTest {
         val project = makeProject()
         val material = Material(id = 7L, name = "Yarn", type = "YARN", project = project)
         project.materials.add(material)
-        project.images.add(ProjectImage(id = 1L, storedName = "http://img", originalName = "img.jpg", section = "material", materialId = 7L, isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://cover", originalName = "cover.jpg", section = "cover", isMain = true, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://img", originalName = "img.jpg", section = ProjectImage.MATERIAL, materialId = 7L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://cover", originalName = "cover.jpg", section = ProjectImage.COVER, isMain = true, project = project))
         stubFindProject(project)
 
         val dto = service.deleteMaterial(PROJECT_ID, 7L, USER_ID)
