@@ -10,21 +10,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class GlobalExceptionHandler {
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
+    private fun errorResponse(status: HttpStatus, ex: Exception) =
+        ResponseEntity.status(status).body(ErrorResponse(ex.message ?: status.reasonPhrase))
+
     @ExceptionHandler(NotFoundException::class)
-    fun handleNotFound(ex: NotFoundException): ResponseEntity<ErrorResponse> =
-        ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse(ex.message ?: "Not found"))
+    fun handleNotFound(ex: NotFoundException) = errorResponse(HttpStatus.NOT_FOUND, ex)
 
     @ExceptionHandler(ForbiddenException::class)
-    fun handleForbidden(ex: ForbiddenException): ResponseEntity<ErrorResponse> =
-        ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse(ex.message ?: "Forbidden"))
+    fun handleForbidden(ex: ForbiddenException) = errorResponse(HttpStatus.FORBIDDEN, ex)
 
     @ExceptionHandler(BadRequestException::class)
-    fun handleBadRequest(ex: BadRequestException): ResponseEntity<ErrorResponse> =
-        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse(ex.message ?: "Bad request"))
+    fun handleBadRequest(ex: BadRequestException) = errorResponse(HttpStatus.BAD_REQUEST, ex)
 
     @ExceptionHandler(IllegalArgumentException::class)
-    fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> =
-        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse(ex.message ?: "Bad request"))
+    fun handleIllegalArgument(ex: IllegalArgumentException) = errorResponse(HttpStatus.BAD_REQUEST, ex)
 
     @ExceptionHandler(Exception::class)
     fun handleGeneric(ex: Exception): ResponseEntity<ErrorResponse> {

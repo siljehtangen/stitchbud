@@ -3,9 +3,9 @@ package com.stitchbud.controller
 import com.stitchbud.dto.*
 import com.stitchbud.model.ProjectCategory
 import com.stitchbud.service.ProjectService
+import com.stitchbud.util.currentUserId
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
@@ -13,101 +13,96 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/projects")
 class ProjectController(private val projectService: ProjectService) {
 
-    private fun userId() = SecurityContextHolder.getContext().authentication.name
-
     @GetMapping
-    fun getAll(@RequestParam(required = false) category: String?): List<ProjectDto> {
-        if (category != null) {
-            val cat = runCatching { ProjectCategory.valueOf(category.uppercase()) }
-                .getOrElse { throw BadRequestException("Invalid category: $category") }
-            return projectService.getProjectsByCategory(cat, userId())
-        }
-        return projectService.getAllProjects(userId())
-    }
+    fun getAll(@RequestParam(required = false) category: String?): List<ProjectDto> =
+        category
+            ?.let { runCatching { ProjectCategory.valueOf(it.uppercase()) }.getOrElse { throw BadRequestException("Invalid category: $category") } }
+            ?.let { projectService.getProjectsByCategory(it, currentUserId()) }
+            ?: projectService.getAllProjects(currentUserId())
 
     @GetMapping("/{id}")
-    fun getOne(@PathVariable id: Long) = projectService.getProject(id, userId())
+    fun getOne(@PathVariable id: Long) = projectService.getProject(id, currentUserId())
 
     @PostMapping
-    fun create(@RequestBody req: CreateProjectRequest) = projectService.createProject(req, userId())
+    fun create(@RequestBody req: CreateProjectRequest) = projectService.createProject(req, currentUserId())
 
     @PutMapping("/{id}")
     fun update(@PathVariable id: Long, @RequestBody req: UpdateProjectRequest) =
-        projectService.updateProject(id, req, userId())
+        projectService.updateProject(id, req, currentUserId())
 
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
-        projectService.deleteProject(id, userId())
+        projectService.deleteProject(id, currentUserId())
         return ResponseEntity.noContent().build()
     }
 
     @DeleteMapping("/account")
     fun deleteAccount(): ResponseEntity<Unit> {
-        projectService.deleteAccount(userId())
+        projectService.deleteAccount(currentUserId())
         return ResponseEntity.noContent().build()
     }
 
     @DeleteMapping("/account/data")
     fun resetData(): ResponseEntity<Unit> {
-        projectService.deleteAllUserData(userId())
+        projectService.deleteAllUserData(currentUserId())
         return ResponseEntity.noContent().build()
     }
 
     @PostMapping("/{id}/materials")
     fun addMaterial(@PathVariable id: Long, @RequestBody req: AddMaterialRequest) =
-        projectService.addMaterial(id, req, userId())
+        projectService.addMaterial(id, req, currentUserId())
 
     @DeleteMapping("/{id}/materials/{materialId}")
     fun deleteMaterial(@PathVariable id: Long, @PathVariable materialId: Long) =
-        projectService.deleteMaterial(id, materialId, userId())
+        projectService.deleteMaterial(id, materialId, currentUserId())
 
     @PutMapping("/{id}/row-counter")
     fun updateRowCounter(@PathVariable id: Long, @RequestBody req: UpdateRowCounterRequest) =
-        projectService.updateRowCounter(id, req, userId())
+        projectService.updateRowCounter(id, req, currentUserId())
 
     @PostMapping("/{id}/pattern-grids")
     fun createPatternGrid(@PathVariable id: Long) =
-        projectService.createPatternGrid(id, userId())
+        projectService.createPatternGrid(id, currentUserId())
 
     @PutMapping("/{id}/pattern-grids/{gridId}")
     fun updatePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long, @RequestBody req: UpdatePatternGridRequest) =
-        projectService.updatePatternGrid(id, gridId, req, userId())
+        projectService.updatePatternGrid(id, gridId, req, currentUserId())
 
     @DeleteMapping("/{id}/pattern-grids/{gridId}")
     fun deletePatternGrid(@PathVariable id: Long, @PathVariable gridId: Long) =
-        projectService.deletePatternGrid(id, gridId, userId())
+        projectService.deletePatternGrid(id, gridId, currentUserId())
 
     @PostMapping("/{id}/files/register")
     fun registerFile(@PathVariable id: Long, @RequestBody req: RegisterProjectFileRequest) =
-        projectService.registerFile(id, req, userId())
+        projectService.registerFile(id, req, currentUserId())
 
     @DeleteMapping("/{id}/files/{fileId}")
     fun deleteFile(@PathVariable id: Long, @PathVariable fileId: Long) =
-        projectService.deleteFile(id, fileId, userId())
+        projectService.deleteFile(id, fileId, currentUserId())
 
     @PostMapping("/{id}/cover-images/register")
     fun registerCoverImage(@PathVariable id: Long, @RequestBody req: RegisterProjectImageRequest) =
-        projectService.registerCoverImage(id, req, userId())
+        projectService.registerCoverImage(id, req, currentUserId())
 
     @PutMapping("/{id}/cover-images/{imageId}/main")
     fun setCoverImageMain(@PathVariable id: Long, @PathVariable imageId: Long) =
-        projectService.setCoverImageMain(id, imageId, userId())
+        projectService.setCoverImageMain(id, imageId, currentUserId())
 
     @DeleteMapping("/{id}/cover-images/{imageId}")
     fun deleteCoverImage(@PathVariable id: Long, @PathVariable imageId: Long) =
-        projectService.deleteCoverImage(id, imageId, userId())
+        projectService.deleteCoverImage(id, imageId, currentUserId())
 
     @PostMapping("/{id}/material-images/register")
     fun registerMaterialImage(@PathVariable id: Long, @RequestBody req: RegisterProjectImageRequest) =
-        projectService.registerMaterialImage(id, req, userId())
+        projectService.registerMaterialImage(id, req, currentUserId())
 
     @PutMapping("/{id}/material-images/{imageId}/main")
     fun setMaterialImageMain(@PathVariable id: Long, @PathVariable imageId: Long) =
-        projectService.setMaterialImageMain(id, imageId, userId())
+        projectService.setMaterialImageMain(id, imageId, currentUserId())
 
     @DeleteMapping("/{id}/material-images/{imageId}")
     fun deleteMaterialImage(@PathVariable id: Long, @PathVariable imageId: Long) =
-        projectService.deleteMaterialImage(id, imageId, userId())
+        projectService.deleteMaterialImage(id, imageId, currentUserId())
 }
 
 @RestController
@@ -118,10 +113,9 @@ class FileController(private val projectService: ProjectService) {
         @PathVariable projectId: Long,
         @PathVariable storedName: String
     ): ResponseEntity<FileSystemResource> {
-        val userId = SecurityContextHolder.getContext().authentication.name
-        val file = projectService.getFilePath(projectId, storedName, userId)
+        val file = projectService.getFilePath(projectId, storedName, currentUserId())
+            ?.takeIf { it.exists() }
             ?: return ResponseEntity.notFound().build()
-        if (!file.exists()) return ResponseEntity.notFound().build()
         return serveFileResponse(file)
     }
 }

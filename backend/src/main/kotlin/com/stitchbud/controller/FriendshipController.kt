@@ -3,6 +3,7 @@ package com.stitchbud.controller
 import com.stitchbud.dto.SendFriendRequestBody
 import com.stitchbud.dto.UserProfileDto
 import com.stitchbud.service.FriendshipService
+import com.stitchbud.util.currentUserId
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -12,26 +13,20 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/users")
 class UserController(private val friendshipService: FriendshipService) {
 
-    private fun userId() = SecurityContextHolder.getContext().authentication.name
+    private val jwtToken: JwtAuthenticationToken?
+        get() = SecurityContextHolder.getContext().authentication as? JwtAuthenticationToken
 
-    private fun jwtClaim(claim: String): String? {
-        val auth = SecurityContextHolder.getContext().authentication
-        return if (auth is JwtAuthenticationToken) auth.token.getClaim(claim) else null
-    }
+    private fun jwtClaim(claim: String): String? = jwtToken?.token?.getClaim(claim)
 
-    private fun displayName(): String? {
-        val auth = SecurityContextHolder.getContext().authentication
-        if (auth !is JwtAuthenticationToken) return null
-        val meta = auth.token.getClaim<Any?>("user_metadata") ?: return null
-        @Suppress("UNCHECKED_CAST")
-        val map = meta as? Map<String, Any?> ?: return null
-        return (map["full_name"] as? String) ?: (map["name"] as? String)
-    }
+    private fun displayName(): String? =
+        jwtToken?.token?.getClaim<Any?>("user_metadata")
+            ?.let { it as? Map<*, *> }
+            ?.let { (it["full_name"] as? String) ?: (it["name"] as? String) }
 
     @PutMapping("/me")
     fun upsertMe(): UserProfileDto {
         val email = jwtClaim("email") ?: ""
-        return friendshipService.upsertProfile(userId(), email, displayName())
+        return friendshipService.upsertProfile(currentUserId(), email, displayName())
     }
 }
 
@@ -39,33 +34,31 @@ class UserController(private val friendshipService: FriendshipService) {
 @RequestMapping("/api/friends")
 class FriendshipController(private val friendshipService: FriendshipService) {
 
-    private fun userId() = SecurityContextHolder.getContext().authentication.name
-
     @GetMapping
-    fun getFriends() = friendshipService.getFriends(userId())
+    fun getFriends() = friendshipService.getFriends(currentUserId())
 
     @GetMapping("/requests")
-    fun getPendingRequests() = friendshipService.getPendingRequests(userId())
+    fun getPendingRequests() = friendshipService.getPendingRequests(currentUserId())
 
     @PostMapping("/request")
     fun sendRequest(@RequestBody body: SendFriendRequestBody) =
-        friendshipService.sendFriendRequest(userId(), body.email.trim())
+        friendshipService.sendFriendRequest(currentUserId(), body.email.trim())
 
     @PutMapping("/{id}/accept")
     fun accept(@PathVariable id: Long) =
-        friendshipService.acceptFriendRequest(id, userId())
+        friendshipService.acceptFriendRequest(id, currentUserId())
 
     @DeleteMapping("/{id}")
     fun remove(@PathVariable id: Long): ResponseEntity<Unit> {
-        friendshipService.removeFriendship(id, userId())
+        friendshipService.removeFriendship(id, currentUserId())
         return ResponseEntity.noContent().build()
     }
 
     @GetMapping("/{friendUserId}/projects")
     fun getFriendProjects(@PathVariable friendUserId: String) =
-        friendshipService.getFriendPublicProjects(userId(), friendUserId)
+        friendshipService.getFriendPublicProjects(currentUserId(), friendUserId)
 
     @GetMapping("/{friendUserId}/projects/{projectId}")
     fun getFriendProject(@PathVariable friendUserId: String, @PathVariable projectId: Long) =
-        friendshipService.getFriendProject(userId(), friendUserId, projectId)
+        friendshipService.getFriendProject(currentUserId(), friendUserId, projectId)
 }
