@@ -21,7 +21,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.util.Optional
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -66,7 +65,7 @@ class ProjectImageServiceTest {
     )
 
     private fun stubFindProject(project: Project) {
-        whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(Optional.of(project))
+        whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(project)
         whenever(projectRepo.save(any<Project>())).doAnswer { it.arguments[0] as Project }
     }
 
@@ -76,7 +75,7 @@ class ProjectImageServiceTest {
     fun `registerCoverImage throws BadRequest when max 3 images already reached`() {
         val project = makeProject()
         repeat(3) { i ->
-            project.images.add(ProjectImage(id = i + 1L, storedName = "http://url$i", originalName = "img$i.jpg", section = "cover", isMain = i == 0, project = project))
+            project.images.add(ProjectImage(id = i + 1L, storedName = "http://url$i", originalName = "img$i.jpg", section = ProjectImage.COVER, isMain = i == 0, project = project))
         }
         stubFindProject(project)
 
@@ -98,7 +97,7 @@ class ProjectImageServiceTest {
     @Test
     fun `registerCoverImage does not set second image as main`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://first", originalName = "first.jpg", section = "cover", isMain = true, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://first", originalName = "first.jpg", section = ProjectImage.COVER, isMain = true, project = project))
         stubFindProject(project)
 
         val req = RegisterProjectImageRequest(originalName = "second.jpg", fileUrl = "http://second")
@@ -112,8 +111,8 @@ class ProjectImageServiceTest {
     @Test
     fun `setCoverImageMain sets target as main and clears the previous main`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = "cover", isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = "cover", isMain = false, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = ProjectImage.COVER, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = ProjectImage.COVER, isMain = false, project = project))
         stubFindProject(project)
 
         service.setCoverImageMain(PROJECT_ID, 2L, USER_ID)
@@ -135,13 +134,13 @@ class ProjectImageServiceTest {
     @Test
     fun `deleteCoverImage promotes next cover image as main when main is deleted`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://img1", originalName = "a.jpg", section = "cover", isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://img2", originalName = "b.jpg", section = "cover", isMain = false, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://img1", originalName = "a.jpg", section = ProjectImage.COVER, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://img2", originalName = "b.jpg", section = ProjectImage.COVER, isMain = false, project = project))
         stubFindProject(project)
 
         service.deleteCoverImage(PROJECT_ID, 1L, USER_ID)
 
-        val remaining = project.images.filter { it.section == "cover" }
+        val remaining = project.images.filter { it.section == ProjectImage.COVER }
         assertTrue(remaining.single().isMain)
         assert(remaining.single().id == 2L)
     }
@@ -149,13 +148,13 @@ class ProjectImageServiceTest {
     @Test
     fun `deleteCoverImage does not change main when a non-main image is deleted`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://img1", originalName = "a.jpg", section = "cover", isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://img2", originalName = "b.jpg", section = "cover", isMain = false, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://img1", originalName = "a.jpg", section = ProjectImage.COVER, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://img2", originalName = "b.jpg", section = ProjectImage.COVER, isMain = false, project = project))
         stubFindProject(project)
 
         service.deleteCoverImage(PROJECT_ID, 2L, USER_ID)
 
-        val remaining = project.images.filter { it.section == "cover" }
+        val remaining = project.images.filter { it.section == ProjectImage.COVER }
         assertTrue(remaining.single().isMain)
         assert(remaining.single().id == 1L)
     }
@@ -194,7 +193,7 @@ class ProjectImageServiceTest {
         val material = Material(id = 5L, name = "Yarn", type = "YARN", project = project)
         project.materials.add(material)
         repeat(3) { i ->
-            project.images.add(ProjectImage(id = i + 1L, storedName = "http://m$i", originalName = "m$i.jpg", section = "material", materialId = 5L, isMain = i == 0, project = project))
+            project.images.add(ProjectImage(id = i + 1L, storedName = "http://m$i", originalName = "m$i.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = i == 0, project = project))
         }
         stubFindProject(project)
 
@@ -220,7 +219,7 @@ class ProjectImageServiceTest {
         val project = makeProject()
         val material = Material(id = 5L, name = "Yarn", type = "YARN", project = project)
         project.materials.add(material)
-        project.images.add(ProjectImage(id = 1L, storedName = "http://first", originalName = "first.jpg", section = "material", materialId = 5L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://first", originalName = "first.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = true, project = project))
         stubFindProject(project)
 
         val req = RegisterProjectImageRequest(originalName = "second.jpg", fileUrl = "http://second", materialId = 5L)
@@ -234,8 +233,8 @@ class ProjectImageServiceTest {
     @Test
     fun `setMaterialImageMain sets target as main and clears others for the same material`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = "material", materialId = 5L, isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = "material", materialId = 5L, isMain = false, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = false, project = project))
         stubFindProject(project)
 
         service.setMaterialImageMain(PROJECT_ID, 2L, USER_ID)
@@ -257,26 +256,26 @@ class ProjectImageServiceTest {
     @Test
     fun `deleteMaterialImage promotes next image as main when the main is deleted`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = "material", materialId = 5L, isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = "material", materialId = 5L, isMain = false, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = false, project = project))
         stubFindProject(project)
 
         service.deleteMaterialImage(PROJECT_ID, 1L, USER_ID)
 
-        val remaining = project.images.filter { it.section == "material" && it.materialId == 5L }
+        val remaining = project.images.filter { it.section == ProjectImage.MATERIAL && it.materialId == 5L }
         assertTrue(remaining.single().isMain)
     }
 
     @Test
     fun `deleteMaterialImage does not change main when a non-main image is deleted`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = "material", materialId = 5L, isMain = true, project = project))
-        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = "material", materialId = 5L, isMain = false, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://a", originalName = "a.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = true, project = project))
+        project.images.add(ProjectImage(id = 2L, storedName = "http://b", originalName = "b.jpg", section = ProjectImage.MATERIAL, materialId = 5L, isMain = false, project = project))
         stubFindProject(project)
 
         service.deleteMaterialImage(PROJECT_ID, 2L, USER_ID)
 
-        val remaining = project.images.filter { it.section == "material" && it.materialId == 5L }
+        val remaining = project.images.filter { it.section == ProjectImage.MATERIAL && it.materialId == 5L }
         assertTrue(remaining.single().isMain)
         assert(remaining.single().id == 1L)
     }
