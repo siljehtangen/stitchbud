@@ -5,6 +5,7 @@ import com.stitchbud.controller.NotFoundException
 import com.stitchbud.dto.RegisterLibraryImageRequest
 import com.stitchbud.model.LibraryItem
 import com.stitchbud.model.LibraryItemImage
+import com.stitchbud.model.LibraryItemType
 import com.stitchbud.repository.LibraryItemImageRepository
 import com.stitchbud.repository.LibraryItemRepository
 import org.junit.jupiter.api.BeforeEach
@@ -14,7 +15,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -43,11 +43,11 @@ class LibraryImageServiceTest {
     }
 
     private fun makeItem(id: Long = ITEM_ID, userId: String = USER_ID) = LibraryItem(
-        id = id, userId = userId, itemType = "YARN", name = "Test Yarn"
+        id = id, userId = userId, itemType = LibraryItemType.YARN, name = "Test Yarn"
     )
 
     private fun stubFindItem(item: LibraryItem) {
-        whenever(libraryItemRepo.findByIdAndUserId(item.id, item.userId)).thenReturn(Optional.of(item))
+        whenever(libraryItemRepo.findByIdAndUserId(item.id, item.userId)).thenReturn(item)
         whenever(libraryItemRepo.save(any<LibraryItem>())).doAnswer { it.arguments[0] as LibraryItem }
     }
 
