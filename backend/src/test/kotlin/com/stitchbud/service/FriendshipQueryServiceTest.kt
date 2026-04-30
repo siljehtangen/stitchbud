@@ -90,25 +90,25 @@ class FriendshipQueryServiceTest {
 
     @Test
     fun `getFriendPublicProjects throws BadRequest when no friendship exists`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.empty())
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(null)
 
         assertThrows<BadRequestException> { service.getFriendPublicProjects(USER_A, USER_B) }
     }
 
     @Test
     fun `getFriendPublicProjects throws BadRequest when friendship is still pending`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.PENDING)
-        ))
+        )
 
         assertThrows<BadRequestException> { service.getFriendPublicProjects(USER_A, USER_B) }
     }
 
     @Test
     fun `getFriendPublicProjects returns projects when friendship is accepted`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.ACCEPTED)
-        ))
+        )
         whenever(projectRepo.findPublicProjectsByUserId(USER_B)).thenReturn(emptyList())
 
         assertTrue(service.getFriendPublicProjects(USER_A, USER_B).isEmpty())
@@ -118,9 +118,9 @@ class FriendshipQueryServiceTest {
 
     @Test
     fun `getFriendProject throws NotFoundException when project not found`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.ACCEPTED)
-        ))
+        )
         whenever(projectRepo.findById(10L)).thenReturn(Optional.empty())
 
         assertThrows<NotFoundException> { service.getFriendProject(USER_A, USER_B, 10L) }
@@ -128,9 +128,9 @@ class FriendshipQueryServiceTest {
 
     @Test
     fun `getFriendProject throws NotFoundException when project belongs to different user`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.ACCEPTED)
-        ))
+        )
         whenever(projectRepo.findById(10L)).thenReturn(Optional.of(
             Project(id = 10L, userId = "someone-else", name = "Other", category = ProjectCategory.KNITTING, isPublic = true)
         ))
@@ -140,9 +140,9 @@ class FriendshipQueryServiceTest {
 
     @Test
     fun `getFriendProject throws BadRequest when project is not public`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.ACCEPTED)
-        ))
+        )
         whenever(projectRepo.findById(10L)).thenReturn(Optional.of(
             Project(id = 10L, userId = USER_B, name = "Secret", category = ProjectCategory.KNITTING, isPublic = false)
         ))
@@ -152,9 +152,9 @@ class FriendshipQueryServiceTest {
 
     @Test
     fun `getFriendProject returns dto when project is public and friendship is accepted`() {
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.ACCEPTED)
-        ))
+        )
         whenever(projectRepo.findById(10L)).thenReturn(Optional.of(
             Project(id = 10L, userId = USER_B, name = "Public Project", category = ProjectCategory.KNITTING, isPublic = true)
         ))
