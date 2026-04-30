@@ -21,7 +21,6 @@ import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -69,7 +68,7 @@ class ProjectCrudServiceTest {
     )
 
     private fun stubFindProject(project: Project) {
-        whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(Optional.of(project))
+        whenever(projectRepo.findByIdAndUserId(project.id, project.userId)).thenReturn(project)
         whenever(projectRepo.save(any<Project>())).doAnswer { it.arguments[0] as Project }
     }
 
@@ -99,7 +98,7 @@ class ProjectCrudServiceTest {
 
     @Test
     fun `getProject throws NotFoundException when project does not belong to user`() {
-        whenever(projectRepo.findByIdAndUserId(PROJECT_ID, USER_ID)).thenReturn(Optional.empty())
+        whenever(projectRepo.findByIdAndUserId(PROJECT_ID, USER_ID)).thenReturn(null)
 
         assertThrows<NotFoundException> { service.getProject(PROJECT_ID, USER_ID) }
     }
@@ -107,7 +106,7 @@ class ProjectCrudServiceTest {
     @Test
     fun `getProject returns dto for a valid project`() {
         val project = makeProject()
-        whenever(projectRepo.findByIdAndUserId(PROJECT_ID, USER_ID)).thenReturn(Optional.of(project))
+        whenever(projectRepo.findByIdAndUserId(PROJECT_ID, USER_ID)).thenReturn(project)
 
         val dto = service.getProject(PROJECT_ID, USER_ID)
 
@@ -192,7 +191,7 @@ class ProjectCrudServiceTest {
     @Test
     fun `deleteProject calls storageService for each image before deleting`() {
         val project = makeProject()
-        project.images.add(ProjectImage(id = 1L, storedName = "http://img1", originalName = "a.jpg", section = "cover", isMain = true, project = project))
+        project.images.add(ProjectImage(id = 1L, storedName = "http://img1", originalName = "a.jpg", section = ProjectImage.COVER, isMain = true, project = project))
         stubFindProject(project)
 
         service.deleteProject(PROJECT_ID, USER_ID)
