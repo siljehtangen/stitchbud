@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(name = "row_counters")
 class RowCounter(
+    id: Long = 0,
     var stitchesPerRound: Int = 0,
     var totalRounds: Int = 0,
     @Column(columnDefinition = "TEXT")
@@ -15,4 +16,4 @@ class RowCounter(
     @JoinColumn(name = "project_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     var project: Project? = null
-) : BaseEntity()
+) : BaseEntity(id)

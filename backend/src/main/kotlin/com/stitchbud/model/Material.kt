@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(name = "materials")
 class Material(
+    id: Long = 0,
     var name: String,
     var type: String,
     var itemType: String? = null,
@@ -18,4 +19,4 @@ class Material(
     @JoinColumn(name = "project_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     var project: Project? = null
-) : BaseEntity()
+) : BaseEntity(id)

@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(name = "project_images")
 class ProjectImage(
+    id: Long = 0,
     var storedName: String = "",
     var originalName: String = "",
     var section: String = "cover",
@@ -16,7 +17,7 @@ class ProjectImage(
     @JoinColumn(name = "project_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     var project: Project? = null
-) : BaseEntity() {
+) : BaseEntity(id) {
     companion object {
         const val COVER = "cover"
         const val MATERIAL = "material"

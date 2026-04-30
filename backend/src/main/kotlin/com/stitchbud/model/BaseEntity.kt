@@ -6,9 +6,9 @@ import jakarta.persistence.Id
 import jakarta.persistence.MappedSuperclass
 
 @MappedSuperclass
-abstract class BaseEntity {
+abstract class BaseEntity(id: Long = 0) {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0
+    val id: Long = id
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

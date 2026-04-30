@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(name = "library_item_images")
 class LibraryItemImage(
+    id: Long = 0,
     var storedName: String = "",
     var originalName: String = "",
     var isMain: Boolean = false,
@@ -14,4 +15,4 @@ class LibraryItemImage(
     @JoinColumn(name = "library_item_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     var libraryItem: LibraryItem? = null
-) : BaseEntity()
+) : BaseEntity(id)

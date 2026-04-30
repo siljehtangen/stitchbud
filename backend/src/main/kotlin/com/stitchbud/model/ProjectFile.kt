@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(name = "project_files")
 class ProjectFile(
+    id: Long = 0,
     var originalName: String = "",
     var storedName: String = "",
     var mimeType: String = "application/octet-stream",
@@ -16,4 +17,4 @@ class ProjectFile(
     @JoinColumn(name = "project_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     var project: Project? = null
-) : BaseEntity()
+) : BaseEntity(id)
