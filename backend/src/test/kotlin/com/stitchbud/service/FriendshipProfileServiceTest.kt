@@ -101,7 +101,7 @@ class FriendshipProfileServiceTest {
     @Test
     fun `sendFriendRequest throws NotFoundException when target user not found`() {
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(UserProfile(userId = USER_A, email = EMAIL_A)))
-        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(Optional.empty())
+        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(null)
 
         assertThrows<NotFoundException> { service.sendFriendRequest(USER_A, EMAIL_B) }
     }
@@ -109,10 +109,10 @@ class FriendshipProfileServiceTest {
     @Test
     fun `sendFriendRequest throws BadRequest when already friends`() {
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(UserProfile(userId = USER_A, email = EMAIL_A)))
-        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(Optional.of(UserProfile(userId = USER_B, email = EMAIL_B)))
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(UserProfile(userId = USER_B, email = EMAIL_B))
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.ACCEPTED)
-        ))
+        )
 
         assertThrows<BadRequestException> { service.sendFriendRequest(USER_A, EMAIL_B) }
     }
@@ -120,10 +120,10 @@ class FriendshipProfileServiceTest {
     @Test
     fun `sendFriendRequest throws BadRequest when request already sent by same user`() {
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(UserProfile(userId = USER_A, email = EMAIL_A)))
-        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(Optional.of(UserProfile(userId = USER_B, email = EMAIL_B)))
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(
+        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(UserProfile(userId = USER_B, email = EMAIL_B))
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(
             Friendship(id = 1L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.PENDING)
-        ))
+        )
 
         assertThrows<BadRequestException> { service.sendFriendRequest(USER_A, EMAIL_B) }
     }
@@ -131,9 +131,9 @@ class FriendshipProfileServiceTest {
     @Test
     fun `sendFriendRequest auto-accepts when target already sent a request to requester`() {
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(UserProfile(userId = USER_A, email = EMAIL_A)))
-        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(Optional.of(UserProfile(userId = USER_B, email = EMAIL_B)))
+        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(UserProfile(userId = USER_B, email = EMAIL_B))
         val existing = Friendship(id = 1L, requesterId = USER_B, recipientId = USER_A, status = FriendshipStatus.PENDING)
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.of(existing))
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(existing)
         whenever(friendshipRepo.save(existing)).thenReturn(existing)
 
         val result = service.sendFriendRequest(USER_A, EMAIL_B)
@@ -145,8 +145,8 @@ class FriendshipProfileServiceTest {
     @Test
     fun `sendFriendRequest creates new pending friendship when none exists`() {
         whenever(userProfileRepo.findById(USER_A)).thenReturn(Optional.of(UserProfile(userId = USER_A, email = EMAIL_A)))
-        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(Optional.of(UserProfile(userId = USER_B, email = EMAIL_B)))
-        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(Optional.empty())
+        whenever(userProfileRepo.findByEmail(EMAIL_B)).thenReturn(UserProfile(userId = USER_B, email = EMAIL_B))
+        whenever(friendshipRepo.findBetween(USER_A, USER_B)).thenReturn(null)
         whenever(friendshipRepo.save(any<Friendship>())).thenReturn(
             Friendship(id = 5L, requesterId = USER_A, recipientId = USER_B, status = FriendshipStatus.PENDING)
         )
