@@ -5,6 +5,7 @@ import com.stitchbud.dto.CreateLibraryItemRequest
 import com.stitchbud.dto.UpdateLibraryItemRequest
 import com.stitchbud.model.LibraryItem
 import com.stitchbud.model.LibraryItemImage
+import com.stitchbud.model.LibraryItemType
 import com.stitchbud.repository.LibraryItemImageRepository
 import com.stitchbud.repository.LibraryItemRepository
 import org.junit.jupiter.api.BeforeEach
@@ -15,7 +16,6 @@ import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import java.util.Optional
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -43,11 +43,11 @@ class LibraryCrudServiceTest {
     }
 
     private fun makeItem(id: Long = ITEM_ID, userId: String = USER_ID) = LibraryItem(
-        id = id, userId = userId, itemType = "YARN", name = "Test Yarn"
+        id = id, userId = userId, itemType = LibraryItemType.YARN, name = "Test Yarn"
     )
 
     private fun stubFindItem(item: LibraryItem) {
-        whenever(libraryItemRepo.findByIdAndUserId(item.id, item.userId)).thenReturn(Optional.of(item))
+        whenever(libraryItemRepo.findByIdAndUserId(item.id, item.userId)).thenReturn(item)
         whenever(libraryItemRepo.save(any<LibraryItem>())).doAnswer { it.arguments[0] as LibraryItem }
     }
 
@@ -62,8 +62,8 @@ class LibraryCrudServiceTest {
 
     @Test
     fun `getAll returns mapped DTOs for user items`() {
-        val item1 = LibraryItem(id = 1L, userId = USER_ID, itemType = "YARN", name = "Merino")
-        val item2 = LibraryItem(id = 2L, userId = USER_ID, itemType = "NEEDLE", name = "5mm needle")
+        val item1 = LibraryItem(id = 1L, userId = USER_ID, itemType = LibraryItemType.YARN, name = "Merino")
+        val item2 = LibraryItem(id = 2L, userId = USER_ID, itemType = LibraryItemType.KNITTING_NEEDLE, name = "5mm needle")
         whenever(libraryItemRepo.findByUserIdOrderByCreatedAtDesc(USER_ID)).thenReturn(listOf(item1, item2))
 
         val result = service.getAll(USER_ID)
@@ -77,19 +77,19 @@ class LibraryCrudServiceTest {
 
     @Test
     fun `create joins colors list with comma separator`() {
-        val req = CreateLibraryItemRequest(itemType = "YARN", name = "Rainbow Yarn", colors = listOf("red", "blue", "green"))
+        val req = CreateLibraryItemRequest(itemType = LibraryItemType.YARN, name = "Rainbow Yarn", colors = listOf("red", "blue", "green"))
         whenever(libraryItemRepo.save(any<LibraryItem>())).thenReturn(
-            LibraryItem(id = 1L, userId = USER_ID, itemType = "YARN", name = "Rainbow Yarn", colors = "red,blue,green")
+            LibraryItem(id = 1L, userId = USER_ID, itemType = LibraryItemType.YARN, name = "Rainbow Yarn", colors = listOf("red", "blue", "green"))
         )
 
         assertEquals(listOf("red", "blue", "green"), service.create(req, USER_ID).colors)
     }
 
     @Test
-    fun `create handles null colors gracefully`() {
-        val req = CreateLibraryItemRequest(itemType = "NEEDLE", name = "5mm Needle", colors = null)
+    fun `create handles empty colors gracefully`() {
+        val req = CreateLibraryItemRequest(itemType = LibraryItemType.KNITTING_NEEDLE, name = "5mm Needle")
         whenever(libraryItemRepo.save(any<LibraryItem>())).thenReturn(
-            LibraryItem(id = 2L, userId = USER_ID, itemType = "NEEDLE", name = "5mm Needle", colors = null)
+            LibraryItem(id = 2L, userId = USER_ID, itemType = LibraryItemType.KNITTING_NEEDLE, name = "5mm Needle")
         )
 
         assertEquals(emptyList(), service.create(req, USER_ID).colors)
@@ -110,18 +110,18 @@ class LibraryCrudServiceTest {
     }
 
     @Test
-    fun `update converts colors list to comma-separated string`() {
+    fun `update converts colors list`() {
         val item = makeItem()
         stubFindItem(item)
 
         service.update(ITEM_ID, UpdateLibraryItemRequest(colors = listOf("pink", "purple")), USER_ID)
 
-        assertEquals("pink,purple", item.colors)
+        assertEquals(listOf("pink", "purple"), item.colors)
     }
 
     @Test
     fun `update throws NotFoundException when item belongs to different user`() {
-        whenever(libraryItemRepo.findByIdAndUserId(ITEM_ID, USER_ID)).thenReturn(Optional.empty())
+        whenever(libraryItemRepo.findByIdAndUserId(ITEM_ID, USER_ID)).thenReturn(null)
 
         assertThrows<NotFoundException> { service.update(ITEM_ID, UpdateLibraryItemRequest(name = "Hack"), USER_ID) }
     }
@@ -130,7 +130,7 @@ class LibraryCrudServiceTest {
 
     @Test
     fun `delete throws NotFoundException when item does not exist`() {
-        whenever(libraryItemRepo.findByIdAndUserId(ITEM_ID, USER_ID)).thenReturn(Optional.empty())
+        whenever(libraryItemRepo.findByIdAndUserId(ITEM_ID, USER_ID)).thenReturn(null)
 
         assertThrows<NotFoundException> { service.delete(ITEM_ID, USER_ID) }
     }
