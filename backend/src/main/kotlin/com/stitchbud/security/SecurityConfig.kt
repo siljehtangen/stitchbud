@@ -31,12 +31,9 @@ class SecurityConfig {
             .build()
         nimbusDecoder.setJwtValidator(JwtTimestampValidator(Duration.ofSeconds(60)))
         return JwtDecoder { token ->
-            try {
-                nimbusDecoder.decode(token)
-            } catch (e: Exception) {
-                log.warn("JWT decode failed [${e::class.simpleName}]: ${e.message}")
-                throw e
-            }
+            runCatching { nimbusDecoder.decode(token) }
+                .onFailure { log.warn("JWT decode failed [${it::class.simpleName}]: ${it.message}") }
+                .getOrThrow()
         }
     }
 
@@ -57,14 +54,12 @@ class SecurityConfig {
     @Bean
     fun corsConfigurationSource(
         @Value("\${app.cors-origins:http://localhost:5173,http://localhost:5174,http://localhost:5176}") corsOrigins: String
-    ): CorsConfigurationSource {
-        val config = CorsConfiguration()
-        config.allowedOrigins = corsOrigins.split(",").map { it.trim() }
-        config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        config.allowedHeaders = listOf("*")
-        config.allowCredentials = true
-        val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", config)
-        return source
+    ): CorsConfigurationSource = UrlBasedCorsConfigurationSource().apply {
+        registerCorsConfiguration("/**", CorsConfiguration().apply {
+            allowedOrigins = corsOrigins.split(",").map { it.trim() }
+            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            allowedHeaders = listOf("*")
+            allowCredentials = true
+        })
     }
 }
