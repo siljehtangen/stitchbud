@@ -41,7 +41,7 @@ class LibraryService(
             userId = userId,
             itemType = req.itemType,
             name = req.name,
-            colors = req.colors?.joinToString(","),
+            colors = req.colors,
             yarnMaterial = req.yarnMaterial,
             yarnBrand = req.yarnBrand,
             yarnAmountG = req.yarnAmountG,
@@ -58,7 +58,7 @@ class LibraryService(
     fun update(id: Long, req: UpdateLibraryItemRequest, userId: String): LibraryItemDto {
         val item = findItem(id, userId).apply {
             req.name?.let { name = it }
-            req.colors?.let { colors = it.joinToString(",") }
+            req.colors?.let { colors = it }
             req.yarnMaterial?.let { yarnMaterial = it }
             req.yarnBrand?.let { yarnBrand = it }
             req.yarnAmountG?.let { yarnAmountG = it }
@@ -111,10 +111,9 @@ class LibraryService(
     }
 
     fun deleteAllForUser(userId: String) {
-        libraryItemRepository.findByUserId(userId).also { items ->
-            items.flatMap { it.images }.forEach { deleteStoredImage(it.storedName) }
-            items.forEach { it.imageStoredName?.let { name -> deleteImageFromDisk(name) } }
-        }
+        val items = libraryItemRepository.findByUserId(userId)
+        items.flatMap { it.images }.forEach { deleteStoredImage(it.storedName) }
+        items.forEach { it.imageStoredName?.let { name -> deleteImageFromDisk(name) } }
         libraryItemImageRepository.deleteAllByLibraryItemUserId(userId)
         libraryItemRepository.deleteAllByUserId(userId)
     }
@@ -159,7 +158,7 @@ class LibraryService(
             itemType = itemType,
             name = name,
             images = imageDtos,
-            colors = colors?.split(",")?.filter { it.isNotEmpty() } ?: emptyList(),
+            colors = colors,
             yarnMaterial = yarnMaterial,
             yarnBrand = yarnBrand,
             yarnAmountG = yarnAmountG,

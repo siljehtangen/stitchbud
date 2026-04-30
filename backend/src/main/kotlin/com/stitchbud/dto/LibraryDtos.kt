@@ -1,5 +1,7 @@
 package com.stitchbud.dto
 
+import com.stitchbud.model.LibraryItemType
+
 data class LibraryItemImageDto(
     val id: Long = 0,
     val storedName: String,
@@ -10,7 +12,7 @@ data class LibraryItemImageDto(
 
 data class LibraryItemDto(
     val id: Long = 0,
-    val itemType: String,
+    val itemType: LibraryItemType,
     val name: String,
     val images: List<LibraryItemImageDto> = emptyList(),
     val colors: List<String> = emptyList(),
@@ -41,9 +43,9 @@ data class UpdateLibraryItemRequest(
 )
 
 data class CreateLibraryItemRequest(
-    val itemType: String,
+    val itemType: LibraryItemType,
     val name: String,
-    val colors: List<String>? = null,
+    val colors: List<String> = emptyList(),
     val yarnMaterial: String? = null,
     val yarnBrand: String? = null,
     val yarnAmountG: Int? = null,

@@ -1,5 +1,6 @@
 package com.stitchbud.model
 
+import com.stitchbud.util.StringListConverter
 import jakarta.persistence.*
 import org.hibernate.annotations.BatchSize
 
@@ -14,7 +15,8 @@ data class LibraryItem(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
     var userId: String = "",
-    var itemType: String = "",
+    @Enumerated(EnumType.STRING)
+    var itemType: LibraryItemType,
     var name: String = "",
     var imageStoredName: String? = null,
     var yarnMaterial: String? = null,
@@ -26,8 +28,8 @@ data class LibraryItem(
     var needleSizeMm: String? = null,
     var circularLengthCm: Int? = null,
     var hookSizeMm: String? = null,
-    // Colors (comma-separated list, applicable for YARN and FABRIC)
-    var colors: String? = null,
+    @Convert(converter = StringListConverter::class)
+    var colors: List<String> = emptyList(),
     @OneToMany(mappedBy = "libraryItem", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 50)
     var images: MutableList<LibraryItemImage> = mutableListOf(),
