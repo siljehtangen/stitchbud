@@ -25,7 +25,7 @@ class SupabaseStorageService(
     fun deleteByUrl(url: String) {
         if (!url.startsWith("http")) return
         val path = extractPath(url) ?: return
-        try {
+        runCatching {
             val request = HttpRequest.newBuilder()
                 .uri(URI.create("$supabaseUrl/storage/v1/object/$bucket/$path"))
                 .header("Authorization", "Bearer $serviceKey")
@@ -38,13 +38,11 @@ class SupabaseStorageService(
                         res.statusCode() >= 400 -> logger.warn("Storage delete returned ${res.statusCode()} for $path")
                     }
                 }
-        } catch (e: Exception) {
-            logger.warn("Storage delete request could not be built for $path: ${e.message}")
-        }
+        }.onFailure { logger.warn("Storage delete request could not be built for $path: ${it.message}") }
     }
 
     fun deleteUser(userId: String) {
-        try {
+        runCatching {
             val request = HttpRequest.newBuilder()
                 .uri(URI.create("$supabaseUrl/auth/v1/admin/users/$userId"))
                 .header("Authorization", "Bearer $serviceKey")
@@ -53,15 +51,11 @@ class SupabaseStorageService(
                 .build()
             val res = client.send(request, HttpResponse.BodyHandlers.discarding())
             if (res.statusCode() >= 400) logger.warn("Supabase user delete returned ${res.statusCode()} for $userId")
-        } catch (e: Exception) {
-            logger.warn("Failed to delete Supabase user $userId: ${e.message}")
-        }
+        }.onFailure { logger.warn("Failed to delete Supabase user $userId: ${it.message}") }
     }
 
     private fun extractPath(url: String): String? {
         val marker = "/object/public/$bucket/"
-        val idx = url.indexOf(marker)
-        if (idx == -1) return null
-        return url.substring(idx + marker.length)
+        return if (url.contains(marker)) url.substringAfter(marker) else null
     }
 }
