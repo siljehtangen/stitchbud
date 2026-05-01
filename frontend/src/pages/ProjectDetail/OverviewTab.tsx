@@ -13,9 +13,7 @@ const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
     { key: 'needleSize', labelKey: 'needle_size' },
     { key: 'circularNeedleLength', labelKey: 'circular_needle_length' },
   ],
-  CROCHET: [
-    { key: 'hookSize', labelKey: 'hook_size' },
-  ],
+  CROCHET: [{ key: 'hookSize', labelKey: 'hook_size' }],
   SEWING: [],
 }
 
@@ -33,30 +31,54 @@ async function fetchAsJpegDataUri(url: string): Promise<string> {
         const canvas = document.createElement('canvas')
         const MAX = 1600
         const scale = Math.min(MAX / img.naturalWidth, MAX / img.naturalHeight, 1)
-        canvas.width  = Math.round(img.naturalWidth  * scale)
+        canvas.width = Math.round(img.naturalWidth * scale)
         canvas.height = Math.round(img.naturalHeight * scale)
         canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
         URL.revokeObjectURL(blobUrl)
         resolve(canvas.toDataURL('image/jpeg', 0.88))
-      } catch (e) { URL.revokeObjectURL(blobUrl); reject(e) }
+      } catch (e) {
+        URL.revokeObjectURL(blobUrl)
+        reject(e)
+      }
     }
-    img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(new Error('img load failed')) }
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl)
+      reject(new Error('img load failed'))
+    }
     img.src = blobUrl
   })
 }
 
-export function OverviewTab({ project, name, description, recipeText, craftDetails, projectId, ownerLabel }: {
-  project: Project; name: string; description: string; recipeText: string
-  craftDetails: Record<string, string>; projectId: number; ownerLabel?: string
+export function OverviewTab({
+  project,
+  name,
+  description,
+  recipeText,
+  craftDetails,
+  projectId,
+  ownerLabel,
+}: {
+  project: Project
+  name: string
+  description: string
+  recipeText: string
+  craftDetails: Record<string, string>
+  projectId: number
+  ownerLabel?: string
 }) {
   const { t, i18n } = useTranslation()
   const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   async function downloadOverview() {
     if (exporting) return
     setExporting(true)
+    setExportError(null)
     try {
       await doDownloadOverview()
+    } catch (e) {
+      console.error('PDF export failed', e)
+      setExportError(t('export_error'))
     } finally {
       setExporting(false)
     }
@@ -76,20 +98,20 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
 
     const imageUrls = uniqueImageUrls([
       ...projectCoverImageUrls(project),
-      ...project.materials.flatMap(materialImageUrls),
-      ...project.files
-        .filter(f => f.fileType === 'image')
-        .map(f => fUrl(projectId, f.storedName)),
+      ...project.materials.flatMap(m => materialImageUrls(m, projectId)),
+      ...project.files.filter(f => f.fileType === 'image').map(f => fUrl(projectId, f.storedName)),
     ])
 
     const imageData: Record<string, string> = {}
-    await Promise.all(imageUrls.map(async url => {
-      try {
-        imageData[url] = await fetchAsJpegDataUri(url)
-      } catch {
-        // leave out — img() in ProjectPdf will fall back to the raw URL
-      }
-    }))
+    await Promise.all(
+      imageUrls.map(async url => {
+        try {
+          imageData[url] = await fetchAsJpegDataUri(url)
+        } catch {
+          // leave out — img() in ProjectPdf will fall back to the raw URL
+        }
+      })
+    )
 
     const doc = (
       <ProjectOverviewPdf
@@ -109,7 +131,7 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
           materials: t('section_materials'),
           recipe: t('section_recipe'),
           patternGrid: t('section_pattern_grid'),
-          gridNumber: (n) => t('pdf_grid_number', { number: n }),
+          gridNumber: n => t('pdf_grid_number', { number: n }),
           gridClipped: (rows, cols) => t('pdf_grid_clipped', { rows, cols }),
           footer: t('pdf_footer'),
           createdBy: t('pdf_created_by'),
@@ -122,8 +144,10 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
     const a = document.createElement('a')
     a.href = url
     a.download = `${name.replace(/[^a-z0-9æøåÆØÅ]/gi, '_')}_stitchbud.pdf`
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
@@ -133,10 +157,15 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
 
   return (
     <div className="space-y-5">
-      <div className="flex justify-end">
-        <button onClick={downloadOverview} disabled={exporting} className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60">
+      <div className="flex flex-col items-end gap-1">
+        <button
+          onClick={downloadOverview}
+          disabled={exporting}
+          className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60"
+        >
           <span>↓</span> {exporting ? t('exporting') : t('download_overview')}
         </button>
+        {exportError && <p className="text-xs text-red-500">{exportError}</p>}
       </div>
       <Section title={t('section_info')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
@@ -147,7 +176,13 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
           {coverUrls.length > 0 && (
             <div className="flex gap-2 flex-wrap sm:justify-end">
               {coverUrls.map((url, i) => (
-                <img key={i} src={url} alt="" className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm" loading="lazy" />
+                <img
+                  key={i}
+                  src={url}
+                  alt=""
+                  className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm"
+                  loading="lazy"
+                />
               ))}
             </div>
           )}
@@ -175,7 +210,9 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
                 return (
                   <div key={m.id} className="space-y-2">
                     <span className="text-sm text-gray-700 block font-medium">
-                      {m.type}{colorLabel ? ` — ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
+                      {m.type}
+                      {colorLabel ? ` — ${colorLabel}` : ''}
+                      {m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                     </span>
                     {imgs.length > 0 ? (
                       <div className="flex gap-2 flex-wrap">
@@ -206,11 +243,21 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
                 const url = fileUrl(projectId, f.storedName)
                 return f.fileType === 'image' ? (
                   <a key={f.id} href={url} target="_blank" rel="noopener noreferrer">
-                    <img src={url} alt={f.originalName} className="w-20 h-20 object-cover rounded-xl shadow-sm" loading="lazy" />
+                    <img
+                      src={url}
+                      alt={f.originalName}
+                      className="w-20 h-20 object-cover rounded-xl shadow-sm"
+                      loading="lazy"
+                    />
                   </a>
                 ) : (
-                  <a key={f.id} href={url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md">
+                  <a
+                    key={f.id}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
+                  >
                     <span>{fileTypeIcon(f.fileType)}</span>
                     <span className="text-gray-700 max-w-[8rem] truncate">{f.originalName}</span>
                   </a>
@@ -227,9 +274,16 @@ export function OverviewTab({ project, name, description, recipeText, craftDetai
           {project.patternGrids.map((grid, i) => (
             <div key={grid.id} className={i > 0 ? 'mt-4' : ''}>
               {project.patternGrids.length > 1 && (
-                <p className="text-xs text-warm-gray mb-1">{i + 1}/{project.patternGrids.length}</p>
+                <p className="text-xs text-warm-gray mb-1">
+                  {i + 1}/{project.patternGrids.length}
+                </p>
               )}
-              <PatternGridReadOnly rows={grid.rows} cols={grid.cols} cellDataJson={grid.cellData} showSymbols={project.category === 'KNITTING'} />
+              <PatternGridReadOnly
+                rows={grid.rows}
+                cols={grid.cols}
+                cellDataJson={grid.cellData}
+                showSymbols={project.category === 'KNITTING'}
+              />
             </div>
           ))}
         </Section>
