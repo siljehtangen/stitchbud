@@ -131,6 +131,7 @@
 
   "download_overview": "Last ned oversikt",
   "exporting": "Eksporterer…",
+  "export_error": "Eksport feilet. Sjekk nettleserkonsollen for detaljer.",
   "section_info": "Info",
   "section_materials": "Materialer",
   "section_recipe": "Oppskrift",

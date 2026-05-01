@@ -131,6 +131,7 @@
 
   "download_overview": "Download overview",
   "exporting": "Exporting…",
+  "export_error": "Export failed. Check the browser console for details.",
   "section_info": "Info",
   "section_materials": "Materials",
   "section_recipe": "Recipe",
