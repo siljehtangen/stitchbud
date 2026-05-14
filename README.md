@@ -161,7 +161,7 @@ The Vite dev server proxies `/api` requests to `http://localhost:8080`, so both 
 
 ### Backend
 
-Unit tests cover the core service layer. No database or Spring context required — all dependencies are mocked with [mockito-kotlin](https://github.com/mockito/mockito-kotlin).
+Unit tests require no database or Spring context — all dependencies are mocked with [mockito-kotlin](https://github.com/mockito/mockito-kotlin).
 
 ```bash
 cd backend
@@ -171,7 +171,13 @@ gradlew.bat test      # Windows
 
 Test reports: `backend/build/reports/tests/test/index.html`
 
-Tests cover `FriendshipService`, `ProjectService`, and `LibraryService` across 7 test files (~104 tests total).
+**~179 tests across 15 files:**
+
+| Area | Files |
+|---|---|
+| Services | `ProjectService`, `LibraryService`, `FriendshipService`, `ProjectMapper`, `SupabaseStorageService` |
+| Controllers | `ProjectController`, `LibraryController`, `FriendshipController`, `GlobalExceptionHandler` |
+| Utilities | `StringListConverter`, `Extensions` |
 
 ### Frontend
 
@@ -186,7 +192,15 @@ npm run test:coverage     # single run with coverage report + threshold check
 
 Coverage is enforced via thresholds in `vite.config.ts`. HTML report: `frontend/coverage/`.
 
-Tests cover hooks (`useAsyncData`, `useAutoSave`, `useDebouncedCallback`, `useProjectFilter`, `useLibraryFilter`), context providers (`ToastContext`, `ConfirmDialogContext`), card components (`ProjectCard`, `LibraryCard`), and utility functions (`libraryUtils`).
+**~232 tests across 21 files:**
+
+| Area | Files |
+|---|---|
+| Hooks | `useAutoSave`, `useAsyncData`, `useDebouncedCallback`, `useLibraryFilter`, `useProjectFilter`, `useConfirmDelete`, `useFileUpload`, `useProjectTabs` |
+| Context | `ToastContext`, `ConfirmDialogContext`, `ThemeContext` |
+| Components | `ProjectCard`, `LibraryCard`, `Field`, `ErrorBoundary` |
+| API | `schemas` (Zod validation), `projectsApi` (endpoint URLs, fallback logic) |
+| Utilities | `libraryUtils`, `projectUtils`, `projectOverviewMedia`, `colors` |
 
 ### E2E
 
