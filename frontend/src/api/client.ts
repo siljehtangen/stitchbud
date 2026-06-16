@@ -4,6 +4,26 @@ export const STORAGE_BUCKET = 'stitchbud-files'
 
 const PUBLIC_MARKER = `/object/public/${STORAGE_BUCKET}/`
 
+/** Hard upload ceiling. Mirrors the bucket-level `file_size_limit` so the user
+ *  gets an immediate error instead of a failed network round-trip. */
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024 // 25 MB
+
+/** Content the bucket accepts: images plus the document types used for patterns.
+ *  Some browsers send '' / octet-stream for .doc/.docx, so those pass here and
+ *  are bounded by the size limit. */
+const ALLOWED_UPLOAD_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/octet-stream',
+  '',
+])
+
 export { supabase }
 
 /** The current authenticated user's id. Throws if there is no active session. */
@@ -16,6 +36,12 @@ export async function getUserId(): Promise<string> {
 
 /** Upload a file to the public bucket and return its public URL. */
 export async function uploadFile(file: File, folder: string): Promise<string> {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error(`File is too large (max ${Math.floor(MAX_UPLOAD_BYTES / (1024 * 1024))} MB)`)
+  }
+  if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
+    throw new Error('Unsupported file type')
+  }
   const dotIdx = file.name.lastIndexOf('.')
   const ext = dotIdx !== -1 ? file.name.slice(dotIdx) : ''
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
