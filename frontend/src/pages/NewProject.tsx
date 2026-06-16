@@ -32,7 +32,7 @@ export default function NewProject() {
     return () => {
       coverImages.forEach(img => URL.revokeObjectURL(img.preview))
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -59,11 +59,17 @@ export default function NewProject() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) { setError(t('name_required')); return }
+    if (!name.trim()) {
+      setError(t('name_required'))
+      return
+    }
     setSaving(true)
     try {
       const project = await projectsApi.create({
-        name: name.trim(), description, category, tags: '',
+        name: name.trim(),
+        description,
+        category,
+        tags: '',
         startDate: startDate ? new Date(startDate).getTime() : Date.now(),
       })
       // Upload main image first so it's marked as main, then the rest in parallel
@@ -73,7 +79,8 @@ export default function NewProject() {
       if (others.length > 0) await Promise.all(others.map(img => projectsApi.uploadCoverImage(project.id, img.file)))
       showToast(t('project_created_toast'))
       navigate(`/projects/${project.id}`)
-    } catch {
+    } catch (err) {
+      console.error('Failed to create project:', err)
       setError(t('failed_create_project'))
     } finally {
       setSaving(false)
@@ -97,10 +104,18 @@ export default function NewProject() {
           onRemove={key => removeImage(key as number)}
           onAdd={() => coverRef.current?.click()}
         />
-        <input ref={coverRef} type="file" accept={LIBRARY_PHOTO_ACCEPT} onChange={handleCoverChange} className="hidden" />
+        <input
+          ref={coverRef}
+          type="file"
+          accept={LIBRARY_PHOTO_ACCEPT}
+          onChange={handleCoverChange}
+          className="hidden"
+        />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">{t('category_label')} <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('category_label')} <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-3 gap-2">
             {CATEGORIES.map(cat => (
               <button
@@ -127,7 +142,10 @@ export default function NewProject() {
           <input
             className="input"
             value={name}
-            onChange={e => { setName(e.target.value); setError('') }}
+            onChange={e => {
+              setName(e.target.value)
+              setError('')
+            }}
             placeholder={t('project_name_placeholder')}
           />
         </div>
@@ -137,6 +155,7 @@ export default function NewProject() {
           <textarea
             className="textarea"
             rows={3}
+            maxLength={255}
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder={t('description_placeholder')}
@@ -144,19 +163,14 @@ export default function NewProject() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('start_date_label')} <span className="text-red-500">*</span></label>
-          <input
-            type="date"
-            className="input"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            {t('start_date_label')} <span className="text-red-500">*</span>
+          </label>
+          <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} />
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
-            {error}
-          </div>
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
         )}
 
         <button type="submit" disabled={saving} className="btn-primary w-full">
