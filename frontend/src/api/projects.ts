@@ -3,6 +3,7 @@ import { normalizeProject } from '../projectOverviewMedia'
 import { supabase, getUserId, uploadFile, deleteUploadedFile, raiseError } from './client'
 import { projectSchema, safeParsed } from './schemas'
 import { rowToProject, detectFileType, PROJECT_SELECT, type DbProject } from './mappers'
+import { isSafeHttpUrl } from '../utils/url'
 import { z } from 'zod'
 
 const COVER = 'cover'
@@ -81,7 +82,12 @@ export const projectsApi = {
     if (data.clearEndDate) patch.end_date = null
     if (data.isPublic !== undefined) patch.is_public = data.isPublic
     if (data.pinterestBoardUrls !== undefined) {
-      const sanitized = data.pinterestBoardUrls.filter(u => u.trim().length > 0).slice(0, 3)
+      // Keep only well-formed http(s) links so a stored `javascript:`/`data:`
+      // URL can never become an href (incl. in a friend's browser).
+      const sanitized = data.pinterestBoardUrls
+        .map(u => u.trim())
+        .filter(u => u.length > 0 && isSafeHttpUrl(u))
+        .slice(0, 3)
       patch.pinterest_board_urls = JSON.stringify(sanitized)
     }
     if (Object.keys(patch).length > 0) {
