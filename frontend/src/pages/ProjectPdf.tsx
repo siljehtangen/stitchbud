@@ -6,7 +6,6 @@ Font.register({
 })
 import type { Project, PatternCell } from '../types'
 import { COLOR_MAP_BY_HEX, getColorName } from '../colors'
-import { fileUrl } from '../api'
 import { materialImageUrls, projectCoverImageUrls } from '../projectOverviewMedia'
 
 const accent = '#6FA8BC'
@@ -19,9 +18,14 @@ const S = StyleSheet.create({
   coverImage: { flex: 1, minWidth: 100, height: 180, objectFit: 'contain', marginRight: 6 },
   section: { marginBottom: 22 },
   sectionTitle: {
-    fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: accent,
-    borderBottomWidth: 1, borderBottomColor: '#d6ebf2', borderBottomStyle: 'solid',
-    paddingBottom: 4, marginBottom: 10,
+    fontSize: 7.5,
+    fontFamily: 'Helvetica-Bold',
+    color: accent,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d6ebf2',
+    borderBottomStyle: 'solid',
+    paddingBottom: 4,
+    marginBottom: 10,
   },
   body: { fontSize: 10, lineHeight: 1.7 },
   craftRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 6 },
@@ -35,11 +39,27 @@ const S = StyleSheet.create({
   recipeImage: { width: '100%', height: 250, objectFit: 'contain', marginBottom: 8 },
   attachment: { fontSize: 9, color: '#888', marginBottom: 3 },
   attachmentLink: { fontSize: 9, color: '#6FA8BC', marginBottom: 3, textDecoration: 'underline' },
-  pCell: { width: 13, height: 13, borderWidth: 0.5, borderColor: '#e0e0e0', borderStyle: 'solid', alignItems: 'center', justifyContent: 'center' },
+  pCell: {
+    width: 13,
+    height: 13,
+    borderWidth: 0.5,
+    borderColor: '#e0e0e0',
+    borderStyle: 'solid',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pCellSymbol: { fontSize: 7, fontFamily: 'NotoSans', lineHeight: 1 },
   gridRow: { flexDirection: 'row' },
   clipNote: { fontSize: 8, color: '#999', fontStyle: 'italic', marginTop: 4 },
-  footer: { fontSize: 7, color: '#bbb', borderTopWidth: 1, borderTopColor: '#eee', borderTopStyle: 'solid', paddingTop: 8, marginTop: 20 },
+  footer: {
+    fontSize: 7,
+    color: '#bbb',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    borderTopStyle: 'solid',
+    paddingTop: 8,
+    marginTop: 20,
+  },
 })
 
 const MAX_PATTERN_ROWS = 60
@@ -63,7 +83,6 @@ export interface PdfProps {
   recipeText: string
   filledCraftFields: { key: string; label: string }[]
   craftDetails: Record<string, string>
-  projectId: number
   categoryLabel: string
   labels: PdfLabels
   language: string
@@ -73,8 +92,17 @@ export interface PdfProps {
 }
 
 export function ProjectOverviewPdf({
-  project, name, description, recipeText, filledCraftFields,
-  craftDetails, projectId, categoryLabel, labels, language, imageData, ownerLabel,
+  project,
+  name,
+  description,
+  recipeText,
+  filledCraftFields,
+  craftDetails,
+  categoryLabel,
+  labels,
+  language,
+  imageData,
+  ownerLabel,
 }: PdfProps) {
   const hasMaterials = filledCraftFields.length > 0 || project.materials.length > 0
   const hasRecipe = !!recipeText
@@ -90,7 +118,13 @@ export function ProjectOverviewPdf({
   const gridDatas = (() => {
     if (project.category === 'SEWING' || !project.patternGrids?.length) return []
     return project.patternGrids.map(pg => {
-      const cells: PatternCell[] = (() => { try { return JSON.parse(pg.cellData) } catch { return [] } })()
+      const cells: PatternCell[] = (() => {
+        try {
+          return JSON.parse(pg.cellData)
+        } catch {
+          return []
+        }
+      })()
       const cellMap = new Map(cells.map(c => [`${c.row},${c.col}`, c]))
       const clippedRows = pg.rows > MAX_PATTERN_ROWS
       const clippedCols = pg.cols > MAX_PATTERN_COLS
@@ -148,7 +182,7 @@ export function ProjectOverviewPdf({
             {project.materials.map(m => {
               const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
               const colorLabel = colorEntry ? getColorName(colorEntry, language) : m.color
-              const matUrls = materialImageUrls(m, projectId)
+              const matUrls = materialImageUrls(m)
               return (
                 <View key={m.id} style={S.matBlock}>
                   {matUrls.length > 0 && (
@@ -159,7 +193,9 @@ export function ProjectOverviewPdf({
                     </View>
                   )}
                   <Text style={S.matText}>
-                    {m.type}{colorLabel ? ` \u2014 ${colorLabel}` : ''}{m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
+                    {m.type}
+                    {colorLabel ? ` \u2014 ${colorLabel}` : ''}
+                    {m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
                   </Text>
                 </View>
               )
@@ -167,17 +203,17 @@ export function ProjectOverviewPdf({
           </View>
         ) : null}
 
-        {(hasRecipe || hasFiles) ? (
+        {hasRecipe || hasFiles ? (
           <View style={S.section}>
             <Text style={S.sectionTitle}>{labels.recipe.toUpperCase()}</Text>
             {hasRecipe && <Text style={S.body}>{recipeText}</Text>}
-            {imageFiles.map(f => {
-              const url = fileUrl(projectId, f.storedName)
-              return <Image key={f.id} src={img(url)} style={S.recipeImage} />
-            })}
+            {imageFiles.map(f => (
+              <Image key={f.id} src={img(f.storedName)} style={S.recipeImage} />
+            ))}
             {nonImageFiles.map(f => (
-              <Link key={f.id} src={fileUrl(projectId, f.storedName)} style={S.attachmentLink}>
-                {f.fileType === 'pdf' ? '(PDF) ' : f.fileType === 'word' ? '(Word) ' : ''}{f.originalName}
+              <Link key={f.id} src={f.storedName} style={S.attachmentLink}>
+                {f.fileType === 'pdf' ? '(PDF) ' : f.fileType === 'word' ? '(Word) ' : ''}
+                {f.originalName}
               </Link>
             ))}
           </View>
@@ -188,18 +224,13 @@ export function ProjectOverviewPdf({
             <Text style={S.sectionTitle}>{labels.patternGrid.toUpperCase()}</Text>
             {gridDatas.map((gridData, i) => (
               <View key={i} style={i > 0 ? { marginTop: 8 } : undefined}>
-                {gridDatas.length > 1 && (
-                  <Text style={S.clipNote}>{labels.gridNumber(i + 1)}</Text>
-                )}
+                {gridDatas.length > 1 && <Text style={S.clipNote}>{labels.gridNumber(i + 1)}</Text>}
                 {Array.from({ length: gridData.rows }, (_, r) => (
                   <View key={r} style={S.gridRow} wrap={false}>
                     {Array.from({ length: gridData.cols }, (_, c) => {
                       const cell = gridData.cellMap.get(`${r},${c}`)
                       return (
-                        <View
-                          key={c}
-                          style={[S.pCell, { backgroundColor: cell?.color ?? '#F5F0E8' }]}
-                        >
+                        <View key={c} style={[S.pCell, { backgroundColor: cell?.color ?? '#F5F0E8' }]}>
                           {cell?.symbol ? <Text style={S.pCellSymbol}>{cell.symbol}</Text> : null}
                         </View>
                       )

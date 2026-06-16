@@ -18,27 +18,11 @@ export function projectCoverImageUrls(project: Project): string[] {
   return sorted.map(c => c.storedName).filter(Boolean)
 }
 
-/** Browser- or PDF-loadable URL for a material/cover stored name (Supabase and `/api/files/...` pass through). */
-export function resolveProjectMediaUrl(projectId: number, storedName: string): string {
-  if (!storedName) return ''
-  if (
-    storedName.startsWith('http://') ||
-    storedName.startsWith('https://') ||
-    storedName.startsWith('/api/')
-  ) {
-    return storedName
-  }
-  return `/api/files/${projectId}/${storedName}`
-}
-
-/** All image URLs for a material: gallery rows (★ first). Pass `projectId` so disk-backed filenames resolve under `/api/files/...`. */
-export function materialImageUrls(m: Material, projectId?: number): string[] {
+/** All image URLs for a material: gallery rows (★ first). Stored names are full Supabase URLs. */
+export function materialImageUrls(m: Material): string[] {
   const rows = m.images ?? []
   const mainFirst = [...rows].sort((a, b) => (a.isMain === b.isMain ? 0 : a.isMain ? -1 : 1))
-  const fromRows = mainFirst.map(i => i.storedName).filter(Boolean)
-  const raw = fromRows
-  if (projectId == null) return raw
-  return raw.map(u => resolveProjectMediaUrl(projectId, u))
+  return mainFirst.map(i => i.storedName).filter(Boolean)
 }
 
 export function uniqueImageUrls(urls: string[]): string[] {

@@ -1,7 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
-import { usersApi } from '../api'
 
 interface AuthContextType {
   user: User | null
@@ -32,29 +31,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) {
-        // Sync user profile to backend so friend requests by email work
-        usersApi.syncMe().catch(e => console.error('Profile sync failed:', e))
-      }
+      // The user_profiles row (used for friend-requests-by-email) is created and
+      // kept in sync automatically by the handle_new_user database trigger.
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user: session?.user ?? null,
-        session,
-        loading,
-        signOut: async () => {
-          await supabase.auth.signOut()
-        },
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut()
+  }, [])
+
+  const value = useMemo<AuthContextType>(
+    () => ({ user: session?.user ?? null, session, loading, signOut }),
+    [session, loading, signOut]
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)

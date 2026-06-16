@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { friendsApi, fileUrl } from '../../api'
+import { friendsApi } from '../../api'
 import { parseCraftDetails } from '../../utils/projectUtils'
 import type { Project } from '../../types'
 import { categoryLabel } from '../../constants/categories'
@@ -23,17 +23,36 @@ export default function FriendProjectDetail() {
   const friendName: string | undefined = (location.state as { friendName?: string } | null)?.friendName
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<ProjectTab>('info')
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
 
-  const pid = parseInt(projectId!)
+  const pid = Number(projectId)
 
   useEffect(() => {
+    if (!friendUserId || Number.isNaN(pid)) {
+      setLoading(false)
+      return
+    }
+    let active = true
+    setLoading(true)
+    setLoadError(false)
     friendsApi
-      .getFriendProject(friendUserId!, pid)
-      .then(setProject)
-      .finally(() => setLoading(false))
-  }, [friendUserId, pid])
+      .getFriendProject(friendUserId, pid)
+      .then(p => {
+        if (active) setProject(p)
+      })
+      .catch(() => {
+        if (active) setLoadError(true)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [friendUserId, pid, reloadKey])
 
   const craftDetails = useMemo<Record<string, string>>(() => {
     if (!project) return {}
@@ -43,6 +62,15 @@ export default function FriendProjectDetail() {
   const tabs = useProjectTabs(project)
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
+  if (loadError)
+    return (
+      <div className="text-center py-20 space-y-3">
+        <p className="text-warm-gray">{t('load_failed')}</p>
+        <button onClick={() => setReloadKey(k => k + 1)} className="btn-secondary text-sm px-4 py-2">
+          {t('retry')}
+        </button>
+      </div>
+    )
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
 
   const ownerLabel = friendName ?? project.userId ?? ''
@@ -114,7 +142,7 @@ export default function FriendProjectDetail() {
             <p className="text-sm text-warm-gray">{t('no_materials_yet')}</p>
           ) : (
             project.materials.map(m => {
-              const imgs = materialImageUrls(m, pid)
+              const imgs = materialImageUrls(m)
               return (
                 <div key={m.id} className="card space-y-2">
                   <p className="text-sm font-medium text-gray-800">
@@ -160,7 +188,7 @@ export default function FriendProjectDetail() {
               <p className="text-xs text-warm-gray">{t('attachments_label')}</p>
               <div className="flex gap-2 flex-wrap">
                 {project.files.map(f => {
-                  const url = fileUrl(pid, f.storedName)
+                  const url = f.storedName
                   return f.fileType === 'image' ? (
                     <button key={f.id} onClick={() => setPreviewFile(f)} className="focus:outline-none">
                       <img
@@ -244,12 +272,11 @@ export default function FriendProjectDetail() {
           description={project.description}
           recipeText={project.recipeText}
           craftDetails={craftDetails}
-          projectId={pid}
           ownerLabel={ownerLabel}
         />
       )}
 
-      {previewFile && <FilePreviewModal file={previewFile} projectId={pid} onClose={() => setPreviewFile(null)} />}
+      {previewFile && <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />}
     </div>
   )
 }

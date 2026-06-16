@@ -1,21 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { fileUrl } from '../../api'
 import type { ProjectFile } from '../../types'
 import { fileTypeIcon } from '../../utils/libraryUtils'
 
-export function FilePreviewModal({
-  file,
-  projectId,
-  onClose,
-}: {
-  file: ProjectFile
-  projectId: number
-  onClose: () => void
-}) {
+export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose: () => void }) {
   const { t } = useTranslation()
   const [zoom, setZoom] = useState(1)
-  const url = fileUrl(projectId, file.storedName)
+  const url = file.storedName
 
   return (
     <div

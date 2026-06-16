@@ -27,9 +27,11 @@ export default function ProjectDetail() {
   const { confirm } = useConfirmDialog()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [tab, setTab] = useState<ProjectTab>('info')
   const [isPublic, setIsPublic] = useState(false)
-  const projectId = parseInt(id!)
+  const projectId = Number(id)
 
   const [textFields, setTextFields] = useState({ name: '', description: '', notes: '', tags: '', recipeText: '' })
   const [pinterestBoardUrls, setPinterestBoardUrls] = useState<string[]>([])
@@ -46,9 +48,17 @@ export default function ProjectDetail() {
   }
 
   useEffect(() => {
+    if (Number.isNaN(projectId)) {
+      setLoading(false)
+      return
+    }
+    let active = true
+    setLoading(true)
+    setLoadError(false)
     projectsApi
       .getOne(projectId)
       .then(p => {
+        if (!active) return
         const fields = {
           name: p.name,
           description: p.description,
@@ -67,8 +77,16 @@ export default function ProjectDetail() {
         )
         setEndDate(p.endDate ? new Date(p.endDate).toISOString().slice(0, 10) : '')
       })
-      .finally(() => setLoading(false))
-  }, [projectId])
+      .catch(() => {
+        if (active) setLoadError(true)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [projectId, reloadKey])
 
   const saveSeqRef = useRef(0)
   const autoSave = useDebouncedCallback(async (updates: object) => {
@@ -111,6 +129,15 @@ export default function ProjectDetail() {
   const tabs = useProjectTabs(project)
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
+  if (loadError)
+    return (
+      <div className="text-center py-20 space-y-3">
+        <p className="text-warm-gray">{t('load_failed')}</p>
+        <button onClick={() => setReloadKey(k => k + 1)} className="btn-secondary text-sm px-4 py-2">
+          {t('retry')}
+        </button>
+      </div>
+    )
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
 
   const isSewing = project.category === 'SEWING'
@@ -197,7 +224,6 @@ export default function ProjectDetail() {
           description={textFields.description}
           recipeText={textFields.recipeText}
           craftDetails={craftDetails}
-          projectId={projectId}
         />
       )}
     </div>

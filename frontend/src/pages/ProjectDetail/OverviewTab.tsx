@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { fileUrl } from '../../api'
 import { projectCoverImageUrls, materialImageUrls, uniqueImageUrls } from '../../projectOverviewMedia'
 import { COLOR_MAP_BY_HEX, getColorName } from '../../colors'
 import type { Project } from '../../types'
@@ -55,7 +54,6 @@ export function OverviewTab({
   description,
   recipeText,
   craftDetails,
-  projectId,
   ownerLabel,
 }: {
   project: Project
@@ -63,7 +61,6 @@ export function OverviewTab({
   description: string
   recipeText: string
   craftDetails: Record<string, string>
-  projectId: number
   ownerLabel?: string
 }) {
   const { t, i18n } = useTranslation()
@@ -85,10 +82,9 @@ export function OverviewTab({
   }
 
   async function doDownloadOverview() {
-    const [{ pdf }, { ProjectOverviewPdf }, { fileUrl: fUrl }] = await Promise.all([
+    const [{ pdf }, { ProjectOverviewPdf }] = await Promise.all([
       import('@react-pdf/renderer'),
       import('../ProjectPdf'),
-      import('../../api'),
     ])
 
     const craftFields = CRAFT_FIELDS_KEYS[project.category] ?? []
@@ -98,8 +94,8 @@ export function OverviewTab({
 
     const imageUrls = uniqueImageUrls([
       ...projectCoverImageUrls(project),
-      ...project.materials.flatMap(m => materialImageUrls(m, projectId)),
-      ...project.files.filter(f => f.fileType === 'image').map(f => fUrl(projectId, f.storedName)),
+      ...project.materials.flatMap(m => materialImageUrls(m)),
+      ...project.files.filter(f => f.fileType === 'image').map(f => f.storedName),
     ])
 
     const imageData: Record<string, string> = {}
@@ -121,7 +117,6 @@ export function OverviewTab({
         recipeText={recipeText}
         filledCraftFields={filledCraftFields}
         craftDetails={craftDetails}
-        projectId={projectId}
         categoryLabel={t(`category_${project.category.toLowerCase()}` as Parameters<typeof t>[0])}
         language={i18n.language}
         imageData={imageData}
@@ -206,7 +201,7 @@ export function OverviewTab({
               {project.materials.map(m => {
                 const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
                 const colorLabel = colorEntry ? getColorName(colorEntry, i18n.language) : m.color
-                const imgs = materialImageUrls(m, projectId)
+                const imgs = materialImageUrls(m)
                 return (
                   <div key={m.id} className="space-y-2">
                     <span className="text-sm text-gray-700 block font-medium">
@@ -240,7 +235,7 @@ export function OverviewTab({
           {project.files.length > 0 && (
             <div className="flex gap-2 flex-wrap">
               {project.files.map(f => {
-                const url = fileUrl(projectId, f.storedName)
+                const url = f.storedName
                 return f.fileType === 'image' ? (
                   <a key={f.id} href={url} target="_blank" rel="noopener noreferrer">
                     <img

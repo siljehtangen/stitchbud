@@ -8,34 +8,20 @@ frontend/dist/
 frontend/build/
 frontend/coverage/
 
-# Backend build output
-backend/build/
-backend/bin/
-backend/target/
-backend/.gradle/
-backend/out/
-*.class
-*.jar
-*.war
-
-# Gradle
-.gradle/
-!gradle/wrapper/gradle-wrapper.jar
-
-# Rust
-backend/Cargo.lock
-
 # Frontend - Next.js
 frontend/.next/
 
 # Frontend - Prisma generated client
 frontend/prisma/client/
 
+# Supabase CLI local state (see supabase/.gitignore)
+.branches
+.temp
+
 # Environment & secrets
 .env
 .env.local
 .env.*.local
-backend/src/main/resources/application.properties
 
 # OS
 .DS_Store

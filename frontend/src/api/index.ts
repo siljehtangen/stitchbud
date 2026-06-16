@@ -1,18 +1,19 @@
-export { uploadFile, api } from './client'
+import { supabase } from './client'
+
+export { uploadFile, supabase } from './client'
 export { projectsApi } from './projects'
 export { libraryApi } from './library'
 export { friendsApi } from './friends'
 
-import { api } from './client'
-
-export const fileUrl = (projectId: number, storedName: string) =>
-  storedName.startsWith('http') ? storedName : `/api/files/${projectId}/${storedName}`
-
+/** Account-level operations handled by the delete-account Edge Function
+ *  (it needs the service-role key for storage cleanup and auth-admin deletion). */
 export const accountApi = {
-  deleteAccount: () => api.delete('/projects/account'),
-  resetData: () => api.delete('/projects/account/data'),
-}
-
-export const usersApi = {
-  syncMe: () => api.put('/users/me'),
+  deleteAccount: async (): Promise<void> => {
+    const { error } = await supabase.functions.invoke('delete-account', { body: { action: 'delete' } })
+    if (error) throw new Error(error.message || 'Failed to delete account')
+  },
+  resetData: async (): Promise<void> => {
+    const { error } = await supabase.functions.invoke('delete-account', { body: { action: 'reset' } })
+    if (error) throw new Error(error.message || 'Failed to reset data')
+  },
 }

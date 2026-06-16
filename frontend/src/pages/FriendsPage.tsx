@@ -12,19 +12,33 @@ export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([])
   const [requests, setRequests] = useState<FriendRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   const [emailInput, setEmailInput] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
   useEffect(() => {
+    let active = true
+    setLoading(true)
+    setLoadError(false)
     Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
       .then(([f, r]) => {
+        if (!active) return
         setFriends(f)
         setRequests(r)
       })
-      .finally(() => setLoading(false))
-  }, [])
+      .catch(() => {
+        if (active) setLoadError(true)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [reloadKey])
 
   async function handleSendRequest() {
     if (!emailInput.trim()) return
@@ -78,6 +92,15 @@ export default function FriendsPage() {
   }
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
+  if (loadError)
+    return (
+      <div className="text-center py-20 space-y-3">
+        <p className="text-warm-gray">{t('load_failed')}</p>
+        <button onClick={() => setReloadKey(k => k + 1)} className="btn-secondary text-sm px-4 py-2">
+          {t('retry')}
+        </button>
+      </div>
+    )
 
   return (
     <div className="space-y-6">
@@ -165,6 +188,7 @@ export default function FriendsPage() {
                 onClick={() => handleRemove(friend)}
                 className="text-xs text-red-400 hover:text-red-600 px-1 flex-shrink-0"
                 title={t('friends_remove')}
+                aria-label={t('friends_remove')}
               >
                 ✕
               </button>

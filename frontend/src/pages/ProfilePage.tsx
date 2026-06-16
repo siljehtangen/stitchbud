@@ -26,6 +26,7 @@ function DangerAction({
   tone: 'orange' | 'red'
 }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [confirming, setConfirming] = useState(false)
   const [pending, setPending] = useState(false)
 
@@ -48,9 +49,12 @@ function DangerAction({
     setPending(true)
     try {
       await onConfirm()
+      setConfirming(false)
+    } catch {
+      // Keep the confirm panel open so the user can retry after a failure.
+      showToast(t('action_failed'), 'info')
     } finally {
       setPending(false)
-      setConfirming(false)
     }
   }
 

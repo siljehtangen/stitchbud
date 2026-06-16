@@ -9,8 +9,18 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    proxy: {
-      '/api': 'http://localhost:8080',
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@supabase')) return 'vendor-supabase'
+          if (id.includes('i18next')) return 'vendor-i18n'
+          if (id.includes('react-icons')) return 'vendor-icons'
+          if (id.includes('react')) return 'vendor-react'
+        },
+      },
     },
   },
   test: {
@@ -29,10 +39,10 @@ export default defineConfig({
         'src/**/*.spec.*',
       ],
       thresholds: {
-        statements: 12,
-        branches: 14,
-        functions: 10,
-        lines: 12,
+        statements: 20,
+        branches: 19,
+        functions: 18,
+        lines: 20,
       },
     },
   },

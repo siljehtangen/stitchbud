@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   normalizeProject,
   projectCoverImageUrls,
-  resolveProjectMediaUrl,
   materialImageUrls,
   uniqueImageUrls,
   libraryItemImagesForProject,
@@ -130,37 +129,6 @@ describe('projectCoverImageUrls', () => {
   })
 })
 
-// ──────── resolveProjectMediaUrl ────────
-
-describe('resolveProjectMediaUrl', () => {
-  it('returns empty string for empty storedName', () => {
-    expect(resolveProjectMediaUrl(1, '')).toBe('')
-  })
-
-  it('passes through http:// URLs unchanged', () => {
-    const url = 'http://example.com/img.jpg'
-    expect(resolveProjectMediaUrl(1, url)).toBe(url)
-  })
-
-  it('passes through https:// URLs unchanged', () => {
-    const url = 'https://storage.supabase.co/img.jpg'
-    expect(resolveProjectMediaUrl(1, url)).toBe(url)
-  })
-
-  it('passes through /api/ paths unchanged', () => {
-    const path = '/api/files/1/something.jpg'
-    expect(resolveProjectMediaUrl(1, path)).toBe(path)
-  })
-
-  it('constructs /api/files/... for bare filenames', () => {
-    expect(resolveProjectMediaUrl(5, 'recipe.pdf')).toBe('/api/files/5/recipe.pdf')
-  })
-
-  it('uses the provided projectId in the constructed path', () => {
-    expect(resolveProjectMediaUrl(42, 'photo.jpg')).toBe('/api/files/42/photo.jpg')
-  })
-})
-
 // ──────── materialImageUrls ────────
 
 describe('materialImageUrls', () => {
@@ -221,12 +189,13 @@ describe('materialImageUrls', () => {
     expect(urls[0]).toBe('main.jpg')
   })
 
-  it('resolves URLs through resolveProjectMediaUrl when projectId is provided', () => {
+  it('returns full Supabase URLs unchanged', () => {
+    const url = 'https://storage.supabase.co/object/public/stitchbud-files/photo.jpg'
     const mat = makeMaterial({
       images: [
         {
           id: 1,
-          storedName: 'photo.jpg',
+          storedName: url,
           originalName: '',
           section: 'material',
           isMain: false,
@@ -235,24 +204,7 @@ describe('materialImageUrls', () => {
         },
       ],
     })
-    expect(materialImageUrls(mat, 7)).toEqual(['/api/files/7/photo.jpg'])
-  })
-
-  it('does not resolve URLs when projectId is not provided', () => {
-    const mat = makeMaterial({
-      images: [
-        {
-          id: 1,
-          storedName: 'photo.jpg',
-          originalName: '',
-          section: 'material',
-          isMain: false,
-          projectId: 1,
-          materialId: 1,
-        },
-      ],
-    })
-    expect(materialImageUrls(mat)).toEqual(['photo.jpg'])
+    expect(materialImageUrls(mat)).toEqual([url])
   })
 
   it('handles null images array gracefully', () => {

@@ -1,0 +1,56 @@
+# Supabase local configuration. See https://supabase.com/docs/guides/cli/config
+# `project_id` is used as a stable name for the local containers.
+project_id = "stitchbud"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+# Public bucket used for project/library images and file attachments.
+# The bucket and its access policies are also created in SQL migrations so a
+# remote `supabase db push` provisions them too.
+[storage.buckets.stitchbud-files]
+public = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+
+# Edge Functions. `delete-account` needs the service-role key, which the
+# platform injects automatically, so no extra config is required here.
+[functions.delete-account]
+verify_jwt = true

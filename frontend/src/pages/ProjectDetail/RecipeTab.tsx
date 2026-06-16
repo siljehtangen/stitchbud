@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { useFileUpload } from '../../hooks/useFileUpload'
-import { projectsApi, fileUrl } from '../../api'
+import { projectsApi } from '../../api'
 import { fileTypeIcon } from '../../utils/libraryUtils'
 import type { Project, ProjectFile } from '../../types'
 import { Field } from '../../components/LibraryItemForm'
@@ -191,7 +191,7 @@ export function RecipeTab({
         ) : (
           <div className="space-y-2">
             {files.map(f => {
-              const url = fileUrl(projectId, f.storedName)
+              const url = f.storedName
               return (
                 <div key={f.id} className="card flex items-center gap-3">
                   <button
@@ -251,9 +251,7 @@ export function RecipeTab({
         )}
       </div>
 
-      {previewFile && (
-        <FilePreviewModal file={previewFile} projectId={projectId} onClose={() => setPreviewFile(null)} />
-      )}
+      {previewFile && <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />}
     </div>
   )
 }

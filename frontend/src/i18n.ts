@@ -15,4 +15,12 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 })
 
+// Keep the document language attribute in sync for accessibility / screen readers.
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = savedLang
+  i18n.on('languageChanged', lng => {
+    document.documentElement.lang = lng
+  })
+}
+
 export default i18n

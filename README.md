@@ -49,64 +49,59 @@ A mobile-first web app for tracking knitting, crochet, and sewing projects. User
 
 ## Stack
 
+Stitchbud runs entirely on Supabase — there is no separate backend server to host. The React app talks directly to Supabase Postgres (secured by Row-Level Security), with business logic in SQL functions/triggers and a single Edge Function for account deletion.
+
 | Layer | Technology |
 |---|---|
-| Backend | Kotlin · Spring Boot 3 · Spring Security (JWT) · JPA/Hibernate |
-| Database | PostgreSQL via Supabase (connection pooling) |
-| Auth | Supabase Auth · Google OAuth 2.0 (JWT RS256) |
+| Backend | Supabase Postgres · Row-Level Security · `SECURITY DEFINER` SQL functions · triggers |
+| Privileged ops | Supabase Edge Function (Deno/TypeScript) for account deletion |
+| Database | PostgreSQL (Supabase) · migrations via Supabase CLI |
+| Auth | Supabase Auth · Google OAuth 2.0 (JWT) |
 | Storage | Supabase Storage (image and file uploads) |
-| Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 · i18next |
-| Build | Gradle 8 (Kotlin DSL) · npm |
-| Testing | Vitest · React Testing Library · Playwright (E2E) |
-| Quality | ESLint · Prettier · Husky · Zod (runtime API validation) |
-| CI/CD | GitHub Actions · Railway · Vercel |
+| Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 · i18next · supabase-js |
+| Build | npm · Supabase CLI |
+| Testing | Vitest · React Testing Library · Playwright (E2E) · pgTAP (database) · Deno (Edge Function) |
+| Quality | ESLint · Prettier · Husky · Zod (runtime validation) |
+| CI/CD | GitHub Actions · Vercel · Supabase |
 
 ---
 
 ## Prerequisites
 
-- **JDK 21** — e.g. [Eclipse Temurin](https://adoptium.net/)
 - **Node.js 20+**
-- A [Supabase](https://supabase.com/) project with:
-  - A PostgreSQL database
-  - Auth enabled
-  - A storage bucket named `stitchbud-files` (or your chosen name)
+- **[Supabase CLI](https://supabase.com/docs/guides/cli)** (`npm i -g supabase` or `brew install supabase/tap/supabase`)
+- **Docker** — required by the Supabase CLI to run the local stack
+- A [Supabase](https://supabase.com/) project (for deployment). Auth, the database, and the `stitchbud-files` storage bucket are all provisioned by the SQL migrations and `config.toml`.
 
 ---
 
 ## Configuration
 
-### Backend
+### Supabase (database, auth, storage, functions)
 
-Copy the example config and fill in your values:
+All backend concerns live in the `supabase/` directory:
 
-```bash
-cp backend/src/main/resources/application.properties.example \
-   backend/src/main/resources/application.properties
-```
-
-Required values:
-
-| Property | Description |
+| Path | Purpose |
 |---|---|
-| `SPRING_DATASOURCE_URL` | Supabase pooler connection string |
-| `SPRING_DATASOURCE_USERNAME` | `postgres.<project-ref>` |
-| `SPRING_DATASOURCE_PASSWORD` | Supabase database password |
-| `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` |
-| `APP_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| `APP_SUPABASE_SERVICE_KEY` | Supabase service role key (for storage operations) |
+| `supabase/config.toml` | Local stack config (ports, storage bucket, auth) |
+| `supabase/migrations/` | Schema, column defaults, RLS policies, functions, triggers, storage policies |
+| `supabase/functions/delete-account/` | Edge Function for account deletion / data reset |
+| `supabase/tests/` | pgTAP database tests |
 
-Optional values (defaults shown):
+There is no application server and no service key in any committed file. The React client uses only the **anon key** and the user's JWT; Row-Level Security enforces per-user access in the database. The single privileged operation (deleting the Supabase Auth user + bulk storage cleanup) runs in the `delete-account` Edge Function, which the Supabase platform injects the service-role key into at runtime.
 
-| Property | Default |
-|---|---|
-| `DDL_AUTO` | `update` (use `validate` in production) |
-| `CORS_ORIGINS` | `http://localhost:5173,...` (set to your Vercel URL in production) |
-| `APP_STORAGE_BUCKET` | `stitchbud-files` |
-| `APP_UPLOAD_DIR` | `./uploads` |
-| `PORT` | `8080` (Railway sets this automatically) |
+### Database schema & migrations
 
-> **Never commit `application.properties`.** It is git-ignored. Only `application.properties.example` should be committed.
+The schema is owned by the ordered SQL files in `supabase/migrations/`:
+
+1. `..._initial_schema.sql` / `..._indexes_and_constraints.sql` — tables, indexes, FKs (ported from the previous Flyway migrations, so existing data is preserved).
+2. `..._column_defaults.sql` — defaults that let the client insert rows directly (timestamps are Unix epoch milliseconds).
+3. `..._rls.sql` — Row-Level Security: owners access their own rows; child tables inherit ownership from their parent.
+4. `..._functions_and_triggers.sql` — profile sync from `auth.users`, project-creation side effects, image limits / main-image promotion, `updated_at` maintenance, and the friendship + friend-project functions.
+5. `..._storage.sql` — the public `stitchbud-files` bucket and its access policies.
+6. `..._api_grants.sql` — PostgREST privileges for the `authenticated` role (tables, sequences, RPC functions).
+
+To change the schema, add a new migration with `supabase migration new <name>` — never edit an applied migration.
 
 ### Google OAuth
 
@@ -133,15 +128,21 @@ VITE_SUPABASE_ANON_KEY=<your-anon-key>
 
 ## Running Locally
 
-### Backend
+### Supabase
+
+Start the local Supabase stack (Postgres + Auth + Storage + Edge Functions). The CLI applies every migration in `supabase/migrations/` on start:
 
 ```bash
-cd backend
-./gradlew bootRun        # macOS / Linux
-gradlew.bat bootRun      # Windows
+supabase start
 ```
 
-The API will be available at `http://localhost:8080`.
+When it finishes it prints local URLs and keys. Use the `API URL` and `anon key` for the frontend `.env.local` below. To serve the Edge Function locally:
+
+```bash
+supabase functions serve delete-account
+```
+
+Reset the database (re-run all migrations + seed) at any time with `supabase db reset`.
 
 ### Frontend
 
@@ -151,33 +152,28 @@ npm install
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
-
-The Vite dev server proxies `/api` requests to `http://localhost:8080`, so both services must be running simultaneously.
+The app will be available at `http://localhost:5173` and talks directly to Supabase via supabase-js.
 
 ---
 
 ## Testing
 
-### Backend
+### Database (pgTAP)
 
-Unit tests require no database or Spring context — all dependencies are mocked with [mockito-kotlin](https://github.com/mockito/mockito-kotlin).
+Database logic — the project-defaults trigger, image limits and main-image promotion, and the friend-request flow — is covered by [pgTAP](https://pgtap.org/) tests in `supabase/tests/`. With the local stack running:
 
 ```bash
-cd backend
-./gradlew test        # macOS / Linux
-gradlew.bat test      # Windows
+supabase test db
 ```
 
-Test reports: `backend/build/reports/tests/test/index.html`
+### Edge Function (Deno)
 
-**~179 tests across 15 files:**
+The `delete-account` helpers (e.g. storage-path parsing) have Deno unit tests:
 
-| Area | Files |
-|---|---|
-| Services | `ProjectService`, `LibraryService`, `FriendshipService`, `ProjectMapper`, `SupabaseStorageService` |
-| Controllers | `ProjectController`, `LibraryController`, `FriendshipController`, `GlobalExceptionHandler` |
-| Utilities | `StringListConverter`, `Extensions` |
+```bash
+cd supabase/functions
+deno test --allow-none _shared/
+```
 
 ### Frontend
 
@@ -199,7 +195,7 @@ Coverage is enforced via thresholds in `vite.config.ts`. HTML report: `frontend/
 | Hooks | `useAutoSave`, `useAsyncData`, `useDebouncedCallback`, `useLibraryFilter`, `useProjectFilter`, `useConfirmDelete`, `useFileUpload`, `useProjectTabs` |
 | Context | `ToastContext`, `ConfirmDialogContext`, `ThemeContext` |
 | Components | `ProjectCard`, `LibraryCard`, `Field`, `ErrorBoundary` |
-| API | `schemas` (Zod validation), `projectsApi` (endpoint URLs, fallback logic) |
+| API | `schemas` (Zod validation), `mappers` (row→DTO conversion, file-type detection) |
 | Utilities | `libraryUtils`, `projectUtils`, `projectOverviewMedia`, `colors` |
 
 ### E2E
@@ -241,7 +237,7 @@ GitHub Actions runs on every push and pull request to `main`:
 | Job | Steps |
 |---|---|
 | `frontend` | Install → Lint → Type-check → Test with coverage → Build → Playwright E2E |
-| `backend` | Gradle test → Gradle build |
+| `supabase` | `supabase start` (applies all migrations) → `supabase test db` (pgTAP) → Deno Edge Function tests |
 
 Both jobs must pass before a PR can be merged. Configuration: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
@@ -249,37 +245,28 @@ Both jobs must pass before a PR can be merged. Configuration: [`.github/workflow
 
 ## Deployment
 
-The app is deployed with **Railway** (backend) and **Vercel** (frontend), both connected to the same Supabase project.
+The app is deployed with **Supabase** (database, auth, storage, Edge Functions) and **Vercel** (frontend). There is no separate backend server.
 
 ### Architecture
 
 ```
-Vercel  ──(API calls)──▶  Railway  ──(DB / Auth / Storage)──▶  Supabase
-(frontend)                (backend)                             (PostgreSQL + Auth + Storage)
+Vercel ──(supabase-js + JWT)──▶ Supabase
+(frontend)                       (Postgres + RLS + functions + Auth + Storage + Edge Functions)
 ```
 
-### Railway (backend)
+### Supabase (backend)
 
-1. Create a free account at [railway.app](https://railway.app) and sign in with GitHub.
-2. New Project → Deploy from GitHub repo → select this repo.
-3. Set **Root Directory** to `backend`.
-4. Add environment variables under the **Variables** tab:
+1. Create a project at [supabase.com](https://supabase.com) and copy its project ref.
+2. Link the local repo and push the schema:
 
-| Variable | Where to find the value |
-|---|---|
-| `SPRING_DATASOURCE_URL` | `spring.datasource.url` in your local `application.properties` |
-| `SPRING_DATASOURCE_USERNAME` | `spring.datasource.username` |
-| `SPRING_DATASOURCE_PASSWORD` | `spring.datasource.password` |
-| `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWKSETURI` | `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` |
-| `APP_SUPABASE_URL` | `app.supabase-url` |
-| `APP_SUPABASE_SERVICE_KEY` | `app.supabase-service-key` |
-| `DDL_AUTO` | `validate` |
-| `CORS_ORIGINS` | your Vercel URL, e.g. `https://stitchbud.vercel.app` (add after Vercel deploy) |
+   ```bash
+   supabase link --project-ref <project-ref>
+   supabase db push                       # applies supabase/migrations to the remote DB
+   supabase functions deploy delete-account
+   ```
 
-Railway sets `PORT` automatically.
-
-5. Deploy. Railway builds the Gradle project and starts the jar via `railway.toml`.
-6. Copy the Railway service URL for the next step.
+3. The `stitchbud-files` storage bucket and all access policies are created by the migrations. (`supabase db push` runs them on the remote database.)
+4. No secrets to set: the Edge Function uses the platform-provided `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` automatically.
 
 ### Vercel (frontend)
 
@@ -290,12 +277,11 @@ Railway sets `PORT` automatically.
 
 | Variable | Value |
 |---|---|
-| `VITE_API_URL` | `https://<your-railway-url>/api` |
-| `VITE_SUPABASE_URL` | same as in `frontend/.env.local` |
-| `VITE_SUPABASE_ANON_KEY` | same as in `frontend/.env.local` |
+| `VITE_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | your project's anon/public key |
 
 5. Deploy.
-6. Copy the Vercel URL and update `CORS_ORIGINS` in Railway.
+6. Add the Vercel URL to **Supabase → Authentication → URL Configuration → Redirect URLs**.
 
 ### Google OAuth — production redirect URLs
 
