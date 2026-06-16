@@ -114,7 +114,8 @@ const COVER = 'cover'
 const MATERIAL = 'material'
 
 /** The nested-embed select string for a full project (PostgREST). */
-export const PROJECT_SELECT = '*, materials(*), project_images(*), project_files(*), pattern_grids(*), row_counters(*)'
+export const PROJECT_SELECT =
+  '*, materials!project_id(*), project_images!project_id(*), project_files!project_id(*), pattern_grids!project_id(*), row_counters!project_id(*)'
 
 /** Parse the JSON-encoded pinterest_board_urls TEXT column into a string array. */
 export function parsePinterestUrls(raw: string | null | undefined): string[] {
