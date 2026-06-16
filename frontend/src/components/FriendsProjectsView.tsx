@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FiChevronRight, FiChevronDown } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +25,12 @@ export function FriendsProjectsView({
   const navigate = useNavigate()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  // Focus the filter field when the dropdown opens (replaces autoFocus).
+  useEffect(() => {
+    if (dropdownOpen) searchRef.current?.focus()
+  }, [dropdownOpen])
 
   if (loading) {
     return <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
@@ -74,12 +80,12 @@ export function FriendsProjectsView({
             <div className="absolute z-10 mt-1 w-full bg-white border border-soft-brown/20 rounded-xl shadow-lg overflow-hidden">
               <div className="p-2">
                 <input
+                  ref={searchRef}
                   type="search"
                   className="input text-sm py-1.5 w-full"
                   placeholder={t('friends_filter_placeholder')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  autoFocus
                 />
               </div>
               <ul className="max-h-48 overflow-y-auto pb-1">

@@ -7,12 +7,14 @@ import { fileTypeIcon } from '../../utils/libraryUtils'
 import type { Project, ProjectFile } from '../../types'
 import { Field } from '../../components/LibraryItemForm'
 import { FilePreviewModal } from './FilePreviewModal'
+import { safeHttpUrl } from '../../utils/url'
 
 export function PinterestBoardEmbed({ url }: { url: string }) {
   const embedRef = useRef<HTMLDivElement>(null)
+  const safeUrl = safeHttpUrl(url)
 
   useEffect(() => {
-    if (!url) return
+    if (!safeUrl) return
     if (!document.getElementById('pinterest-pinit-js')) {
       const script = document.createElement('script')
       script.id = 'pinterest-pinit-js'
@@ -25,18 +27,18 @@ export function PinterestBoardEmbed({ url }: { url: string }) {
       ;(window as { PinUtils?: { build: () => void } }).PinUtils?.build()
     }, 300)
     return () => clearTimeout(timer)
-  }, [url])
+  }, [safeUrl])
 
-  if (!url) return null
+  if (!safeUrl) return null
 
   return (
-    <div ref={embedRef} key={url} className="overflow-hidden rounded-xl">
+    <div ref={embedRef} key={safeUrl} className="overflow-hidden rounded-xl">
       <a
         data-pin-do="embedBoard"
         data-pin-board-width="400"
         data-pin-scale-height="240"
         data-pin-scale-width="80"
-        href={url}
+        href={safeUrl}
       >
         <span className="sr-only">Pinterest board</span>
       </a>
