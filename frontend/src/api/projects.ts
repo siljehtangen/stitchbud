@@ -58,6 +58,9 @@ export const projectsApi = {
         start_date: data.startDate,
         description: data.description ?? '',
         tags: data.tags ?? '',
+        is_public: false,
+        created_at: Date.now(),
+        updated_at: Date.now(),
       })
       .select('id')
       .single()
