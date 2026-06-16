@@ -117,11 +117,25 @@ export const friendRequestSchema = z.object({
 })
 
 // --- Validation helper ---
-// Uses safeParse so a schema mismatch logs a warning but never breaks the UI.
+// Uses safeParse so a schema mismatch logs/reports but never breaks the UI.
+
+type SchemaIssue = z.ZodIssue
+type SchemaReporter = (context: string, issues: SchemaIssue[]) => void
+
+let reportSchemaMismatch: SchemaReporter = (context, issues) => {
+  console.warn(`[API] Schema mismatch for ${context}:`, issues)
+}
+
+/** Wire schema drift to an error-reporting backend (e.g. Sentry). Defaults to
+ *  console.warn so drift is at least visible in dev. */
+export function setSchemaMismatchReporter(reporter: SchemaReporter): void {
+  reportSchemaMismatch = reporter
+}
+
 export function safeParsed<T>(schema: z.ZodType<T>, data: unknown, context: string): T {
   const result = schema.safeParse(data)
   if (!result.success) {
-    console.warn(`[API] Schema mismatch for ${context}:`, result.error.issues)
+    reportSchemaMismatch(context, result.error.issues)
     return data as T
   }
   return result.data
