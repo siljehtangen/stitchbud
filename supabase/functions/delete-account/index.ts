@@ -105,22 +105,39 @@ Deno.serve(async req => {
     })
   }
 
-  // 2. Remove storage objects (best-effort; non-fatal).
+  // 2. Remove storage objects. For a full account delete this is personal data,
+  //    so a failure must abort before we delete any rows (the request can then be
+  //    retried) rather than silently orphaning files in storage.
   if (paths.size > 0) {
     const { error: storageErr } = await admin.storage.from(BUCKET).remove([...paths])
-    if (storageErr) console.warn('Storage cleanup error:', storageErr.message)
+    if (storageErr) {
+      console.error('Storage cleanup error:', storageErr.message)
+      if (action === 'delete') {
+        return json({ error: 'Failed to remove stored files; account not deleted' }, 500)
+      }
+    }
   }
 
-  // 3. Delete the user's data (children cascade).
-  await admin.from('projects').delete().eq('user_id', userId)
-  await admin.from('library_items').delete().eq('user_id', userId)
+  // 3. Delete the user's data (children cascade). Check each step: if data
+  //    removal fails we must not proceed to delete the auth user, otherwise the
+  //    account is gone but its rows linger.
+  const projectsDel = await admin.from('projects').delete().eq('user_id', userId)
+  const libraryDel = await admin.from('library_items').delete().eq('user_id', userId)
+  if (projectsDel.error || libraryDel.error) {
+    console.error('Data delete failed:', projectsDel.error?.message, libraryDel.error?.message)
+    return json({ error: 'Failed to delete account data' }, 500)
+  }
 
   if (action === 'delete') {
-    await admin
+    const friendsDel = await admin
       .from('friendships')
       .delete()
       .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
-    await admin.from('user_profiles').delete().eq('user_id', userId)
+    const profileDel = await admin.from('user_profiles').delete().eq('user_id', userId)
+    if (friendsDel.error || profileDel.error) {
+      console.error('Account cleanup failed:', friendsDel.error?.message, profileDel.error?.message)
+      return json({ error: 'Failed to delete account data' }, 500)
+    }
 
     const { error: deleteErr } = await admin.auth.admin.deleteUser(userId)
     if (deleteErr) {
