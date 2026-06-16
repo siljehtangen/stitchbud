@@ -25,6 +25,7 @@ export function ColorMultiSelect({
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
   const listboxId = useId()
 
   const toggle = useCallback(
@@ -48,6 +49,11 @@ export function ColorMultiSelect({
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [close])
+
+  // Focus the search field when the dropdown opens (replaces autoFocus).
+  useEffect(() => {
+    if (open) searchRef.current?.focus()
+  }, [open])
 
   const q = query.toLowerCase()
   const filtered = availableColors.filter(name => {
@@ -102,7 +108,7 @@ export function ColorMultiSelect({
         <div className="absolute z-30 mt-1 w-full bg-white border border-soft-brown/30 rounded-xl shadow-lg overflow-hidden">
           <div className="p-2 border-b border-soft-brown/20">
             <input
-              autoFocus
+              ref={searchRef}
               type="text"
               className="input text-sm py-1.5 w-full"
               placeholder={searchPlaceholder}
