@@ -20,7 +20,10 @@ export function useAsyncData<T>(fetchFn: () => Promise<T>, initial: T) {
         if (!controller.signal.aborted) setData(result)
       })
       .catch(err => {
-        if (!controller.signal.aborted) setError(err instanceof Error ? err : new Error(String(err)))
+        if (!controller.signal.aborted) {
+          console.error('[useAsyncData] fetch error:', err)
+          setError(err instanceof Error ? err : new Error(String(err)))
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
