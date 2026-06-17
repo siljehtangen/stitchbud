@@ -35,7 +35,9 @@ export async function getUserId(): Promise<string> {
   return id
 }
 
-/** Upload a file to the public bucket and return its public URL. */
+/** Upload a file to the (private) storage bucket. Returns a public-object URL
+ *  that is used purely as a stable identifier in `stored_name`; it is not
+ *  directly fetchable — render sites resolve it to a signed URL (see media.ts). */
 export async function uploadFile(file: File, folder: string): Promise<string> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new Error(`File is too large (max ${Math.floor(MAX_UPLOAD_BYTES / (1024 * 1024))} MB)`)

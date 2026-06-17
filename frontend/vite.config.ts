@@ -18,6 +18,10 @@ export default defineConfig({
           if (id.includes('@supabase')) return 'vendor-supabase'
           if (id.includes('i18next')) return 'vendor-i18n'
           if (id.includes('react-icons')) return 'vendor-icons'
+          // Keep the heavy PDF renderer out of the eagerly-loaded react vendor
+          // chunk — it is dynamically imported (OverviewTab) and must stay lazy.
+          // This check must precede the generic 'react' match below.
+          if (id.includes('@react-pdf')) return 'vendor-pdf'
           if (id.includes('react')) return 'vendor-react'
         },
       },
@@ -39,10 +43,10 @@ export default defineConfig({
         'src/**/*.spec.*',
       ],
       thresholds: {
-        statements: 20,
-        branches: 19,
-        functions: 18,
-        lines: 20,
+        statements: 23,
+        branches: 24,
+        functions: 22,
+        lines: 22,
       },
     },
   },
