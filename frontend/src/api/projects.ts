@@ -1,8 +1,9 @@
 import type { Project, ProjectCategory } from '../types'
 import { normalizeProject } from '../projectOverviewMedia'
-import { supabase, getUserId, uploadFile, deleteUploadedFile, raiseError } from './client'
+import { supabase, getUserId, uploadFile, deleteUploadedFile, canonicalStoredName, raiseError } from './client'
 import { projectSchema, safeParsed } from './schemas'
 import { rowToProject, detectFileType, PROJECT_SELECT, type DbProject } from './mappers'
+import { withSignedProjectMedia, withSignedProjectsMedia } from './media'
 import { isSafeHttpUrl } from '../utils/url'
 import { z } from 'zod'
 
@@ -13,7 +14,7 @@ const MATERIAL = 'material'
 async function fetchProject(id: number): Promise<Project> {
   const { data, error } = await supabase.from('projects').select(PROJECT_SELECT).eq('id', id).single()
   raiseError(error, 'Project not found')
-  return normalizeProject(safeParsed(projectSchema, rowToProject(data as DbProject), 'Project'))
+  return withSignedProjectMedia(normalizeProject(safeParsed(projectSchema, rowToProject(data as DbProject), 'Project')))
 }
 
 type ProjectUpdate = Partial<{
@@ -37,7 +38,8 @@ export const projectsApi = {
     const { data, error } = await query.order('updated_at', { ascending: false })
     raiseError(error, 'Failed to load projects')
     const mapped = ((data as DbProject[]) ?? []).map(rowToProject)
-    return safeParsed(z.array(projectSchema), mapped, 'Project[]').map(normalizeProject)
+    const projects = safeParsed(z.array(projectSchema), mapped, 'Project[]').map(normalizeProject)
+    return withSignedProjectsMedia(projects)
   },
 
   getOne: (id: number): Promise<Project> => fetchProject(id),
@@ -141,9 +143,11 @@ export const projectsApi = {
     fileUrl: string,
     originalName: string
   ): Promise<Project> => {
+    // The source may be a signed URL (library images are signed on fetch); store
+    // the canonical public-object identifier so re-signing and deletion keep working.
     const { error } = await supabase.from('project_images').insert({
       project_id: id,
-      stored_name: fileUrl,
+      stored_name: canonicalStoredName(fileUrl),
       original_name: originalName || 'image',
       section: MATERIAL,
       material_id: materialId,
