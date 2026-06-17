@@ -87,7 +87,7 @@ export default function Library() {
               setSelectedType(filterType ?? 'YARN')
               setAdding(true)
             }}
-            className="btn-secondary text-sm inline-flex items-center gap-1.5"
+            className="btn-primary text-sm inline-flex items-center gap-1.5"
           >
             <FiPlus className="text-base" />
             {t('library_add')}

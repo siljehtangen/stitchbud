@@ -12,6 +12,7 @@
 
   "loading": "Laster...",
   "cancel": "Avbryt",
+  "dismiss": "Lukk",
   "dialog_btn_remove": "Fjern",
   "delete": "Slett",
   "add": "Legg til",
@@ -24,7 +25,8 @@
   "start_first_project": "Start ditt første prosjekt!",
   "you_have_projects_one": "Du har ett prosjekt",
   "you_have_projects_other": "Du har {{count}} prosjekter",
-  "home_auto_save_hint": "Endringene dine lagres automatisk mens du jobber.",
+  "home_auto_save_title": "Lagres mens du jobber",
+  "home_auto_save_hint": "Du trenger ikke trykke lagre — du får en liten bekreftelse når noe er lagret.",
   "recent_projects": "Nylige prosjekter",
   "clear_filter": "Fjern filter",
   "no_projects_yet": "Ingen prosjekter ennå",
@@ -182,7 +184,7 @@
 
   "library_heading": "Bibliotek",
   "library_empty": "Biblioteket er tomt. Legg til garn, stoff, strikkepinner eller heklenåler.",
-  "library_add": "Legg til nytt materiale",
+  "library_add": "Legg til materiale",
   "lib_yarn": "Garn",
   "lib_fabric": "Stoff",
   "lib_knitting_needle": "Strikkepinne",

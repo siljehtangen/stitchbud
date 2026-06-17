@@ -12,6 +12,7 @@
 
   "loading": "Loading...",
   "cancel": "Cancel",
+  "dismiss": "Dismiss",
   "dialog_btn_remove": "Remove",
   "delete": "Delete",
   "add": "Add",
@@ -24,7 +25,8 @@
   "start_first_project": "Start your first project!",
   "you_have_projects_one": "You have one project",
   "you_have_projects_other": "You have {{count}} projects",
-  "home_auto_save_hint": "Your changes are saved automatically as you work.",
+  "home_auto_save_title": "Saved as you go",
+  "home_auto_save_hint": "No save button needed — you'll get a small confirmation whenever something is stored.",
   "recent_projects": "Recent Projects",
   "clear_filter": "Clear filter",
   "no_projects_yet": "No projects yet",
@@ -182,7 +184,7 @@
 
   "library_heading": "Library",
   "library_empty": "Library is empty. Add yarn, fabric, knitting needles or crochet hooks.",
-  "library_add": "Add new material",
+  "library_add": "Add material",
   "lib_yarn": "Yarn",
   "lib_fabric": "Fabric",
   "lib_knitting_needle": "Knitting Needle",

@@ -303,21 +303,19 @@ export function MaterialsTab({
                 })
               )}
             </div>
-            <div className="border-t border-soft-brown/20 pt-2.5">
-              <p className="text-xs text-warm-gray text-center">
-                {t('lib_not_found_hint')}{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewLibType(filterType ?? 'YARN')
-                    setCreatingInLib(true)
-                  }}
-                  className="text-sand-blue-deep underline hover:no-underline font-medium inline-flex items-center gap-1 align-middle"
-                >
-                  <FiPlus className="text-sm" />
-                  {t('lib_create_new')}
-                </button>
-              </p>
+            <div className="border-t border-soft-brown/20 pt-2.5 text-center space-y-2">
+              <p className="text-xs text-warm-gray">{t('lib_not_found_hint')}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setNewLibType(filterType ?? 'YARN')
+                  setCreatingInLib(true)
+                }}
+                className="btn-primary text-sm inline-flex items-center gap-1.5"
+              >
+                <FiPlus className="text-base" />
+                {t('lib_create_new')}
+              </button>
             </div>
           </>
         )}
