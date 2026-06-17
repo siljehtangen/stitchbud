@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FiCheck, FiX, FiRefreshCw, FiUserPlus } from 'react-icons/fi'
 import { useToast } from '../context/ToastContext'
 import { friendsApi } from '../api'
 import type { Friend, FriendRequest } from '../types'
@@ -104,7 +105,11 @@ export default function FriendsPage() {
     return (
       <div className="text-center py-20 space-y-3">
         <p className="text-warm-gray">{t('load_failed')}</p>
-        <button onClick={() => setReloadKey(k => k + 1)} className="btn-secondary text-sm px-4 py-2">
+        <button
+          onClick={() => setReloadKey(k => k + 1)}
+          className="btn-secondary text-sm px-4 py-2 inline-flex items-center gap-1.5"
+        >
+          <FiRefreshCw className="text-base" />
           {t('retry')}
         </button>
       </div>
@@ -112,14 +117,14 @@ export default function FriendsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-gray-800">{t('nav_friends')}</h2>
+      <h1 className="font-serif text-3xl text-ink">{t('nav_friends')}</h1>
 
       <div className="card space-y-3">
-        <p className="text-sm font-medium text-gray-800">{t('friends_add_heading')}</p>
+        <p className="text-sm font-medium text-ink">{t('friends_add_heading')}</p>
         <p className="text-xs text-warm-gray">{t('friends_add_hint')}</p>
         <div className="flex gap-2">
           <input
-            className="input flex-1"
+            className="input flex-1 min-w-0 max-w-md"
             type="email"
             placeholder={t('friends_email_placeholder')}
             value={emailInput}
@@ -132,8 +137,9 @@ export default function FriendsPage() {
           <button
             onClick={handleSendRequest}
             disabled={sending || !emailInput.trim()}
-            className="btn-primary px-4 text-sm disabled:opacity-50"
+            className="btn-primary px-4 text-sm disabled:opacity-50 inline-flex items-center gap-1.5"
           >
+            <FiUserPlus className="text-base" />
             {sending ? t('friends_sending') : t('friends_send_btn')}
           </button>
         </div>
@@ -142,7 +148,7 @@ export default function FriendsPage() {
 
       {requests.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-800">
+          <p className="text-sm font-semibold text-ink">
             {t('friends_requests_heading')} ({requests.length})
           </p>
           {requests.map(req => (
@@ -150,21 +156,23 @@ export default function FriendsPage() {
               <UserAvatar name={req.requesterDisplayName} email={req.requesterEmail} />
               <div className="flex-1 min-w-0">
                 {req.requesterDisplayName && (
-                  <p className="text-sm font-medium text-gray-800 truncate">{req.requesterDisplayName}</p>
+                  <p className="text-sm font-medium text-ink truncate">{req.requesterDisplayName}</p>
                 )}
                 <p className="text-xs text-warm-gray truncate">{req.requesterEmail}</p>
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() => handleAccept(req)}
-                  className="px-3 py-1.5 rounded-lg bg-sand-green text-white text-xs font-medium hover:opacity-90 transition-opacity"
+                  className="min-h-[44px] px-4 rounded-[14px] bg-sand-green-dark text-ink text-sm font-medium hover:brightness-95 transition-all inline-flex items-center gap-1.5"
                 >
+                  <FiCheck className="text-base" />
                   {t('friends_accept')}
                 </button>
                 <button
                   onClick={() => handleDecline(req)}
-                  className="px-3 py-1.5 rounded-lg border border-soft-brown/30 text-warm-gray text-xs hover:bg-soft-brown/10 transition-colors"
+                  className="min-h-[44px] px-4 rounded-[14px] border border-[rgb(var(--border-light))] text-warm-gray text-sm hover:bg-soft-brown/10 transition-colors inline-flex items-center gap-1.5"
                 >
+                  <FiX className="text-base" />
                   {t('friends_decline')}
                 </button>
               </div>
@@ -174,7 +182,7 @@ export default function FriendsPage() {
       )}
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-gray-800">
+        <p className="text-sm font-semibold text-ink">
           {t('friends_list_heading')} ({friends.length})
         </p>
         {friends.length === 0 ? (
@@ -184,18 +192,16 @@ export default function FriendsPage() {
             <div key={friend.friendshipId} className="card flex items-center gap-3">
               <UserAvatar name={friend.displayName} email={friend.email} color="blue" />
               <div className="flex-1 min-w-0">
-                {friend.displayName && (
-                  <p className="text-sm font-medium text-gray-800 truncate">{friend.displayName}</p>
-                )}
+                {friend.displayName && <p className="text-sm font-medium text-ink truncate">{friend.displayName}</p>}
                 <p className="text-xs text-warm-gray truncate">{friend.email}</p>
               </div>
               <button
                 onClick={() => handleRemove(friend)}
-                className="text-xs text-red-400 hover:text-red-600 px-1 flex-shrink-0"
+                className="w-11 h-11 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
                 title={t('friends_remove')}
                 aria-label={t('friends_remove')}
               >
-                ✕
+                <FiX className="w-5 h-5" />
               </button>
             </div>
           ))

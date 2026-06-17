@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { FiRefreshCw } from 'react-icons/fi'
 import i18n from '../i18n'
 import { reportError } from '../sentry'
 
@@ -25,9 +26,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen text-center px-6">
-          <p className="text-gray-800 font-medium mb-1">{i18n.t('error_boundary_title')}</p>
+          <p className="text-ink font-medium mb-1">{i18n.t('error_boundary_title')}</p>
           <p className="text-sm text-warm-gray mb-4">{i18n.t('error_boundary_message')}</p>
-          <button onClick={() => this.setState({ hasError: false })} className="btn-primary">
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="btn-primary inline-flex items-center gap-1.5"
+          >
+            <FiRefreshCw className="text-base" />
             {i18n.t('retry')}
           </button>
         </div>

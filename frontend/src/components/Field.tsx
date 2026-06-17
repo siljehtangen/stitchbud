@@ -12,7 +12,7 @@ export function Field({
   return (
     <div className={className}>
       <label className="block">
-        <span className="block text-sm font-medium text-gray-700 mb-1.5">
+        <span className="block text-sm font-medium text-ink/80 mb-1.5">
           {label}
           {required && <span className="text-red-500 ml-0.5">*</span>}
         </span>

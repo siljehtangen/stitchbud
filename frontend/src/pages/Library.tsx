@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FiPlus } from 'react-icons/fi'
 import { useToast } from '../context/ToastContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
@@ -14,100 +15,141 @@ import { useAsyncData } from '../hooks/useAsyncData'
 export default function Library() {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const { data: items, setData: setItems, loading, error } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
+  const {
+    data: items,
+    setData: setItems,
+    loading,
+    error,
+  } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
 
-  const { filterType, setFilterType, filterColors, setFilterColors, search, setSearch, showColorFilter, availableColors, filtered } = useLibraryFilter(items)
+  const {
+    filterType,
+    setFilterType,
+    filterColors,
+    setFilterColors,
+    search,
+    setSearch,
+    showColorFilter,
+    availableColors,
+    filtered,
+  } = useLibraryFilter(items)
 
-  const grouped = useMemo(() => ITEM_TYPES.map(type => ({
-    type,
-    items: filtered.filter(i => i.itemType === type),
-  })).filter(g => g.items.length > 0), [filtered])
+  const grouped = useMemo(
+    () =>
+      ITEM_TYPES.map(type => ({
+        type,
+        items: filtered.filter(i => i.itemType === type),
+      })).filter(g => g.items.length > 0),
+    [filtered]
+  )
 
   const confirmDelete = useConfirmDelete()
 
-  const handleDelete = useCallback(async (id: number) => {
-    await confirmDelete(
-      t('lib_delete_confirm'),
-      async () => {
-        await libraryApi.delete(id)
-        setItems(prev => prev.filter(i => i.id !== id))
-      },
-      'lib_item_deleted_toast',
-    )
-  }, [confirmDelete, t, setItems])
+  const handleDelete = useCallback(
+    async (id: number) => {
+      await confirmDelete(
+        t('lib_delete_confirm'),
+        async () => {
+          await libraryApi.delete(id)
+          setItems(prev => prev.filter(i => i.id !== id))
+        },
+        'lib_item_deleted_toast'
+      )
+    },
+    [confirmDelete, t, setItems]
+  )
 
-  const handleCreated = useCallback((item: LibraryItem) => {
-    setItems(prev => [item, ...prev])
-    setAdding(false)
-    showToast(t('lib_item_created_toast'))
-  }, [setItems, showToast, t])
+  const handleCreated = useCallback(
+    (item: LibraryItem) => {
+      setItems(prev => [item, ...prev])
+      setAdding(false)
+      showToast(t('lib_item_created_toast'))
+    },
+    [setItems, showToast, t]
+  )
 
-  const handleUpdated = useCallback((item: LibraryItem) => {
-    setItems(prev => prev.map(i => i.id === item.id ? item : i))
-  }, [setItems])
+  const handleUpdated = useCallback(
+    (item: LibraryItem) => {
+      setItems(prev => prev.map(i => (i.id === item.id ? item : i)))
+    },
+    [setItems]
+  )
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-800">{t('library_heading')}</h2>
-        <button onClick={() => { if (!adding) setSelectedType(filterType ?? 'YARN'); setAdding(v => !v) }} className="btn-secondary text-sm">
-          {adding ? t('cancel') : `+ ${t('library_add')}`}
-        </button>
+        <h1 className="font-serif text-3xl text-ink">{adding ? t('lib_create_new') : t('library_heading')}</h1>
+        {!adding && (
+          <button
+            onClick={() => {
+              setSelectedType(filterType ?? 'YARN')
+              setAdding(true)
+            }}
+            className="btn-secondary text-sm inline-flex items-center gap-1.5"
+          >
+            <FiPlus className="text-base" />
+            {t('library_add')}
+          </button>
+        )}
       </div>
 
-      <LibraryFilterBar
-        filterType={filterType}
-        setFilterType={setFilterType}
-        filterColors={filterColors}
-        setFilterColors={setFilterColors}
-        search={search}
-        setSearch={setSearch}
-        showColorFilter={showColorFilter}
-        availableColors={availableColors}
-      />
-
-      {adding && (
-        <LibraryItemForm
-          selectedType={selectedType}
-          onTypeChange={setSelectedType}
-          onCreated={handleCreated}
-          onCancel={() => setAdding(false)}
-        />
-      )}
-
-      {loading ? (
-        <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
-      ) : error ? (
-        <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
-      ) : filtered.length === 0 && !adding ? (
-        <div className="card text-center py-10">
-          <p className="text-warm-gray text-sm">{t('library_empty')}</p>
+      {adding ? (
+        <div className="card">
+          <LibraryItemForm
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+            onCreated={handleCreated}
+            onCancel={() => setAdding(false)}
+          />
         </div>
       ) : (
-        <div className="space-y-6">
-          {grouped.map(({ type, items: groupItems }) => (
-            <div key={type}>
-              <h3 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span>{TYPE_ICONS[type]}</span>
-                <span>{typeLabel(type, t)}</span>
-              </h3>
-              <div className="space-y-2">
-                {groupItems.map(item => (
-                  <LibraryCard
-                    key={item.id}
-                    item={item}
-                    subtitle={itemSummary(item)}
-                    onDelete={handleDelete}
-                    onImageUploaded={handleUpdated}
-                    onUpdated={handleUpdated}
-                  />
-                ))}
-              </div>
+        <>
+          <LibraryFilterBar
+            filterType={filterType}
+            setFilterType={setFilterType}
+            filterColors={filterColors}
+            setFilterColors={setFilterColors}
+            search={search}
+            setSearch={setSearch}
+            showColorFilter={showColorFilter}
+            availableColors={availableColors}
+          />
+
+          {loading ? (
+            <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
+          ) : filtered.length === 0 && !adding ? (
+            <div className="card text-center py-10">
+              <p className="text-warm-gray text-sm">{t('library_empty')}</p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="space-y-6">
+              {grouped.map(({ type, items: groupItems }) => (
+                <div key={type}>
+                  <h3 className="text-xs font-semibold text-warm-gray uppercase tracking-[0.12em] mb-3 flex items-center gap-1.5">
+                    <span>{TYPE_ICONS[type]}</span>
+                    <span>{typeLabel(type, t)}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    {groupItems.map(item => (
+                      <LibraryCard
+                        key={item.id}
+                        item={item}
+                        subtitle={itemSummary(item)}
+                        onDelete={handleDelete}
+                        onImageUploaded={handleUpdated}
+                        onUpdated={handleUpdated}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

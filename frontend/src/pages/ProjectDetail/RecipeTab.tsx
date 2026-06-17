@@ -5,8 +5,10 @@ import { useFileUpload } from '../../hooks/useFileUpload'
 import { projectsApi } from '../../api'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { CloseIcon } from '../../components/UiIcons'
+import { FiPlus, FiRotateCw } from 'react-icons/fi'
 import type { Project, ProjectFile } from '../../types'
 import { Field } from '../../components/LibraryItemForm'
+import { FileDropzone } from '../../components/FileDropzone'
 import { FilePreviewModal } from './FilePreviewModal'
 import { safeHttpUrl } from '../../utils/url'
 
@@ -74,12 +76,6 @@ export function RecipeTab({
   const { uploading, ref: fileRef, execute } = useFileUpload()
   const replaceRef = useRef<HTMLInputElement>(null)
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    await execute(() => projectsApi.uploadProjectFile(projectId, file), onUpdate, fileRef)
-  }
-
   async function handleReplace(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || replacingId === null) return
@@ -97,7 +93,7 @@ export function RecipeTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-2xl">
       <Field label={t('recipe_label')}>
         <textarea
           className="textarea"
@@ -107,32 +103,38 @@ export function RecipeTab({
           placeholder={t('recipe_placeholder')}
         />
       </Field>
-      <p className="text-xs text-warm-gray text-right -mt-2">{t('auto_saving')}</p>
-
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">{t('pinterest_label')}</span>
-          {pinterestBoardUrls.length < MAX_PINTEREST_BOARDS && (
+          <span className="text-sm font-medium text-ink/80">{t('pinterest_label')}</span>
+          {pinterestBoardUrls.length > 0 && pinterestBoardUrls.length < MAX_PINTEREST_BOARDS && (
             <button
               onClick={() => onPinterestChange([...pinterestBoardUrls, ''])}
-              className="btn-secondary text-xs py-1.5 px-3"
+              className="btn-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1.5"
             >
+              <FiPlus className="text-sm" aria-hidden />
               {t('pinterest_add')}
             </button>
           )}
         </div>
 
         {pinterestBoardUrls.length === 0 ? (
-          <div className="text-center py-6 border-2 border-dashed border-soft-brown/30 rounded-xl">
-            <p className="text-sm text-warm-gray">{t('pinterest_empty')}</p>
-          </div>
+          <button
+            type="button"
+            onClick={() => onPinterestChange([''])}
+            className="w-full text-center py-6 border-2 border-dashed border-soft-brown/30 rounded-xl hover:border-sand-green-dark/70 hover:bg-sand-green/10 transition-colors"
+          >
+            <span className="text-sm text-warm-gray inline-flex items-center gap-1.5">
+              <FiPlus className="text-sm" aria-hidden />
+              {t('pinterest_add')}
+            </span>
+          </button>
         ) : (
           <div className="space-y-4">
             {pinterestBoardUrls.map((url, i) => (
               <div key={i} className="space-y-2">
                 <div className="flex gap-2 items-center">
                   <input
-                    className="input flex-1"
+                    className="input input-wide flex-1 min-w-0"
                     type="url"
                     value={url}
                     onChange={e => {
@@ -163,37 +165,27 @@ export function RecipeTab({
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">{t('attachments_label')}</span>
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="btn-secondary text-xs py-1.5 px-3"
-          >
-            {uploading ? t('uploading') : t('upload_file')}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*,.pdf,.doc,.docx"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <input
-            ref={replaceRef}
-            type="file"
-            accept="image/*,.pdf,.doc,.docx"
-            onChange={handleReplace}
-            className="hidden"
-          />
-        </div>
+        <span className="text-sm font-medium text-ink/80 block mb-2">{t('attachments_label')}</span>
 
-        {files.length === 0 ? (
-          <div className="text-center py-6 border-2 border-dashed border-soft-brown/30 rounded-xl">
-            <p className="text-sm text-warm-gray">{t('no_files_yet')}</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
+        <FileDropzone
+          accept="image/*,.pdf,.doc,.docx"
+          uploading={uploading}
+          uploadingLabel={t('uploading')}
+          title={t('file_dropzone_title')}
+          hint={t('file_dropzone_hint')}
+          onFile={file => execute(() => projectsApi.uploadProjectFile(projectId, file), onUpdate, fileRef)}
+        />
+
+        <input
+          ref={replaceRef}
+          type="file"
+          accept="image/*,.pdf,.doc,.docx"
+          onChange={handleReplace}
+          className="hidden"
+        />
+
+        {files.length > 0 && (
+          <div className="space-y-2 mt-3">
             {files.map(f => {
               const url = f.storedName
               return (
@@ -219,7 +211,7 @@ export function RecipeTab({
                   <div className="flex-1 min-w-0">
                     <button
                       onClick={() => setPreviewFile(f)}
-                      className="text-sm font-medium text-gray-800 hover:text-sand-green-dark truncate block text-left w-full"
+                      className="text-sm font-medium text-ink hover:text-sand-green-dark truncate block text-left w-full"
                     >
                       {f.originalName}
                     </button>
@@ -230,8 +222,9 @@ export function RecipeTab({
                     disabled={uploading}
                     className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
                     title={t('replace_file')}
+                    aria-label={t('replace_file')}
                   >
-                    ↺
+                    <FiRotateCw className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() =>

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FiArrowLeft, FiRefreshCw } from 'react-icons/fi'
 import { friendsApi } from '../../api'
 import { parseCraftDetails } from '../../utils/projectUtils'
 import type { Project } from '../../types'
@@ -84,7 +85,11 @@ export default function FriendProjectDetail() {
     return (
       <div className="text-center py-20 space-y-3">
         <p className="text-warm-gray">{t('load_failed')}</p>
-        <button onClick={() => setReloadKey(k => k + 1)} className="btn-secondary text-sm px-4 py-2">
+        <button
+          onClick={() => setReloadKey(k => k + 1)}
+          className="btn-secondary text-sm px-4 py-2 inline-flex items-center gap-1.5"
+        >
+          <FiRefreshCw className="text-base" />
           {t('retry')}
         </button>
       </div>
@@ -99,11 +104,15 @@ export default function FriendProjectDetail() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>
-          ←
+        <button
+          onClick={() => navigate(-1)}
+          className="btn-ghost py-1.5 px-2 inline-flex items-center"
+          aria-label={t('go_back')}
+        >
+          <FiArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
+          <h2 className="text-lg font-semibold text-ink truncate">{project.name}</h2>
           <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
         </div>
         <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
@@ -128,25 +137,25 @@ export default function FriendProjectDetail() {
           <div className="space-y-3">
             <div>
               <p className="text-xs text-warm-gray mb-0.5">{t('field_name')}</p>
-              <p className="text-sm text-gray-800">{project.name}</p>
+              <p className="text-sm text-ink">{project.name}</p>
             </div>
             {project.description && (
               <div>
                 <p className="text-xs text-warm-gray mb-0.5">{t('field_description')}</p>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{project.description}</p>
+                <p className="text-sm text-ink/80 whitespace-pre-wrap">{project.description}</p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
               {startDateStr && (
                 <div>
                   <p className="text-xs text-warm-gray mb-0.5">{t('start_date_label')}</p>
-                  <p className="text-sm text-gray-700">{startDateStr}</p>
+                  <p className="text-sm text-ink/80">{startDateStr}</p>
                 </div>
               )}
               {endDateStr && (
                 <div>
                   <p className="text-xs text-warm-gray mb-0.5">{t('end_date_label')}</p>
-                  <p className="text-sm text-gray-700">{endDateStr}</p>
+                  <p className="text-sm text-ink/80">{endDateStr}</p>
                 </div>
               )}
             </div>
@@ -163,7 +172,7 @@ export default function FriendProjectDetail() {
               const imgs = materialImageUrls(m)
               return (
                 <div key={m.id} className="card space-y-2">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm font-medium text-ink">
                     {m.name || m.type}
                     {m.color ? ` — ${m.color}` : ''}
                     {m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
@@ -187,7 +196,7 @@ export default function FriendProjectDetail() {
           {project.recipeText && (
             <div>
               <p className="text-xs text-warm-gray mb-1">{t('recipe_label')}</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{project.recipeText}</p>
+              <p className="text-sm text-ink/80 whitespace-pre-wrap">{project.recipeText}</p>
             </div>
           )}
           {project.pinterestBoardUrls && project.pinterestBoardUrls.length > 0 && (
@@ -223,7 +232,7 @@ export default function FriendProjectDetail() {
                       className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
                     >
                       <FileTypeIcon fileType={f.fileType} />
-                      <span className="text-gray-700 max-w-[8rem] truncate">{f.originalName}</span>
+                      <span className="text-ink/80 max-w-[8rem] truncate">{f.originalName}</span>
                     </button>
                   )
                 })}
@@ -241,7 +250,7 @@ export default function FriendProjectDetail() {
           {project.rowCounter && project.rowCounter.totalRounds > 0 && (
             <div className="card space-y-1">
               <p className="text-xs text-warm-gray uppercase tracking-wide font-semibold">{t('round_counter')}</p>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-ink/80">
                 {t('row_counter', {
                   current: (() => {
                     if (project.rowCounter.stitchesPerRound <= 0) return 0

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FiDownload } from 'react-icons/fi'
 import { projectCoverImageUrls, materialImageUrls, uniqueImageUrls } from '../../projectOverviewMedia'
 import { COLOR_MAP_BY_HEX, getColorName } from '../../colors'
 import type { Project } from '../../types'
@@ -158,15 +159,15 @@ export function OverviewTab({
           disabled={exporting}
           className="btn-secondary text-sm flex items-center gap-2 disabled:opacity-60"
         >
-          <span>↓</span> {exporting ? t('exporting') : t('download_overview')}
+          <FiDownload className="text-base" /> {exporting ? t('exporting') : t('download_overview')}
         </button>
         {exportError && <p className="text-xs text-red-500">{exportError}</p>}
       </div>
       <Section title={t('section_info')}>
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-800 text-base">{name}</h3>
-            {description && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-1">{description}</p>}
+            <h3 className="font-semibold text-ink text-base">{name}</h3>
+            {description && <p className="text-sm text-ink/80 whitespace-pre-wrap mt-1">{description}</p>}
           </div>
           {coverUrls.length > 0 && (
             <div className="flex gap-2 flex-wrap sm:justify-end">
@@ -191,7 +192,7 @@ export function OverviewTab({
               {filledCraftFields.map(({ key, labelKey }) => (
                 <div key={key}>
                   <span className="text-xs text-warm-gray">{t(labelKey as Parameters<typeof t>[0])}: </span>
-                  <span className="text-sm text-gray-700">{craftDetails[key]}</span>
+                  <span className="text-sm text-ink/80">{craftDetails[key]}</span>
                 </div>
               ))}
             </div>
@@ -204,7 +205,7 @@ export function OverviewTab({
                 const imgs = materialImageUrls(m)
                 return (
                   <div key={m.id} className="space-y-2">
-                    <span className="text-sm text-gray-700 block font-medium">
+                    <span className="text-sm text-ink/80 block font-medium">
                       {m.type}
                       {colorLabel ? ` — ${colorLabel}` : ''}
                       {m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
@@ -254,13 +255,13 @@ export function OverviewTab({
                     className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
                   >
                     <FileTypeIcon fileType={f.fileType} />
-                    <span className="text-gray-700 max-w-[8rem] truncate">{f.originalName}</span>
+                    <span className="text-ink/80 max-w-[8rem] truncate">{f.originalName}</span>
                   </a>
                 )
               })}
             </div>
           )}
-          {recipeText && <p className="text-sm text-gray-700 whitespace-pre-wrap mt-2">{recipeText}</p>}
+          {recipeText && <p className="text-sm text-ink/80 whitespace-pre-wrap mt-2">{recipeText}</p>}
         </Section>
       )}
 

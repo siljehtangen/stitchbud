@@ -7,6 +7,8 @@ import type { Project, ProjectCategory } from '../../types'
 import { RoundCounterWidget } from './RoundCounterWidget'
 import { PatternGridWidget } from './PatternGridWidget'
 import { CloseIcon, PlusIcon } from '../../components/UiIcons'
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { CATEGORY_ACCENT } from '../../constants/categories'
 
 export function KnitTab({
   project,
@@ -63,8 +65,9 @@ export function KnitTab({
             onClick={() => setActiveGridIndex(i => Math.max(0, i - 1))}
             disabled={clampedIndex === 0}
             className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 disabled:opacity-30 text-warm-gray text-base leading-none"
+            aria-label={t('previous')}
           >
-            ‹
+            <FiChevronLeft className="w-4 h-4" />
           </button>
           <span className="text-xs text-warm-gray tabular-nums">
             {clampedIndex + 1}/{grids.length}
@@ -73,14 +76,15 @@ export function KnitTab({
             onClick={() => setActiveGridIndex(i => Math.min(grids.length - 1, i + 1))}
             disabled={clampedIndex === grids.length - 1}
             className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 disabled:opacity-30 text-warm-gray text-base leading-none"
+            aria-label={t('next')}
           >
-            ›
+            <FiChevronRight className="w-4 h-4" />
           </button>
         </>
       )}
       <button
         onClick={handleAddGrid}
-        className="w-5 h-5 flex items-center justify-center rounded-full bg-sand-green hover:opacity-80 text-gray-700 text-xs font-bold ml-1"
+        className="w-5 h-5 flex items-center justify-center rounded-full bg-sand-green hover:opacity-80 text-ink/80 text-xs font-bold ml-1"
         title={t('add_grid')}
       >
         <PlusIcon className="w-3 h-3" />
@@ -104,15 +108,21 @@ export function KnitTab({
           <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{t('round_counter')}</h3>
           <RoundCounterWidget
             counter={project.rowCounter!}
-            onSave={async (spr, tr, cs) =>
-              onUpdate(
-                await projectsApi.updateRowCounter(projectId, {
-                  stitchesPerRound: spr,
-                  totalRounds: tr,
-                  checkedStitches: JSON.stringify(cs),
-                })
-              )
-            }
+            accent={CATEGORY_ACCENT[category].base}
+            onSave={async (spr, tr, cs) => {
+              try {
+                onUpdate(
+                  await projectsApi.updateRowCounter(projectId, {
+                    stitchesPerRound: spr,
+                    totalRounds: tr,
+                    checkedStitches: JSON.stringify(cs),
+                  })
+                )
+                showToast(t('changes_saved_toast'))
+              } catch {
+                showToast(t('save_failed'), 'info')
+              }
+            }}
           />
         </div>
       )}
@@ -125,15 +135,20 @@ export function KnitTab({
             cols={activeGrid.cols}
             cellDataJson={activeGrid.cellData}
             showSymbols={category === 'KNITTING'}
-            onSave={async (cells, r, c) =>
-              onUpdate(
-                await projectsApi.updatePatternGrid(projectId, activeGrid.id, {
-                  rows: r,
-                  cols: c,
-                  cellData: JSON.stringify(cells),
-                })
-              )
-            }
+            onSave={async (cells, r, c) => {
+              try {
+                onUpdate(
+                  await projectsApi.updatePatternGrid(projectId, activeGrid.id, {
+                    rows: r,
+                    cols: c,
+                    cellData: JSON.stringify(cells),
+                  })
+                )
+                showToast(t('changes_saved_toast'))
+              } catch {
+                showToast(t('save_failed'), 'info')
+              }
+            }}
           />
         )}
       </div>

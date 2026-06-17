@@ -1,14 +1,7 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiExclamationTriangle } from 'react-icons/hi2'
+import { FiX, FiCheck, FiTrash2 } from 'react-icons/fi'
 
 export type ConfirmOptions = {
   message: string
@@ -100,19 +93,21 @@ function ConfirmDialogModal({
           <button
             type="button"
             onClick={onDismiss}
-            className="w-full rounded-lg border border-neutral-400 bg-white py-2.5 text-sm font-medium text-black hover:bg-neutral-50 sm:w-auto sm:min-w-[5.5rem]"
+            className="w-full rounded-lg border border-neutral-400 bg-white py-2.5 text-sm font-medium text-black hover:bg-neutral-50 sm:w-auto sm:min-w-[5.5rem] inline-flex items-center justify-center gap-1.5"
           >
+            <FiX className="text-base" />
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`w-full rounded-lg py-2.5 text-sm font-medium sm:min-w-[5.5rem] sm:w-auto ${
+            className={`w-full rounded-lg py-2.5 text-sm font-medium sm:min-w-[5.5rem] sm:w-auto inline-flex items-center justify-center gap-1.5 ${
               isDanger
                 ? 'bg-red-500 text-white hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500'
                 : 'border border-neutral-400 bg-white text-black hover:bg-neutral-50'
             }`}
           >
+            {isDanger ? <FiTrash2 className="text-base" /> : <FiCheck className="text-base" />}
             {state.confirmLabel}
           </button>
         </div>
@@ -142,13 +137,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmDialogContext.Provider value={{ confirm }}>
       {children}
-      {open && (
-        <ConfirmDialogModal
-          state={open}
-          onConfirm={() => finish(true)}
-          onDismiss={() => finish(false)}
-        />
-      )}
+      {open && <ConfirmDialogModal state={open} onConfirm={() => finish(true)} onDismiss={() => finish(false)} />}
     </ConfirmDialogContext.Provider>
   )
 }

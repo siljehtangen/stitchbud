@@ -13,24 +13,28 @@ export default function AuthPage() {
 
   async function handleGoogle() {
     setError('')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/home' },
-    })
-    if (error) setError(error.message)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/home' },
+      })
+      if (error) setError(error.message)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
   }
 
   return (
     <div className="min-h-screen bg-soft-brown/10 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-sm border border-soft-brown/20 w-full max-w-sm p-8 space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">{t('auth_welcome')}</h1>
+          <h1 className="text-2xl font-bold text-ink">{t('auth_welcome')}</h1>
           <p className="text-sm text-warm-gray mt-1">{t('auth_subtitle')}</p>
         </div>
 
         <button
           onClick={handleGoogle}
-          className="w-full flex items-center justify-center gap-3 border border-soft-brown/30 rounded-xl py-2.5 px-4 text-sm font-medium text-gray-700 hover:bg-soft-brown/10 transition-colors"
+          className="w-full flex items-center justify-center gap-3 border border-soft-brown/30 rounded-xl py-2.5 px-4 text-sm font-medium text-ink/80 hover:bg-soft-brown/10 transition-colors"
         >
           <svg width="18" height="18" viewBox="0 0 18 18">
             <path

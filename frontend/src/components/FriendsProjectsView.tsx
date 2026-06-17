@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { FiChevronRight, FiChevronDown } from 'react-icons/fi'
+import { FiChevronRight, FiChevronDown, FiUser } from 'react-icons/fi'
+import { LiaUserFriendsSolid } from 'react-icons/lia'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { Friend, Project } from '../types'
@@ -39,7 +40,11 @@ export function FriendsProjectsView({
     return (
       <div className="card text-center py-10">
         <p className="text-warm-gray text-sm">{t('projects_friends_empty')}</p>
-        <button onClick={() => navigate('/friends')} className="btn-primary mt-4 text-sm">
+        <button
+          onClick={() => navigate('/friends')}
+          className="btn-primary mt-4 text-sm inline-flex items-center gap-1.5"
+        >
+          <LiaUserFriendsSolid className="text-base" />
           {t('projects_go_to_friends')}
         </button>
       </div>
@@ -62,9 +67,9 @@ export function FriendsProjectsView({
       <div className="relative">
         <button
           onClick={() => setDropdownOpen(o => !o)}
-          className="input flex items-center justify-between w-full text-sm text-left"
+          className="input flex items-center justify-between w-full max-w-md text-sm text-left"
         >
-          <span className={selectedFriend ? 'text-gray-800' : 'text-warm-gray'}>{selectedLabel}</span>
+          <span className={selectedFriend ? 'text-ink' : 'text-warm-gray'}>{selectedLabel}</span>
           <FiChevronDown className="w-4 h-4 text-warm-gray ml-2 flex-shrink-0" />
         </button>
 
@@ -95,8 +100,9 @@ export function FriendsProjectsView({
                       setDropdownOpen(false)
                       setSearchQuery('')
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-soft-brown/10 transition-colors ${friendFilter === null ? 'font-semibold text-gray-800' : 'text-warm-gray'}`}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-soft-brown/10 transition-colors inline-flex items-center gap-2 ${friendFilter === null ? 'font-semibold text-ink' : 'text-warm-gray'}`}
                   >
+                    <LiaUserFriendsSolid className="text-base flex-shrink-0" />
                     {t('friends_filter_all')}
                   </button>
                 </li>
@@ -108,8 +114,9 @@ export function FriendsProjectsView({
                         setDropdownOpen(false)
                         setSearchQuery('')
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-soft-brown/10 transition-colors ${friendFilter === f.userId ? 'font-semibold text-gray-800' : 'text-warm-gray'}`}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-soft-brown/10 transition-colors inline-flex items-center gap-2 ${friendFilter === f.userId ? 'font-semibold text-ink' : 'text-warm-gray'}`}
                     >
+                      <FiUser className="text-sm flex-shrink-0" />
                       {f.displayName ?? f.email}
                     </button>
                   </li>
@@ -178,7 +185,7 @@ function FriendProjectCard({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 truncate">{project.name}</p>
+        <p className="text-sm font-medium text-ink truncate">{project.name}</p>
         <p className="text-xs text-warm-gray">
           {categoryLabel(project.category, t)}
           {friendName ? ` · ${friendName}` : ''}
@@ -186,7 +193,7 @@ function FriendProjectCard({
         {project.description && <p className="text-xs text-gray-600 truncate mt-0.5">{project.description}</p>}
       </div>
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-soft-brown/10 group-hover:bg-soft-brown/20 flex items-center justify-center transition-colors ml-1">
-        <FiChevronRight className="w-3.5 h-3.5 text-warm-gray group-hover:text-gray-700 transition-colors" />
+        <FiChevronRight className="w-3.5 h-3.5 text-warm-gray group-hover:text-ink/80 transition-colors" />
       </div>
     </div>
   )

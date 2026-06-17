@@ -32,7 +32,7 @@ export function UserAvatar({
   return (
     <div
       className={`rounded-full flex items-center justify-center font-semibold flex-shrink-0 ${sizeClass} ${
-        color === 'blue' ? 'bg-sand-blue text-gray-700' : 'bg-sand-green text-white'
+        color === 'blue' ? 'bg-sand-blue text-ink/80' : 'bg-sand-green text-white'
       }`}
     >
       {getInitials(name, email)}

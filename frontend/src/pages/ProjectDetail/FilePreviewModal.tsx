@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { ProjectFile } from '../../types'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { CloseIcon } from '../../components/UiIcons'
+import { FiMinus, FiPlus, FiExternalLink } from 'react-icons/fi'
 
 export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose: () => void }) {
   const { t } = useTranslation()
@@ -55,8 +56,9 @@ export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose
                 onClick={() => setZoom(z => Math.max(0.25, parseFloat((z - 0.25).toFixed(2))))}
                 className="text-white text-lg w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full"
                 title={t('zoom_out')}
+                aria-label={t('zoom_out')}
               >
-                −
+                <FiMinus className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setZoom(1)}
@@ -69,8 +71,9 @@ export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose
                 onClick={() => setZoom(z => Math.min(4, parseFloat((z + 0.25).toFixed(2))))}
                 className="text-white text-lg w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full"
                 title={t('zoom_in')}
+                aria-label={t('zoom_in')}
               >
-                +
+                <FiPlus className="w-4 h-4" />
               </button>
             </div>
           </>
@@ -86,8 +89,14 @@ export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose
             <div className="mb-4 flex justify-center text-warm-gray">
               <FileTypeIcon fileType={file.fileType} className="w-16 h-16" />
             </div>
-            <p className="text-gray-800 font-medium mb-6">{file.originalName}</p>
-            <a href={url} target="_blank" rel="noopener noreferrer" className="btn-primary">
+            <p className="text-ink font-medium mb-6">{file.originalName}</p>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary inline-flex items-center gap-1.5"
+            >
+              <FiExternalLink className="text-base" />
               {t('open_file')}
             </a>
           </div>

@@ -8,6 +8,7 @@ import { LibraryItemTypeFields } from './LibraryItemTypeFields'
 import { libraryItemImageUrl, isImageUrl } from '../utils/libraryUtils'
 import { FileTypeIcon, ImagePlaceholderIcon } from './FileTypeIcon'
 import { StarIcon, CloseIcon, EditIcon, PlusIcon, LoadingDotsIcon } from './UiIcons'
+import { FiCheck, FiX } from 'react-icons/fi'
 import { useConfirmDelete } from '../hooks/useConfirmDelete'
 import { resolveColorDisplay } from '../colors'
 
@@ -67,6 +68,7 @@ export const LibraryCard = memo(function LibraryCard({
     try {
       const updated = await libraryApi.registerLibraryImage(item.id, file)
       onImageUploaded(updated)
+      showToast(t('library_photo_added_toast'))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -114,7 +116,7 @@ export const LibraryCard = memo(function LibraryCard({
 
   if (editing) {
     return (
-      <div className="card space-y-3">
+      <div className="card space-y-3 max-w-lg">
         <div className="space-y-2">
           <p className="text-xs text-warm-gray">{t('material_photos_hint')}</p>
           <div className="flex gap-2 flex-wrap items-start">
@@ -152,7 +154,10 @@ export const LibraryCard = memo(function LibraryCard({
                 )}
                 <button
                   type="button"
-                  onClick={async () => onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))}
+                  onClick={async () => {
+                    onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))
+                    showToast(t('changes_saved_toast'))
+                  }}
                   className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
                   title={img.isMain ? t('main_image') : t('set_as_main')}
                 >
@@ -201,7 +206,7 @@ export const LibraryCard = memo(function LibraryCard({
         </div>
         <Field label={t('lib_name')}>
           <input
-            className="input text-sm py-1.5 w-full"
+            className="input text-sm py-1.5"
             value={fields.name}
             onChange={e => setField('name', e.target.value)}
             placeholder={t('lib_name')}
@@ -235,12 +240,18 @@ export const LibraryCard = memo(function LibraryCard({
           hookSize={fields.hookSize}
           setHookSize={v => setField('hookSize', v)}
         />
-        <div className="flex gap-2">
-          <button onClick={handleSave} disabled={saving} className="btn-primary text-sm flex-1">
-            {saving ? t('saving') : t('save')}
-          </button>
-          <button onClick={() => setEditing(false)} className="btn-ghost text-sm">
+        <div className="flex items-center justify-end gap-2">
+          <button onClick={() => setEditing(false)} className="btn-ghost text-sm inline-flex items-center gap-1.5">
+            <FiX className="text-base" />
             {t('cancel')}
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="btn-primary text-sm inline-flex items-center justify-center gap-1.5"
+          >
+            <FiCheck className="text-base" />
+            {saving ? t('saving') : t('save')}
           </button>
         </div>
       </div>
@@ -265,7 +276,7 @@ export const LibraryCard = memo(function LibraryCard({
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm text-gray-800">{item.name}</p>
+        <p className="font-medium text-sm text-ink">{item.name}</p>
         {subtitle && <p className="text-xs text-warm-gray">{subtitle}</p>}
         {(item.colors ?? []).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">

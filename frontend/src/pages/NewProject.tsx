@@ -7,6 +7,8 @@ import type { ProjectCategory } from '../types'
 import { CATEGORY_ICONS, CATEGORIES } from '../constants/categories'
 import { MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
 import { CoverImageGallery } from '../components/CoverImageGallery'
+import { DateField } from '../components/DateField'
+import { FiArrowLeft, FiPlus } from 'react-icons/fi'
 
 type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 
@@ -34,11 +36,17 @@ export default function NewProject() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  function addCoverFile(file: File) {
+    setCoverImages(prev =>
+      prev.length >= MAX_LIBRARY_PHOTOS
+        ? prev
+        : [...prev, { file, preview: URL.createObjectURL(file), isMain: prev.length === 0 }]
+    )
+  }
+
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || coverImages.length >= MAX_LIBRARY_PHOTOS) return
-    const preview = URL.createObjectURL(file)
-    setCoverImages(prev => [...prev, { file, preview, isMain: prev.length === 0 }])
+    if (file) addCoverFile(file)
     if (coverRef.current) coverRef.current.value = ''
   }
 
@@ -76,7 +84,7 @@ export default function NewProject() {
       if (mainImg) await projectsApi.uploadCoverImage(project.id, mainImg.file)
       if (others.length > 0) await Promise.all(others.map(img => projectsApi.uploadCoverImage(project.id, img.file)))
       showToast(t('project_created_toast'))
-      navigate(`/projects/${project.id}`)
+      navigate(`/projects/${project.id}?tab=info`)
     } catch (err) {
       console.error('Failed to create project:', err)
       setError(t('failed_create_project'))
@@ -88,19 +96,24 @@ export default function NewProject() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2 text-warm-gray" aria-label={t('go_back')}>
-          ←
+        <button
+          onClick={() => navigate(-1)}
+          className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-full border border-[rgb(var(--border-light))] bg-white text-ink hover:bg-cream transition-colors"
+          aria-label={t('go_back')}
+        >
+          <FiArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-xl font-semibold text-gray-800">{t('new_project')}</h2>
+        <h1 className="font-serif text-3xl text-ink">{t('new_project')}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
         <CoverImageGallery
           items={coverImages.map((img, i) => ({ key: i, src: img.preview, isMain: img.isMain }))}
           max={MAX_LIBRARY_PHOTOS}
           onSetMain={key => setMainImage(key as number)}
           onRemove={key => removeImage(key as number)}
           onAdd={() => coverRef.current?.click()}
+          onFile={addCoverFile}
         />
         <input
           ref={coverRef}
@@ -111,7 +124,7 @@ export default function NewProject() {
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-ink/80 mb-2">
             {t('category_label')} <span className="text-red-500">*</span>
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -134,7 +147,7 @@ export default function NewProject() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-ink/80 mb-1.5">
             {t('project_name_label')} <span className="text-red-500">*</span>
           </label>
           <input
@@ -149,7 +162,7 @@ export default function NewProject() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('description_label')}</label>
+          <label className="block text-sm font-medium text-ink/80 mb-1.5">{t('description_label')}</label>
           <textarea
             className="textarea"
             rows={3}
@@ -160,19 +173,26 @@ export default function NewProject() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-ink/80 mb-1.5">
             {t('start_date_label')} <span className="text-red-500">*</span>
           </label>
-          <input type="date" className="input" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          <DateField value={startDate} onChange={setStartDate} />
         </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
         )}
 
-        <button type="submit" disabled={saving} className="btn-primary w-full">
-          {saving ? t('creating') : t('create_project')}
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="btn-primary inline-flex items-center justify-center gap-1.5"
+          >
+            <FiPlus className="text-base" />
+            {saving ? t('creating') : t('create_project')}
+          </button>
+        </div>
       </form>
     </div>
   )

@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../context/ToastContext'
 import { projectsApi } from '../../api'
 import type { Project, ProjectCategory } from '../../types'
 import { HiLockClosed, HiGlobeAlt } from 'react-icons/hi2'
+import { FiArrowLeft, FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import { useProjectTabs, type ProjectTab } from '../../hooks/useProjectTabs'
 import { ProjectTabBar } from '../../components/ProjectTabBar'
 import { categoryLabel } from '../../constants/categories'
@@ -25,11 +26,15 @@ export default function ProjectDetail() {
   const { showToast } = useToast()
   const confirmDelete = useConfirmDelete()
   const { confirm } = useConfirmDialog()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
-  const [tab, setTab] = useState<ProjectTab>('info')
+  const [tab, setTab] = useState<ProjectTab>(() => {
+    const tabParam = searchParams.get('tab') as ProjectTab | null
+    return tabParam ?? 'info'
+  })
   const [isPublic, setIsPublic] = useState(false)
   const projectId = Number(id)
 
@@ -93,7 +98,10 @@ export default function ProjectDetail() {
     const seq = ++saveSeqRef.current
     try {
       const updated = await projectsApi.update(projectId, updates)
-      if (saveSeqRef.current === seq) setProject(updated)
+      if (saveSeqRef.current === seq) {
+        setProject(updated)
+        showToast(t('changes_saved_toast'))
+      }
     } catch {
       showToast(t('save_failed'), 'info')
     }
@@ -120,20 +128,47 @@ export default function ProjectDetail() {
   }
 
   async function handleDelete() {
-    await confirmDelete(t('delete_confirm', { name: project?.name }), async () => {
-      await projectsApi.delete(projectId)
-      navigate('/home')
-    })
+    await confirmDelete(
+      t('delete_confirm', { name: project?.name }),
+      async () => {
+        await projectsApi.delete(projectId)
+        navigate('/home')
+      },
+      'project_deleted_toast'
+    )
   }
 
   const tabs = useProjectTabs(project)
+
+  function selectTab(next: ProjectTab) {
+    setTab(next)
+    setSearchParams(
+      prev => {
+        const params = new URLSearchParams(prev)
+        params.set('tab', next)
+        return params
+      },
+      { replace: true }
+    )
+  }
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as ProjectTab | null
+    if (tabParam && tabs.some(t => t.id === tabParam)) {
+      setTab(tabParam)
+    }
+  }, [searchParams, tabs])
 
   if (loading) return <div className="text-center py-20 text-warm-gray">{t('loading')}</div>
   if (loadError)
     return (
       <div className="text-center py-20 space-y-3">
         <p className="text-warm-gray">{t('load_failed')}</p>
-        <button onClick={() => setReloadKey(k => k + 1)} className="btn-secondary text-sm px-4 py-2">
+        <button
+          onClick={() => setReloadKey(k => k + 1)}
+          className="btn-secondary text-sm px-4 py-2 inline-flex items-center gap-1.5"
+        >
+          <FiRefreshCw className="text-base" />
           {t('retry')}
         </button>
       </div>
@@ -145,11 +180,15 @@ export default function ProjectDetail() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="btn-ghost py-1.5 px-2" aria-label={t('go_back')}>
-          ←
+        <button
+          onClick={() => navigate(-1)}
+          className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-full border border-[rgb(var(--border-light))] bg-white text-ink hover:bg-cream transition-colors"
+          aria-label={t('go_back')}
+        >
+          <FiArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold text-gray-800 truncate">{project.name}</h2>
+          <h2 className="font-serif text-2xl text-ink truncate">{project.name}</h2>
           <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
         </div>
         <button
@@ -165,22 +204,28 @@ export default function ProjectDetail() {
             try {
               const updated = await projectsApi.update(projectId, { isPublic: next })
               setProject(updated)
+              showToast(t(next ? 'project_made_public_toast' : 'project_made_private_toast'))
             } catch {
               setIsPublic(!next)
+              showToast(t('save_failed'), 'info')
             }
           }}
           title={isPublic ? t('project_public') : t('project_private')}
-          className="px-1 py-1 text-warm-gray hover:text-gray-700 transition-colors"
+          className="px-1 py-1 text-warm-gray hover:text-ink/80 transition-colors"
           aria-label={isPublic ? t('project_public') : t('project_private')}
         >
           {isPublic ? <HiGlobeAlt className="h-5 w-5" /> : <HiLockClosed className="h-5 w-5" />}
         </button>
-        <button onClick={handleDelete} className="text-sm text-red-400 hover:text-red-600 px-2 py-1">
+        <button
+          onClick={handleDelete}
+          className="text-sm text-red-400 hover:text-red-600 px-2 py-1 inline-flex items-center gap-1.5"
+        >
+          <FiTrash2 className="text-base" />
           {t('delete')}
         </button>
       </div>
 
-      <ProjectTabBar tabs={tabs} activeTab={tab} onSelect={setTab} />
+      <ProjectTabBar tabs={tabs} activeTab={tab} onSelect={selectTab} />
 
       {tab === 'info' && (
         <InfoTab

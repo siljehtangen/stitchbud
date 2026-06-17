@@ -12,6 +12,7 @@ interface Props {
   noResults: string
   clearLabel: string
   removeLabel: (colorName: string) => string
+  className?: string
 }
 
 export function ColorMultiSelect({
@@ -24,6 +25,7 @@ export function ColorMultiSelect({
   noResults,
   clearLabel,
   removeLabel,
+  className,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -71,7 +73,7 @@ export function ColorMultiSelect({
         aria-expanded={open}
         aria-controls={listboxId}
         onClick={() => setOpen(v => !v)}
-        className="input text-sm py-1.5 w-full text-left flex items-center gap-1.5 flex-wrap min-h-[36px]"
+        className={`input text-sm py-1.5 w-full text-left flex items-center gap-1.5 flex-wrap min-h-[36px] ${className ?? ''}`}
       >
         {selected.length === 0 ? (
           <span className="text-warm-gray">{placeholder}…</span>
@@ -81,7 +83,7 @@ export function ColorMultiSelect({
             return (
               <span
                 key={name}
-                className="inline-flex items-center gap-1 bg-sand-blue/40 text-gray-700 text-xs rounded-full px-2 py-0.5"
+                className="inline-flex items-center gap-1 bg-sand-blue/40 text-ink/80 text-xs rounded-full px-2 py-0.5"
               >
                 <span
                   className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0"
@@ -112,7 +114,7 @@ export function ColorMultiSelect({
             <input
               ref={searchRef}
               type="text"
-              className="input text-sm py-1.5 w-full"
+              className="input text-sm py-1.5 w-full max-w-none"
               placeholder={searchPlaceholder}
               value={query}
               onChange={e => setQuery(e.target.value)}
@@ -150,7 +152,7 @@ export function ColorMultiSelect({
                     }
                   }}
                   className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors ${
-                    checked ? 'bg-sand-blue/20 text-gray-800' : 'hover:bg-soft-brown/10 text-gray-700'
+                    checked ? 'bg-sand-blue/20 text-ink' : 'hover:bg-soft-brown/10 text-ink/80'
                   }`}
                 >
                   <span
@@ -173,8 +175,9 @@ export function ColorMultiSelect({
               <button
                 type="button"
                 onClick={() => onChange([])}
-                className="text-xs text-warm-gray hover:text-red-400 transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-warm-gray hover:text-red-400 transition-colors"
               >
+                <CloseIcon className="w-3.5 h-3.5" />
                 {clearLabel}
               </button>
             </div>

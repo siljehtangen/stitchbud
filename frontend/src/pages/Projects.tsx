@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FiPlus } from 'react-icons/fi'
+import { GrProjects } from 'react-icons/gr'
+import { LiaUserFriendsSolid } from 'react-icons/lia'
 import { projectsApi, friendsApi } from '../api'
 import { CATEGORY_ICONS, categoryLabel } from '../constants/categories'
 import ProjectCard from '../components/ProjectCard'
@@ -29,7 +32,8 @@ export default function Projects() {
     if (mode !== 'friends') return
     setFriendsLoading(true)
     setAllFriendsProjects([])
-    friendsApi.getFriends()
+    friendsApi
+      .getFriends()
       .then(f => {
         setFriends(f)
         setFriendsLoading(false)
@@ -38,7 +42,7 @@ export default function Projects() {
         Promise.all(
           f.map(async friend => ({
             friend,
-            projects: await friendsApi.getFriendProjects(friend.userId).catch(() => [] as Project[])
+            projects: await friendsApi.getFriendProjects(friend.userId).catch(() => [] as Project[]),
           }))
         ).then(results => {
           setAllFriendsProjects(results)
@@ -49,26 +53,39 @@ export default function Projects() {
   }, [mode])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="font-serif text-3xl text-ink">{t('nav_projects')}</h1>
+        <button
+          onClick={() => navigate(newProjectPath)}
+          className="btn-primary text-sm whitespace-nowrap inline-flex items-center gap-1.5"
+        >
+          <FiPlus className="text-base" />
+          {t('add_project')}
+        </button>
+      </div>
+
       <div className="flex items-center gap-2">
         <button
           onClick={() => setMode('mine')}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             mode === 'mine'
-              ? 'bg-sand-green text-gray-800 shadow-sm'
+              ? 'bg-sand-green-dark text-ink shadow-sm'
               : 'bg-soft-brown/20 text-warm-gray hover:bg-soft-brown/40'
           }`}
         >
+          <GrProjects className="text-sm" />
           {t('projects_mode_mine')}
         </button>
         <button
           onClick={() => setMode('friends')}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             mode === 'friends'
-              ? 'bg-sand-green text-gray-800 shadow-sm'
+              ? 'bg-sand-green-dark text-ink shadow-sm'
               : 'bg-soft-brown/20 text-warm-gray hover:bg-soft-brown/40'
           }`}
         >
+          <LiaUserFriendsSolid className="text-base" />
           {t('projects_mode_friends')}
         </button>
       </div>
@@ -77,7 +94,7 @@ export default function Projects() {
         <>
           <input
             type="search"
-            className="input text-sm py-2 w-full"
+            className="input text-sm py-2 max-w-md"
             placeholder={t('projects_search_placeholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -88,13 +105,20 @@ export default function Projects() {
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
                   filter === cat
-                    ? 'bg-sand-green text-gray-800 shadow-sm'
+                    ? 'bg-sand-green-dark text-ink shadow-sm'
                     : 'bg-soft-brown/20 text-warm-gray hover:bg-soft-brown/40'
                 }`}
               >
-                {cat === 'ALL' ? t('filter_all') : <><span className="leading-none flex-shrink-0">{CATEGORY_ICONS[cat]}</span><span>{categoryLabel(cat, t)}</span></>}
+                {cat === 'ALL' ? (
+                  t('filter_all')
+                ) : (
+                  <>
+                    <span className="leading-none flex-shrink-0">{CATEGORY_ICONS[cat]}</span>
+                    <span>{categoryLabel(cat, t)}</span>
+                  </>
+                )}
               </button>
             ))}
           </div>
@@ -106,14 +130,22 @@ export default function Projects() {
           ) : filtered.length === 0 ? (
             <div className="card text-center py-10">
               <p className="text-warm-gray text-sm">{t('no_projects_found')}</p>
-              <button onClick={() => navigate(newProjectPath)} className="btn-primary mt-4 text-sm">
+              <button
+                onClick={() => navigate(newProjectPath)}
+                className="btn-primary mt-4 text-sm inline-flex items-center gap-1.5"
+              >
+                <FiPlus className="text-base" />
                 {t('add_project')}
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map(project => (
-                <ProjectCard key={project.id} project={project} onClick={() => navigate(`/projects/${project.id}`)} />
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onClick={() => navigate(`/projects/${project.id}?tab=info`)}
+                />
               ))}
             </div>
           )}

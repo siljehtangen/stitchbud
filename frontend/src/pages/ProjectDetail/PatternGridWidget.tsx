@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FiEdit2, FiCheck, FiGrid } from 'react-icons/fi'
+import { FaPaintBrush, FaEraser } from 'react-icons/fa'
 import type { PatternCell } from '../../types'
 import { useAutoSave } from '../../hooks/useAutoSave'
 import { STITCH_SYMBOLS } from './constants'
@@ -159,10 +161,10 @@ function GridCanvas({
           <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
           {(editing ? STITCH_SYMBOLS : STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol))).map(s => (
             <div key={s.symbol} className="flex items-center gap-1.5">
-              <span className="w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0 border-gray-400 bg-soft-brown/20 text-gray-800">
+              <span className="w-7 h-7 flex items-center justify-center rounded-lg border text-xs font-bold flex-shrink-0 border-[rgb(var(--border-light))] bg-soft-brown/15 text-ink">
                 {s.symbol}
               </span>
-              <span className="text-xs text-gray-700">{t(s.labelKey as Parameters<TFn>[0])}</span>
+              <span className="text-xs text-ink/80">{t(s.labelKey as Parameters<TFn>[0])}</span>
             </div>
           ))}
         </div>
@@ -245,11 +247,11 @@ export function PatternGridWidget({
       <div className="flex items-center gap-2">
         <button
           onClick={() => (editing ? flushAndStopEditing() : setEditing(true))}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-ink' : 'bg-soft-brown/20 text-warm-gray'}`}
         >
+          {editing ? <FiCheck className="text-sm" /> : <FiEdit2 className="text-sm" />}
           {editing ? t('done_editing_grid') : t('edit_grid')}
         </button>
-        <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>
       </div>
 
       {editing && (
@@ -257,14 +259,16 @@ export function PatternGridWidget({
           <div className="flex gap-1.5 items-center flex-wrap">
             <button
               onClick={() => setMode('color')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'color' ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'color' ? 'bg-sand-green text-ink' : 'bg-soft-brown/20 text-warm-gray'}`}
             >
+              <FaPaintBrush className="text-[0.7rem]" />
               {t('paint')}
             </button>
             <button
               onClick={() => setMode('erase')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'erase' ? 'bg-soft-brown text-white' : 'bg-soft-brown/20 text-warm-gray'}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'erase' ? 'bg-soft-brown text-white' : 'bg-soft-brown/20 text-warm-gray'}`}
             >
+              <FaEraser className="text-[0.7rem]" />
               {t('erase')}
             </button>
             <div className="flex gap-1 flex-wrap ml-1">
@@ -305,8 +309,8 @@ export function PatternGridWidget({
                   className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold transition-colors
                     ${
                       mode === 'symbol' && selectedSymbol === s.symbol
-                        ? 'border-gray-700 bg-sand-green text-gray-800'
-                        : 'border-soft-brown/30 bg-soft-brown/10 text-gray-700 hover:bg-sand-blue/20'
+                        ? 'border-gray-700 bg-sand-green text-ink'
+                        : 'border-soft-brown/30 bg-soft-brown/10 text-ink/80 hover:bg-sand-blue/20'
                     }`}
                 >
                   {s.symbol}
@@ -336,8 +340,9 @@ export function PatternGridWidget({
             />
             <button
               onClick={() => applyResize(rows, cols)}
-              className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg"
+              className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg inline-flex items-center gap-1.5"
             >
+              <FiCheck className="text-sm" />
               {t('apply')}
             </button>
           </div>
@@ -348,8 +353,9 @@ export function PatternGridWidget({
               <button
                 key={p.label}
                 onClick={() => applyResize(p.rows, p.cols)}
-                className="px-2 py-0.5 rounded text-xs bg-soft-brown/20 hover:bg-sand-blue/30 text-warm-gray transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-soft-brown/20 hover:bg-sand-blue/30 text-warm-gray transition-colors"
               >
+                <FiGrid className="text-[0.7rem]" />
                 {p.label}
               </button>
             ))}

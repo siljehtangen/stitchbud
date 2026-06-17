@@ -2,13 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Field } from '../../components/LibraryItemForm'
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback'
+import { FiRotateCcw, FiSettings } from 'react-icons/fi'
 
 export function RoundCounterWidget({
   counter,
   onSave,
+  accent = '#78A073',
 }: {
   counter: { stitchesPerRound: number; totalRounds: number; checkedStitches: string }
   onSave: (stitchesPerRound: number, totalRounds: number, checked: number[]) => void
+  accent?: string
 }) {
   const { t } = useTranslation()
 
@@ -89,11 +92,11 @@ export function RoundCounterWidget({
     return (
       <div className="space-y-4">
         <p className="text-sm text-warm-gray">{t('setup_counter')}</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-wrap gap-3 max-w-xs">
           <Field label={t('repetitions_per_round')}>
             <input
               type="number"
-              className="input"
+              className="input input-number"
               min={1}
               max={500}
               value={editSpr}
@@ -103,7 +106,7 @@ export function RoundCounterWidget({
           <Field label={t('total_rounds')}>
             <input
               type="number"
-              className="input"
+              className="input input-number"
               min={1}
               max={1000}
               value={editRounds}
@@ -111,9 +114,11 @@ export function RoundCounterWidget({
             />
           </Field>
         </div>
-        <button onClick={handleConfigure} className="btn-primary w-full">
-          {t('start_counting')}
-        </button>
+        <div className="flex justify-end">
+          <button onClick={handleConfigure} className="btn-primary inline-flex items-center justify-center gap-1.5">
+            {t('start_counting')}
+          </button>
+        </div>
       </div>
     )
   }
@@ -124,14 +129,19 @@ export function RoundCounterWidget({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm flex-wrap gap-1">
-        <span className="text-warm-gray">
-          {t('rounds_repetitions', { completedRounds, rounds, done: doneCount, total: totalStitches })}
+      <div className="flex items-end justify-between flex-wrap gap-1">
+        <div className="flex items-baseline gap-2">
+          <span className="font-serif text-3xl leading-none text-ink">{completedRounds}</span>
+          <span className="text-sm text-warm-gray">
+            / {rounds} {t('total_rounds').toLowerCase()}
+          </span>
+        </div>
+        <span className="text-warm-gray text-sm">
+          {t('rounds_repetitions', { completedRounds, rounds, done: doneCount, total: totalStitches })} · {progress}%
         </span>
-        <span className="text-warm-gray text-xs">{progress}%</span>
       </div>
-      <div className="w-full bg-soft-brown/30 rounded-full h-1.5">
-        <div className="bg-sand-green-dark h-1.5 rounded-full transition-all" style={{ width: `${progress}%` }} />
+      <div className="w-full bg-soft-brown/30 rounded-full h-2">
+        <div className="h-2 rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: accent }} />
       </div>
 
       <div className="overflow-x-auto">
@@ -141,7 +151,8 @@ export function RoundCounterWidget({
             return (
               <div key={r} className="flex items-center gap-1 mb-1">
                 <span
-                  className={`text-xs w-7 text-right flex-shrink-0 font-mono ${rowComplete ? 'text-sand-green-dark font-bold' : 'text-warm-gray'}`}
+                  className={`font-serif text-sm w-7 text-right flex-shrink-0 ${rowComplete ? 'font-semibold' : 'text-warm-gray'}`}
+                  style={rowComplete ? { color: accent } : undefined}
                 >
                   {r + 1}
                 </span>
@@ -153,11 +164,10 @@ export function RoundCounterWidget({
                       <button
                         key={s}
                         onClick={() => toggleStitch(idx)}
-                        className={`w-7 h-7 rounded border text-xs font-bold transition-all active:scale-95 ${
-                          done
-                            ? 'bg-sand-green border-sand-green-dark text-gray-700'
-                            : 'bg-white border-soft-brown/40 text-transparent hover:border-sand-green hover:bg-sand-green/10'
+                        className={`w-11 h-11 sm:w-8 sm:h-8 rounded-lg border text-xs font-bold transition-all active:scale-95 ${
+                          done ? 'text-white' : 'bg-white border-soft-brown/40 text-transparent hover:bg-soft-brown/10'
                         }`}
+                        style={done ? { backgroundColor: accent, borderColor: accent } : undefined}
                       >
                         ✓
                       </button>
@@ -171,17 +181,21 @@ export function RoundCounterWidget({
       </div>
 
       <div className="flex gap-2 pt-1">
-        <button onClick={handleReset} className="btn-ghost text-xs border border-soft-brown/30 rounded-lg py-1.5 px-3">
+        <button
+          onClick={handleReset}
+          className="btn-ghost text-xs border border-soft-brown/30 rounded-lg py-1.5 px-3 inline-flex items-center gap-1.5"
+        >
+          <FiRotateCcw className="text-sm" />
           {t('reset_all')}
         </button>
         <button
           onClick={() => setConfigured(false)}
-          className="btn-ghost text-xs border border-soft-brown/30 rounded-lg py-1.5 px-3"
+          className="btn-ghost text-xs border border-soft-brown/30 rounded-lg py-1.5 px-3 inline-flex items-center gap-1.5"
         >
+          <FiSettings className="text-sm" />
           {t('change_setup')}
         </button>
       </div>
-      <p className="text-xs text-warm-gray">{t('auto_saving')}</p>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FiCheck, FiX, FiLogOut, FiRefreshCw, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { accountApi } from '../api'
@@ -60,34 +61,37 @@ function DangerAction({
   return (
     <div className={`card border ${colors.border} space-y-3`}>
       <div>
-        <p className="text-sm font-medium text-gray-800">{title}</p>
+        <p className="text-sm font-medium text-ink">{title}</p>
         <p className="text-xs text-warm-gray mt-0.5">{description}</p>
       </div>
       {confirming ? (
         <div className="space-y-2">
           <p className={`text-xs font-medium ${colors.warning}`}>{warning}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleConfirm}
-              disabled={pending}
-              className={`flex-1 py-2 rounded-xl text-white font-medium text-sm transition-colors disabled:opacity-50 ${colors.bg}`}
-            >
-              {pending ? pendingLabel : confirmLabel}
-            </button>
+          <div className="flex items-center justify-end gap-2">
             <button
               onClick={() => setConfirming(false)}
               disabled={pending}
-              className="px-4 py-2 rounded-xl border border-soft-brown/30 text-warm-gray text-sm hover:bg-soft-brown/10 transition-colors"
+              className="px-4 py-2 rounded-xl border border-soft-brown/30 text-warm-gray text-sm hover:bg-soft-brown/10 transition-colors inline-flex items-center justify-center gap-1.5"
             >
+              <FiX className="text-base" />
               {t('cancel')}
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={pending}
+              className={`py-2 px-4 rounded-xl text-white font-medium text-sm transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-1.5 ${colors.bg}`}
+            >
+              <FiCheck className="text-base" />
+              {pending ? pendingLabel : confirmLabel}
             </button>
           </div>
         </div>
       ) : (
         <button
           onClick={() => setConfirming(true)}
-          className={`w-full py-2 rounded-xl border font-medium text-sm transition-colors ${colors.trigger}`}
+          className={`py-2 px-4 rounded-xl border font-medium text-sm transition-colors inline-flex items-center justify-center gap-1.5 ${colors.trigger}`}
         >
+          {tone === 'orange' ? <FiRefreshCw className="text-base" /> : <FiTrash2 className="text-base" />}
           {triggerLabel}
         </button>
       )}
@@ -106,22 +110,26 @@ export default function ProfilePage() {
 
   async function handleSignOut() {
     await signOut()
-    navigate('/auth', { replace: true })
+    navigate('/', { replace: true })
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-semibold text-gray-800">{t('profile_heading')}</h2>
+    <div className="space-y-6 max-w-2xl">
+      <h1 className="font-serif text-3xl text-ink">{t('profile_heading')}</h1>
 
       <div className="card flex items-center gap-4">
         <UserAvatar name={displayName} email={email} avatarUrl={avatarUrl} size="lg" />
         <div className="min-w-0">
-          {displayName && <p className="font-semibold text-gray-800 truncate">{displayName}</p>}
+          {displayName && <p className="font-semibold text-ink truncate">{displayName}</p>}
           <p className="text-sm text-warm-gray truncate">{email}</p>
         </div>
       </div>
 
-      <button onClick={handleSignOut} className="btn-secondary w-full py-3 text-sm">
+      <button
+        onClick={handleSignOut}
+        className="btn-secondary py-3 text-sm inline-flex items-center justify-center gap-1.5"
+      >
+        <FiLogOut className="text-base" />
         {t('profile_sign_out')}
       </button>
 
@@ -150,7 +158,7 @@ export default function ProfilePage() {
         onConfirm={async () => {
           await accountApi.deleteAccount()
           await signOut()
-          navigate('/auth', { replace: true })
+          navigate('/', { replace: true })
         }}
       />
     </div>

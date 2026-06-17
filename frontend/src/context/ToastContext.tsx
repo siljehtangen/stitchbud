@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
 import { HiCheckCircle, HiInformationCircle } from 'react-icons/hi2'
 
 type ToastVariant = 'success' | 'info'
@@ -46,8 +39,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="status"
             className={`animate-toast-in pointer-events-auto inline-flex items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-[0_12px_40px_-8px_rgba(60,50,40,0.18),0_4px_14px_-4px_rgba(60,50,40,0.1)] backdrop-blur-md ${
               toast.variant === 'success'
-                ? 'border-sand-green/35 bg-gradient-to-br from-white/95 via-cream/95 to-sand-green/15 text-gray-800 ring-1 ring-sand-green/20'
-                : 'border-sand-blue/40 bg-gradient-to-br from-white/95 via-cream/95 to-sand-blue/20 text-gray-800 ring-1 ring-sand-blue/15'
+                ? 'border-sand-green/35 bg-gradient-to-br from-white/95 via-cream/95 to-sand-green/15 text-ink ring-1 ring-sand-green/20'
+                : 'border-sand-blue/40 bg-gradient-to-br from-white/95 via-cream/95 to-sand-blue/20 text-ink ring-1 ring-sand-blue/15'
             }`}
           >
             <span
@@ -64,9 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <HiInformationCircle className="h-5 w-5" />
               )}
             </span>
-            <p className="min-w-0 flex-1 text-sm font-medium leading-snug tracking-tight text-gray-800">
-              {toast.message}
-            </p>
+            <p className="min-w-0 flex-1 text-sm font-medium leading-snug tracking-tight text-ink">{toast.message}</p>
           </div>
         ))}
       </div>

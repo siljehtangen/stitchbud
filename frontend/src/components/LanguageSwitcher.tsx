@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { FiGlobe } from 'react-icons/fi'
 import i18n from '../i18n'
 import { useTheme, type Theme } from '../context/ThemeContext'
 
@@ -44,10 +45,11 @@ export function LanguageSwitcher() {
         <button
           key={lang}
           onClick={() => setLang(lang)}
-          className={`text-xs font-semibold px-3 py-1 rounded-full transition-all ${
-            current === lang ? 'bg-white text-gray-800 shadow-sm' : 'text-warm-gray hover:text-gray-700'
+          className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full transition-all ${
+            current === lang ? 'bg-white text-ink shadow-sm' : 'text-warm-gray hover:text-ink/80'
           }`}
         >
+          <FiGlobe className="text-xs" />
           {lang.toUpperCase()}
         </button>
       ))}

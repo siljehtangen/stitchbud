@@ -34,7 +34,7 @@ export function LibraryFilterBar({
           type="button"
           onClick={() => setFilterType(null)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filterType === null ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+            filterType === null ? 'bg-sand-blue text-ink' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
           }`}
         >
           {t('lib_all')}
@@ -45,9 +45,7 @@ export function LibraryFilterBar({
             type="button"
             onClick={() => setFilterType(filterType === type ? null : type)}
             className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filterType === type
-                ? 'bg-sand-blue text-gray-800'
-                : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+              filterType === type ? 'bg-sand-blue text-ink' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
             }`}
           >
             <span className="text-sm leading-none flex-shrink-0">{TYPE_ICONS[type]}</span>
@@ -56,15 +54,17 @@ export function LibraryFilterBar({
         ))}
       </div>
       <div className="flex gap-2">
-        <input
-          type="search"
-          className="input text-sm py-2 w-1/2 min-w-0"
-          placeholder={t('lib_search_placeholder')}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div className="w-1/2 min-w-0">
+          <input
+            type="search"
+            className="input text-sm py-2 max-w-none"
+            placeholder={t('lib_search_placeholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
         {showColorFilter && availableColors.length > 0 && (
-          <div className="w-1/2 flex-shrink-0">
+          <div className="w-1/2 min-w-0 flex-shrink-0">
             <ColorMultiSelect
               availableColors={availableColors}
               selected={filterColors}
@@ -75,6 +75,7 @@ export function LibraryFilterBar({
               noResults={t('lib_color_no_results')}
               clearLabel={t('lib_clear_color_filter')}
               removeLabel={name => t('color_remove', { name })}
+              className="max-w-none"
             />
           </div>
         )}

@@ -11,6 +11,7 @@ import { LibraryFilterBar } from '../../components/LibraryFilterBar'
 import { itemSummary, libraryItemImageUrl } from '../../utils/libraryUtils'
 import { useLibraryFilter } from '../../hooks/useLibraryFilter'
 import { CloseIcon } from '../../components/UiIcons'
+import { FiPlus, FiX } from 'react-icons/fi'
 
 export function MaterialsTab({
   project,
@@ -157,7 +158,7 @@ export function MaterialsTab({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-gray-800">{m.type}</p>
+                  <p className="font-medium text-sm text-ink">{m.type}</p>
                   {(m.amount || m.unit) && (
                     <p className="text-xs text-warm-gray">
                       {m.amount}
@@ -188,126 +189,138 @@ export function MaterialsTab({
       })}
 
       <div className="card space-y-2.5">
-        <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('add_from_library')}</h4>
-        <LibraryFilterBar
-          filterType={filterType}
-          setFilterType={setFilterType}
-          filterColors={filterColors}
-          setFilterColors={setFilterColors}
-          search={search}
-          setSearch={setSearch}
-          showColorFilter={showColorFilter}
-          availableColors={availableColors}
-        />
-        {pendingItem && (
-          <div className="border border-sand-blue/40 rounded-lg p-3 space-y-2.5 bg-sand-blue/5">
-            <div className="flex items-center gap-2">
-              {libraryItemImageUrl(pendingItem) ? (
-                <img
-                  src={libraryItemImageUrl(pendingItem)!}
-                  alt={pendingItem.name}
-                  className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-sm">
-                  {TYPE_ICONS[pendingItem.itemType]}
-                </div>
-              )}
-              <p className="text-sm font-medium text-gray-800 flex-1 truncate">{pendingItem.name}</p>
-              <button
-                type="button"
-                onClick={() => setPendingItem(null)}
-                className="text-warm-gray hover:text-red-400"
-                title={t('delete')}
-              >
-                <CloseIcon className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => void addFromLibrary(pendingItem, '')}
-                className="btn-primary text-sm flex-1"
-              >
-                {saving ? t('saving') : t('add_library_to_project')}
-              </button>
-              <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">
-                {t('cancel')}
-              </button>
-            </div>
-          </div>
-        )}
-        <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
-          {libraryLoading ? (
-            <p className="text-sm text-warm-gray text-center py-3">{t('loading')}</p>
-          ) : libraryError ? (
-            <p className="text-sm text-red-400 text-center py-3">{t('load_failed')}</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
-          ) : (
-            filtered.map(item => {
-              const imgUrl = libraryItemImageUrl(item)
-              const summary = itemSummary(item)
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
-                >
-                  {imgUrl ? (
+        <h4 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">
+          {creatingInLib ? t('lib_create_new') : t('add_from_library')}
+        </h4>
+        {creatingInLib ? (
+          <LibraryItemForm
+            selectedType={newLibType}
+            onTypeChange={setNewLibType}
+            onCreated={handleLibItemCreated}
+            onCancel={() => setCreatingInLib(false)}
+          />
+        ) : (
+          <>
+            <LibraryFilterBar
+              filterType={filterType}
+              setFilterType={setFilterType}
+              filterColors={filterColors}
+              setFilterColors={setFilterColors}
+              search={search}
+              setSearch={setSearch}
+              showColorFilter={showColorFilter}
+              availableColors={availableColors}
+            />
+            {pendingItem && (
+              <div className="border border-sand-blue/40 rounded-lg p-3 space-y-2.5 bg-sand-blue/5">
+                <div className="flex items-center gap-2">
+                  {libraryItemImageUrl(pendingItem) ? (
                     <img
-                      src={imgUrl}
-                      alt=""
-                      className="h-10 w-10 flex-shrink-0 rounded-lg object-cover"
+                      src={libraryItemImageUrl(pendingItem)!}
+                      alt={pendingItem.name}
+                      className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
-                      {TYPE_ICONS[item.itemType]}
+                    <div className="w-8 h-8 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-sm">
+                      {TYPE_ICONS[pendingItem.itemType]}
                     </div>
                   )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-gray-800">{item.name}</p>
-                    {summary && <p className="truncate text-xs text-warm-gray">{summary}</p>}
-                  </div>
+                  <p className="text-sm font-medium text-ink flex-1 truncate">{pendingItem.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => setPendingItem(null)}
+                    className="text-warm-gray hover:text-red-400"
+                    title={t('delete')}
+                  >
+                    <CloseIcon className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPendingItem(null)}
+                    className="btn-ghost text-sm inline-flex items-center gap-1.5"
+                  >
+                    <FiX className="text-base" />
+                    {t('cancel')}
+                  </button>
                   <button
                     type="button"
                     disabled={saving}
-                    onClick={() => handleLibraryClick(item)}
-                    className="btn-primary flex-shrink-0 whitespace-nowrap py-2 px-3 text-xs"
+                    onClick={() => void addFromLibrary(pendingItem, '')}
+                    className="btn-primary text-sm inline-flex items-center justify-center gap-1.5"
                   >
-                    {t('add_library_to_project')}
+                    <FiPlus className="text-base" />
+                    {saving ? t('saving') : t('add_library_to_project')}
                   </button>
                 </div>
-              )
-            })
-          )}
-        </div>
-        <div className="border-t border-soft-brown/20 pt-2.5">
-          {creatingInLib ? (
-            <LibraryItemForm
-              selectedType={newLibType}
-              onTypeChange={setNewLibType}
-              onCreated={handleLibItemCreated}
-              onCancel={() => setCreatingInLib(false)}
-            />
-          ) : (
-            <p className="text-xs text-warm-gray text-center">
-              {t('lib_not_found_hint')}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setNewLibType(filterType ?? 'YARN')
-                  setCreatingInLib(true)
-                }}
-                className="text-sand-blue-deep underline hover:no-underline font-medium"
-              >
-                {t('lib_create_new')}
-              </button>
-            </p>
-          )}
-        </div>
+              </div>
+            )}
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+              {libraryLoading ? (
+                <p className="text-sm text-warm-gray text-center py-3">{t('loading')}</p>
+              ) : libraryError ? (
+                <p className="text-sm text-red-400 text-center py-3">{t('load_failed')}</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-sm text-warm-gray text-center py-3">{t('library_empty')}</p>
+              ) : (
+                filtered.map(item => {
+                  const imgUrl = libraryItemImageUrl(item)
+                  const summary = itemSummary(item)
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
+                    >
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt=""
+                          className="h-10 w-10 flex-shrink-0 rounded-lg object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
+                          {TYPE_ICONS[item.itemType]}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">{item.name}</p>
+                        {summary && <p className="truncate text-xs text-warm-gray">{summary}</p>}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => handleLibraryClick(item)}
+                        className="btn-primary flex-shrink-0 whitespace-nowrap py-2 px-3 text-xs inline-flex items-center gap-1"
+                      >
+                        <FiPlus className="text-sm" />
+                        {t('add_library_to_project')}
+                      </button>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+            <div className="border-t border-soft-brown/20 pt-2.5">
+              <p className="text-xs text-warm-gray text-center">
+                {t('lib_not_found_hint')}{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewLibType(filterType ?? 'YARN')
+                    setCreatingInLib(true)
+                  }}
+                  className="text-sand-blue-deep underline hover:no-underline font-medium inline-flex items-center gap-1 align-middle"
+                >
+                  <FiPlus className="text-sm" />
+                  {t('lib_create_new')}
+                </button>
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

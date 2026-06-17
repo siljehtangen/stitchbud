@@ -9,6 +9,7 @@ import { LibraryItemTypeFields } from './LibraryItemTypeFields'
 import { Field } from './Field'
 import { ColorPicker } from './ColorPicker'
 import { StarIcon, CloseIcon, PlusIcon } from './UiIcons'
+import { FiCheck, FiX } from 'react-icons/fi'
 
 export { Field } from './Field'
 export { ColorPicker } from './ColorPicker'
@@ -19,9 +20,9 @@ export const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx'
 
 export const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
   YARN: <PiYarnFill className="text-sand-green-dark" />,
-  FABRIC: <GiRolledCloth className="text-warm-gray" />,
+  FABRIC: <GiRolledCloth className="text-sand-green-dark" />,
   KNITTING_NEEDLE: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET_HOOK: <GiPirateHook className="text-sand-blue-deep" />,
+  CROCHET_HOOK: <GiPirateHook className="text-sand-green-dark" />,
 }
 
 export const MAX_LIBRARY_PHOTOS = 3
@@ -33,7 +34,7 @@ interface LibraryItemFormProps {
   selectedType: LibraryItemType
   onTypeChange: (t: LibraryItemType) => void
   onCreated: (item: LibraryItem) => void
-  onCancel: () => void
+  onCancel?: () => void
   hideImageUpload?: boolean
 }
 
@@ -140,9 +141,9 @@ export function LibraryItemForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 pt-1">
+    <form onSubmit={handleSubmit} className="space-y-3 pt-1 max-w-lg">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label className="block text-sm font-medium text-ink/80 mb-1.5">
           {t('lib_item_type')}
           <span className="text-red-500 ml-0.5">*</span>
         </label>
@@ -158,7 +159,7 @@ export function LibraryItemForm({
               }}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                 selectedType === type
-                  ? 'bg-sand-green text-gray-800'
+                  ? 'bg-sand-green text-ink'
                   : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
               }`}
             >
@@ -256,12 +257,20 @@ export function LibraryItemForm({
         </div>
       )}
 
-      <div className="flex gap-2">
-        <button type="submit" disabled={saving} className="btn-primary text-sm flex-1">
+      <div className="flex items-center justify-end gap-2 pt-1">
+        {onCancel && (
+          <button type="button" onClick={onCancel} className="btn-ghost text-sm inline-flex items-center gap-1.5">
+            <FiX className="text-base" />
+            {t('cancel')}
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={saving}
+          className="btn-primary text-sm inline-flex items-center justify-center gap-1.5"
+        >
+          <FiCheck className="text-base" />
           {saving ? t('saving') : t('lib_add_item')}
-        </button>
-        <button type="button" onClick={onCancel} className="btn-ghost text-sm">
-          {t('cancel')}
         </button>
       </div>
     </form>

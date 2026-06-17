@@ -23,7 +23,7 @@ export function ColorPicker({ selected, onChange }: { selected: string[]; onChan
             return (
               <span
                 key={name}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-soft-brown/20 text-gray-700"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-soft-brown/20 text-ink/80"
               >
                 <span
                   className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
