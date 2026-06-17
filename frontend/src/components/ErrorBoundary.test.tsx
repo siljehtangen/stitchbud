@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import i18n from '../i18n'
 import { ErrorBoundary } from './ErrorBoundary'
 
 function ThrowingComponent({ shouldThrow }: { shouldThrow: boolean }) {
@@ -11,6 +12,8 @@ function ThrowingComponent({ shouldThrow }: { shouldThrow: boolean }) {
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
+    // The fallback text is translated; pin the language so assertions are stable.
+    i18n.changeLanguage('en')
   })
 
   it('renders children when there is no error', () => {

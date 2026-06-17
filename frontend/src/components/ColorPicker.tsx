@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
 
 export function ColorPicker({ selected, onChange }: { selected: string[]; onChange: (colors: string[]) => void }) {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   function toggle(name: string) {
     if (selected.includes(name)) {
@@ -42,7 +42,7 @@ export function ColorPicker({ selected, onChange }: { selected: string[]; onChan
           })}
         </div>
       )}
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Color palette">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('color_palette')}>
         {COLORS.map(color => {
           const { name, hex } = color
           const isSelected = selected.includes(name)

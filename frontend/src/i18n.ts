@@ -3,7 +3,12 @@ import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
 import no from './locales/no.json'
 
-const savedLang = localStorage.getItem('lang') ?? 'no'
+let savedLang = 'no'
+try {
+  savedLang = localStorage.getItem('lang') ?? 'no'
+} catch {
+  // storage unavailable — keep the default
+}
 
 i18n.use(initReactI18next).init({
   resources: {

@@ -10,6 +10,7 @@ interface Props {
   searchPlaceholder: string
   noResults: string
   clearLabel: string
+  removeLabel: (colorName: string) => string
 }
 
 export function ColorMultiSelect({
@@ -21,6 +22,7 @@ export function ColorMultiSelect({
   searchPlaceholder,
   noResults,
   clearLabel,
+  removeLabel,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -89,7 +91,7 @@ export function ColorMultiSelect({
                 {displayName}
                 <button
                   type="button"
-                  aria-label={`Remove ${displayName}`}
+                  aria-label={removeLabel(displayName)}
                   onClick={e => {
                     e.stopPropagation()
                     toggle(name)

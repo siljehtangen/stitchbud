@@ -5,6 +5,14 @@ import { friendsApi } from '../api'
 import type { Friend, FriendRequest } from '../types'
 import { UserAvatar } from '../components/UserAvatar'
 
+const FRIEND_ERROR_KEYS: Record<string, string> = {
+  'You cannot add yourself as a friend.': 'friend_err_self',
+  'No user found with that email.': 'friend_err_no_user',
+  'You are already friends.': 'friend_err_already_friends',
+  'You have already sent a friend request to this person.': 'friend_err_already_sent',
+  'Profile not found. Please try again.': 'friend_err_profile',
+}
+
 export default function FriendsPage() {
   const { t } = useTranslation()
   const { showToast } = useToast()
@@ -46,15 +54,16 @@ export default function FriendsPage() {
     setSendError('')
     try {
       await friendsApi.sendRequest(emailInput.trim())
-      showToast(t('friend_request_sent'))
+      showToast(t('friends_request_sent'))
       setEmailInput('')
       // Refresh lists
       const [f, r] = await Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
       setFriends(f)
       setRequests(r)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setSendError(msg || t('friend_request_failed'))
+      const raw = err instanceof Error ? err.message : ''
+      const key = FRIEND_ERROR_KEYS[raw]
+      setSendError(key ? t(key as 'friend_err_self') : t('friends_request_failed'))
     } finally {
       setSending(false)
     }

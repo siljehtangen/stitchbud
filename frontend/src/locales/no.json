@@ -279,5 +279,23 @@
   "friends_filter_placeholder": "Søk etter venner...",
   "friend_project_readonly": "Kun visning",
   "no_recipe_yet": "Ingen oppskrift eller vedlegg lagt til.",
-  "no_knit_content_yet": "Ingen strikkinnhold lagt til ennå."
+  "no_knit_content_yet": "Ingen strikkinnhold lagt til ennå.",
+
+  "color_palette": "Fargepalett",
+  "color_remove": "Fjern {{name}}",
+  "pinterest_board_aria": "Pinterest-tavle",
+
+  "theme_beige": "Beige",
+  "theme_blue": "Blå",
+  "theme_green": "Grønn",
+  "theme_lavender": "Lavendel",
+
+  "friend_err_self": "Du kan ikke legge til deg selv som venn.",
+  "friend_err_no_user": "Fant ingen bruker med den e-posten.",
+  "friend_err_already_friends": "Dere er allerede venner.",
+  "friend_err_already_sent": "Du har allerede sendt en venneforespørsel til denne personen.",
+  "friend_err_profile": "Profil ikke funnet. Prøv igjen.",
+
+  "error_boundary_title": "Noe gikk galt",
+  "error_boundary_message": "Prøv å laste siden på nytt."
 }

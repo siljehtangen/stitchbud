@@ -16,10 +16,14 @@ interface Props {
 }
 
 export function LibraryFilterBar({
-  filterType, setFilterType,
-  filterColors, setFilterColors,
-  search, setSearch,
-  showColorFilter, availableColors,
+  filterType,
+  setFilterType,
+  filterColors,
+  setFilterColors,
+  search,
+  setSearch,
+  showColorFilter,
+  availableColors,
 }: Props) {
   const { t, i18n } = useTranslation()
 
@@ -41,7 +45,9 @@ export function LibraryFilterBar({
             type="button"
             onClick={() => setFilterType(filterType === type ? null : type)}
             className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filterType === type ? 'bg-sand-blue text-gray-800' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+              filterType === type
+                ? 'bg-sand-blue text-gray-800'
+                : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
             }`}
           >
             <span className="text-sm leading-none flex-shrink-0">{TYPE_ICONS[type]}</span>
@@ -68,6 +74,7 @@ export function LibraryFilterBar({
               searchPlaceholder={t('lib_color_search_placeholder')}
               noResults={t('lib_color_no_results')}
               clearLabel={t('lib_clear_color_filter')}
+              removeLabel={name => t('color_remove', { name })}
             />
           </div>
         )}

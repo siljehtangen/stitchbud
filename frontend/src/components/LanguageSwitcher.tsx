@@ -3,9 +3,9 @@ import i18n from '../i18n'
 import { useTheme, type Theme } from '../context/ThemeContext'
 
 export const THEMES: { id: Theme; color: string }[] = [
-  { id: 'beige',    color: '#C8A87A' },
-  { id: 'blue',     color: '#6AA8C4' },
-  { id: 'green',    color: '#78A073' },
+  { id: 'beige', color: '#C8A87A' },
+  { id: 'blue', color: '#6AA8C4' },
+  { id: 'green', color: '#78A073' },
   { id: 'lavender', color: '#9A87CA' },
 ]
 
@@ -15,6 +15,7 @@ export function setLang(lang: string) {
 }
 
 export function ThemeColorPicker() {
+  const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
   return (
     <div className="flex items-center gap-1.5">
@@ -26,7 +27,7 @@ export function ThemeColorPicker() {
             theme === th.id ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : 'opacity-60 hover:opacity-100'
           }`}
           style={{ backgroundColor: th.color }}
-          aria-label={th.id}
+          aria-label={t(`theme_${th.id}` as 'theme_beige')}
         />
       ))}
     </div>
@@ -44,9 +45,7 @@ export function LanguageSwitcher() {
           key={lang}
           onClick={() => setLang(lang)}
           className={`text-xs font-semibold px-3 py-1 rounded-full transition-all ${
-            current === lang
-              ? 'bg-white text-gray-800 shadow-sm'
-              : 'text-warm-gray hover:text-gray-700'
+            current === lang ? 'bg-white text-gray-800 shadow-sm' : 'text-warm-gray hover:text-gray-700'
           }`}
         >
           {lang.toUpperCase()}

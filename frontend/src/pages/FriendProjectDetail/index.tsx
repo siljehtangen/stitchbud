@@ -28,6 +28,8 @@ export default function FriendProjectDetail() {
   const [tab, setTab] = useState<ProjectTab>('info')
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null)
 
+  const [resolvedFriendName, setResolvedFriendName] = useState<string | undefined>(friendName)
+
   const pid = Number(projectId)
 
   useEffect(() => {
@@ -54,6 +56,22 @@ export default function FriendProjectDetail() {
     }
   }, [friendUserId, pid, reloadKey])
 
+  useEffect(() => {
+    if (resolvedFriendName || !friendUserId) return
+    let active = true
+    friendsApi
+      .getFriends()
+      .then(friends => {
+        if (!active) return
+        const match = friends.find(f => f.userId === friendUserId)
+        if (match) setResolvedFriendName(match.displayName ?? match.email)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [resolvedFriendName, friendUserId])
+
   const craftDetails = useMemo<Record<string, string>>(() => {
     if (!project) return {}
     return parseCraftDetails(project.craftDetails)
@@ -73,7 +91,7 @@ export default function FriendProjectDetail() {
     )
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
 
-  const ownerLabel = friendName ?? project.userId ?? ''
+  const ownerLabel = resolvedFriendName ?? ''
   const coverUrls = projectCoverImageUrls(project)
   const startDateStr = project.startDate ? new Date(project.startDate).toISOString().slice(0, 10) : ''
   const endDateStr = project.endDate ? new Date(project.endDate).toISOString().slice(0, 10) : ''
@@ -226,6 +244,7 @@ export default function FriendProjectDetail() {
               <p className="text-sm text-gray-700">
                 {t('row_counter', {
                   current: (() => {
+                    if (project.rowCounter.stitchesPerRound <= 0) return 0
                     try {
                       const checked = JSON.parse(project.rowCounter.checkedStitches) as number[]
                       return Math.floor(checked.length / project.rowCounter.stitchesPerRound)

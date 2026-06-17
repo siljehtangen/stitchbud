@@ -5,10 +5,22 @@ import { useAutoSave } from '../../hooks/useAutoSave'
 import { STITCH_SYMBOLS } from './constants'
 
 const PALETTE = [
-  '#C6D8B8', '#BFD8E0', '#F5F0E8', '#D4C4A8',
-  '#8B7355', '#A8C49A', '#9DC4CF', '#E8D5B0',
-  '#F28B82', '#FBBC04', '#34A853', '#4285F4',
-  '#000000', '#FFFFFF', '#888888', '#CC6699',
+  '#C6D8B8',
+  '#BFD8E0',
+  '#F5F0E8',
+  '#D4C4A8',
+  '#8B7355',
+  '#A8C49A',
+  '#9DC4CF',
+  '#E8D5B0',
+  '#F28B82',
+  '#FBBC04',
+  '#34A853',
+  '#4285F4',
+  '#000000',
+  '#FFFFFF',
+  '#888888',
+  '#CC6699',
 ]
 
 const GRID_PRESETS = [
@@ -33,17 +45,31 @@ const GAP = 1
 const GRID_LINE_COLOR = '#E8DDD0'
 const DEFAULT_CELL_COLOR = '#F5F0E8'
 
-function GridCanvas({ rows, cols, cellMap, editing, onCell, showSymbols, usedSymbols, t }: {
-  rows: number; cols: number; cellMap: Map<string, PatternCell>
-  editing: boolean; onCell: (r: number, c: number) => void
-  showSymbols: boolean; usedSymbols: Set<string>
+function GridCanvas({
+  rows,
+  cols,
+  cellMap,
+  editing,
+  onCell,
+  showSymbols,
+  usedSymbols,
+  t,
+}: {
+  rows: number
+  cols: number
+  cellMap: Map<string, PatternCell>
+  editing: boolean
+  onCell: (r: number, c: number) => void
+  showSymbols: boolean
+  usedSymbols: Set<string>
   t: TFn
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isDrawingRef = useRef(false)
   const lastCellRef = useRef<string | null>(null)
 
-  const cellPx = cols <= COLS_MEDIUM_THRESHOLD ? CELL_PX_LARGE : cols <= COLS_SMALL_THRESHOLD ? CELL_PX_MEDIUM : CELL_PX_SMALL
+  const cellPx =
+    cols <= COLS_MEDIUM_THRESHOLD ? CELL_PX_LARGE : cols <= COLS_SMALL_THRESHOLD ? CELL_PX_MEDIUM : CELL_PX_SMALL
   const canvasW = cols * (cellPx + GAP) - GAP + 2
   const canvasH = rows * (cellPx + GAP) - GAP + 2
 
@@ -113,7 +139,9 @@ function GridCanvas({ rows, cols, cellMap, editing, onCell, showSymbols, usedSym
     }
   }
 
-  function stopDrawing() { isDrawingRef.current = false }
+  function stopDrawing() {
+    isDrawingRef.current = false
+  }
 
   return (
     <div className="flex gap-4 items-start">
@@ -133,11 +161,10 @@ function GridCanvas({ rows, cols, cellMap, editing, onCell, showSymbols, usedSym
           <p className="text-xs font-semibold text-warm-gray uppercase tracking-wide">{t('grid_legend')}</p>
           {(editing ? STITCH_SYMBOLS : STITCH_SYMBOLS.filter(s => usedSymbols.has(s.symbol))).map(s => (
             <div key={s.symbol} className="flex items-center gap-1.5">
-              <span className="w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0 border-gray-400 bg-soft-brown/20 text-gray-800"
-              >{s.symbol}</span>
-              <span className="text-xs text-gray-700">
-                {t(s.labelKey as Parameters<TFn>[0])}
+              <span className="w-6 h-6 flex items-center justify-center rounded border text-xs font-bold flex-shrink-0 border-gray-400 bg-soft-brown/20 text-gray-800">
+                {s.symbol}
               </span>
+              <span className="text-xs text-gray-700">{t(s.labelKey as Parameters<TFn>[0])}</span>
             </div>
           ))}
         </div>
@@ -146,8 +173,17 @@ function GridCanvas({ rows, cols, cellMap, editing, onCell, showSymbols, usedSym
   )
 }
 
-export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson, showSymbols = true, onSave }: {
-  rows: number; cols: number; cellDataJson: string; showSymbols?: boolean
+export function PatternGridWidget({
+  rows: initRows,
+  cols: initCols,
+  cellDataJson,
+  showSymbols = true,
+  onSave,
+}: {
+  rows: number
+  cols: number
+  cellDataJson: string
+  showSymbols?: boolean
   onSave: (cells: PatternCell[], rows: number, cols: number) => void
 }) {
   const { t } = useTranslation()
@@ -155,7 +191,9 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
   const [rows, setRows] = useState(initRows)
   const [cols, setCols] = useState(initCols)
   const [cells, setCells] = useState<PatternCell[]>(() => {
-    try { return JSON.parse(cellDataJson) } catch (e) {
+    try {
+      return JSON.parse(cellDataJson)
+    } catch (e) {
       console.error('Failed to parse grid cell data:', e)
       return []
     }
@@ -193,11 +231,13 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
   }
 
   function applyResize(newRows: number, newCols: number) {
-    const trimmed = cells.filter(c => c.row < newRows && c.col < newCols)
-    setRows(newRows)
-    setCols(newCols)
+    const r = Math.min(200, Math.max(1, newRows))
+    const c = Math.min(200, Math.max(1, newCols))
+    const trimmed = cells.filter(cell => cell.row < r && cell.col < c)
+    setRows(r)
+    setCols(c)
     setCells(trimmed)
-    onSave(trimmed, newRows, newCols)
+    onSave(trimmed, r, c)
   }
 
   const usedSymbols = useMemo(() => new Set(cells.map(c => c.symbol).filter(Boolean)), [cells])
@@ -206,9 +246,11 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <button
-          onClick={() => editing ? flushAndStopEditing() : setEditing(true)}
+          onClick={() => (editing ? flushAndStopEditing() : setEditing(true))}
           className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
-        >{editing ? t('done_editing_grid') : t('edit_grid')}</button>
+        >
+          {editing ? t('done_editing_grid') : t('edit_grid')}
+        </button>
         <p className="text-xs text-warm-gray">{t('auto_saving_grid')}</p>
       </div>
 
@@ -218,19 +260,36 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
             <button
               onClick={() => setMode('color')}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'color' ? 'bg-sand-green text-gray-800' : 'bg-soft-brown/20 text-warm-gray'}`}
-            >{t('paint')}</button>
+            >
+              {t('paint')}
+            </button>
             <button
               onClick={() => setMode('erase')}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${mode === 'erase' ? 'bg-soft-brown text-white' : 'bg-soft-brown/20 text-warm-gray'}`}
-            >{t('erase')}</button>
+            >
+              {t('erase')}
+            </button>
             <div className="flex gap-1 flex-wrap ml-1">
               {PALETTE.map(c => (
-                <button key={c} onClick={() => { setSelectedColor(c); setMode('color') }}
+                <button
+                  key={c}
+                  onClick={() => {
+                    setSelectedColor(c)
+                    setMode('color')
+                  }}
                   className={`w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform ${selectedColor === c && mode === 'color' ? 'border-gray-700 scale-110' : 'border-white shadow-sm'}`}
-                  style={{ backgroundColor: c }} />
+                  style={{ backgroundColor: c }}
+                />
               ))}
-              <input type="color" value={selectedColor} onChange={e => { setSelectedColor(e.target.value); setMode('color') }}
-                className="w-5 h-5 rounded-full cursor-pointer border-0" />
+              <input
+                type="color"
+                value={selectedColor}
+                onChange={e => {
+                  setSelectedColor(e.target.value)
+                  setMode('color')
+                }}
+                className="w-5 h-5 rounded-full cursor-pointer border-0"
+              />
             </div>
           </div>
 
@@ -240,25 +299,49 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
               {STITCH_SYMBOLS.map(s => (
                 <button
                   key={s.symbol}
-                  onClick={() => { setSelectedSymbol(s.symbol); setMode('symbol') }}
+                  onClick={() => {
+                    setSelectedSymbol(s.symbol)
+                    setMode('symbol')
+                  }}
                   title={t(s.labelKey as Parameters<typeof t>[0])}
                   className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold transition-colors
-                    ${mode === 'symbol' && selectedSymbol === s.symbol
-                      ? 'border-gray-700 bg-sand-green text-gray-800'
-                      : 'border-soft-brown/30 bg-soft-brown/10 text-gray-700 hover:bg-sand-blue/20'}`}
-                >{s.symbol}</button>
+                    ${
+                      mode === 'symbol' && selectedSymbol === s.symbol
+                        ? 'border-gray-700 bg-sand-green text-gray-800'
+                        : 'border-soft-brown/30 bg-soft-brown/10 text-gray-700 hover:bg-sand-blue/20'
+                    }`}
+                >
+                  {s.symbol}
+                </button>
               ))}
             </div>
           )}
 
           <div className="flex gap-2 items-center text-xs flex-wrap">
             <span className="text-warm-gray">{t('rows_label')}</span>
-            <input type="number" value={rows} min={1} max={100} onChange={e => setRows(parseInt(e.target.value) || 1)}
-              className="input py-1 px-2 text-xs w-14" />
+            <input
+              type="number"
+              value={rows}
+              min={1}
+              max={200}
+              onChange={e => setRows(parseInt(e.target.value) || 1)}
+              className="input py-1 px-2 text-xs w-14"
+            />
             <span className="text-warm-gray">{t('cols_label')}</span>
-            <input type="number" value={cols} min={1} max={100} onChange={e => setCols(parseInt(e.target.value) || 1)}
-              className="input py-1 px-2 text-xs w-14" />
-            <button onClick={() => applyResize(rows, cols)} className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg">{t('apply')}</button>
+            <input
+              type="number"
+              value={cols}
+              min={1}
+              max={200}
+              onChange={e => setCols(parseInt(e.target.value) || 1)}
+              className="input py-1 px-2 text-xs w-14"
+            />
+            <button
+              onClick={() => applyResize(rows, cols)}
+              className="btn-ghost text-xs py-1 px-2 border border-soft-brown/30 rounded-lg"
+            >
+              {t('apply')}
+            </button>
           </div>
 
           <div className="flex gap-1.5 items-center flex-wrap">
@@ -268,16 +351,22 @@ export function PatternGridWidget({ rows: initRows, cols: initCols, cellDataJson
                 key={p.label}
                 onClick={() => applyResize(p.rows, p.cols)}
                 className="px-2 py-0.5 rounded text-xs bg-soft-brown/20 hover:bg-sand-blue/30 text-warm-gray transition-colors"
-              >{p.label}</button>
+              >
+                {p.label}
+              </button>
             ))}
           </div>
         </>
       )}
 
       <GridCanvas
-        rows={rows} cols={cols} cellMap={cellMap}
-        editing={editing} onCell={handleCell}
-        showSymbols={showSymbols} usedSymbols={usedSymbols}
+        rows={rows}
+        cols={cols}
+        cellMap={cellMap}
+        editing={editing}
+        onCell={handleCell}
+        showSymbols={showSymbols}
+        usedSymbols={usedSymbols}
         t={t}
       />
     </div>

@@ -279,5 +279,23 @@
   "friends_filter_placeholder": "Search friends...",
   "friend_project_readonly": "View only",
   "no_recipe_yet": "No recipe or attachments added.",
-  "no_knit_content_yet": "No knit content added yet."
+  "no_knit_content_yet": "No knit content added yet.",
+
+  "color_palette": "Color palette",
+  "color_remove": "Remove {{name}}",
+  "pinterest_board_aria": "Pinterest board",
+
+  "theme_beige": "Beige",
+  "theme_blue": "Blue",
+  "theme_green": "Green",
+  "theme_lavender": "Lavender",
+
+  "friend_err_self": "You cannot add yourself as a friend.",
+  "friend_err_no_user": "No user found with that email.",
+  "friend_err_already_friends": "You are already friends.",
+  "friend_err_already_sent": "You have already sent a friend request to this person.",
+  "friend_err_profile": "Profile not found. Please try again.",
+
+  "error_boundary_title": "Something went wrong",
+  "error_boundary_message": "Please try refreshing the page."
 }

@@ -10,6 +10,7 @@ import { FilePreviewModal } from './FilePreviewModal'
 import { safeHttpUrl } from '../../utils/url'
 
 export function PinterestBoardEmbed({ url }: { url: string }) {
+  const { t } = useTranslation()
   const embedRef = useRef<HTMLDivElement>(null)
   const safeUrl = safeHttpUrl(url)
 
@@ -40,7 +41,7 @@ export function PinterestBoardEmbed({ url }: { url: string }) {
         data-pin-scale-width="80"
         href={safeUrl}
       >
-        <span className="sr-only">Pinterest board</span>
+        <span className="sr-only">{t('pinterest_board_aria')}</span>
       </a>
     </div>
   )
