@@ -1,7 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
 
-// client.ts imports the supabase singleton, which throws without env vars.
-// Mock it so we can test the pure helpers in isolation.
 vi.mock('../supabase', () => ({ supabase: {} }))
 
 import { storagePathFromUrl, raiseError } from './client'

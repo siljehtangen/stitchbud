@@ -1,15 +1,3 @@
-// delete-account Edge Function.
-//
-// Replaces the parts of the Spring Boot account flow that need the service-role
-// key: bulk storage cleanup, deleting the Supabase Auth user, and removing
-// friendships/profile. Two actions:
-//   * "reset"  -> delete all of the caller's projects + library (and their files)
-//   * "delete" -> reset, then remove friendships, profile, and the auth user
-//
-// Row deletes rely on ON DELETE CASCADE (projects -> materials/images/files/
-// grids/row_counters, library_items -> library_item_images), so we only delete
-// the top-level rows after collecting their storage object paths.
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { BUCKET, storagePathFromUrl } from '../_shared/storage.ts'
@@ -43,7 +31,6 @@ Deno.serve(async req => {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  // Identify the caller from their JWT.
   const token = authHeader.replace(/^Bearer\s+/i, '')
   const { data: userData, error: userErr } = await admin.auth.getUser(token)
   if (userErr || !userData.user) {
@@ -55,11 +42,8 @@ Deno.serve(async req => {
   try {
     const body = await req.json()
     if (body?.action === 'reset' || body?.action === 'delete') action = body.action
-  } catch {
-    // No body -> default to full delete (matches DELETE /projects/account).
-  }
+  } catch {}
 
-  // 1. Collect storage object paths owned by the user.
   const paths = new Set<string>()
 
   const { data: projectIdRows } = await admin
@@ -105,9 +89,7 @@ Deno.serve(async req => {
     })
   }
 
-  // 2. Remove storage objects. For a full account delete this is personal data,
-  //    so a failure must abort before we delete any rows (the request can then be
-  //    retried) rather than silently orphaning files in storage.
+  // Abort before row deletes so orphaned storage files can be retried on failure.
   if (paths.size > 0) {
     const { error: storageErr } = await admin.storage.from(BUCKET).remove([...paths])
     if (storageErr) {
@@ -118,9 +100,7 @@ Deno.serve(async req => {
     }
   }
 
-  // 3. Delete the user's data (children cascade). Check each step: if data
-  //    removal fails we must not proceed to delete the auth user, otherwise the
-  //    account is gone but its rows linger.
+  // Do not delete the auth user if data removal fails — rows would linger orphaned.
   const projectsDel = await admin.from('projects').delete().eq('user_id', userId)
   const libraryDel = await admin.from('library_items').delete().eq('user_id', userId)
   if (projectsDel.error || libraryDel.error) {

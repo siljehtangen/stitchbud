@@ -1,7 +1,5 @@
 import { z } from 'zod'
 
-// --- Primitive schemas ---
-
 const projectImageSchema = z.object({
   id: z.number(),
   storedName: z.string(),
@@ -47,8 +45,6 @@ const projectFileSchema = z.object({
   uploadedAt: z.number(),
   projectId: z.number(),
 })
-
-// --- Exported schemas ---
 
 export const projectSchema = z.object({
   id: z.number(),
@@ -116,9 +112,6 @@ export const friendRequestSchema = z.object({
   createdAt: z.number(),
 })
 
-// --- Validation helper ---
-// Uses safeParse so a schema mismatch logs/reports but never breaks the UI.
-
 type SchemaIssue = z.ZodIssue
 type SchemaReporter = (context: string, issues: SchemaIssue[]) => void
 
@@ -126,8 +119,6 @@ let reportSchemaMismatch: SchemaReporter = (context, issues) => {
   console.warn(`[API] Schema mismatch for ${context}:`, issues)
 }
 
-/** Wire schema drift to an error-reporting backend (e.g. Sentry). Defaults to
- *  console.warn so drift is at least visible in dev. */
 export function setSchemaMismatchReporter(reporter: SchemaReporter): void {
   reportSchemaMismatch = reporter
 }

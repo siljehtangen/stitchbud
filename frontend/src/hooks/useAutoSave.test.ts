@@ -53,7 +53,6 @@ describe('useAutoSave', () => {
     expect(fn).toHaveBeenCalledOnce()
     expect(fn).toHaveBeenCalledWith('pending')
 
-    // Timer was cleared — no second call when it would have fired
     act(() => vi.advanceTimersByTime(500))
     expect(fn).toHaveBeenCalledOnce()
   })
@@ -92,8 +91,10 @@ describe('useAutoSave', () => {
     let captured = ''
     const { result, rerender } = renderHook(
       ({ value }: { value: string }) =>
-        useAutoSave(() => { captured = value }, 500),
-      { initialProps: { value: 'initial' } },
+        useAutoSave(() => {
+          captured = value
+        }, 500),
+      { initialProps: { value: 'initial' } }
     )
 
     act(() => result.current[0]())

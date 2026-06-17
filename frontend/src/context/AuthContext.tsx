@@ -31,8 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      // The user_profiles row (used for friend-requests-by-email) is created and
-      // kept in sync automatically by the handle_new_user database trigger.
     })
 
     return () => subscription.unsubscribe()

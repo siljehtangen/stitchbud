@@ -17,7 +17,7 @@ const CRAFT_FIELDS_KEYS: Record<string, { key: string; labelKey: string }[]> = {
 }
 
 /** Fetch an image URL and return a JPEG data URI by drawing it through a canvas.
- *  This is the only reliable way to embed external images in react-pdf v4 browser mode. */
+ *  Required for embedding external images in react-pdf v4 browser mode. */
 async function fetchAsJpegDataUri(url: string): Promise<string> {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`fetch ${url} → ${res.status}`)

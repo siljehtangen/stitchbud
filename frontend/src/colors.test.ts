@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName, getColorNameByHex, resolveColorDisplay } from './colors'
 
-// ──────── COLORS data integrity ────────
-
 describe('COLORS', () => {
   it('every entry has a non-empty name, nameEn, and hex', () => {
     for (const c of COLORS) {
@@ -29,8 +27,6 @@ describe('COLORS', () => {
   })
 })
 
-// ──────── COLOR_MAP ────────
-
 describe('COLOR_MAP', () => {
   it('maps Norwegian name to hex for every color', () => {
     for (const c of COLORS) {
@@ -42,8 +38,6 @@ describe('COLOR_MAP', () => {
     expect(COLOR_MAP['NotAColor']).toBeUndefined()
   })
 })
-
-// ──────── COLOR_MAP_BY_HEX ────────
 
 describe('COLOR_MAP_BY_HEX', () => {
   it('maps hex to the full ColorOption for every color', () => {
@@ -57,8 +51,6 @@ describe('COLOR_MAP_BY_HEX', () => {
   })
 })
 
-// ──────── getColorName ────────
-
 describe('getColorName', () => {
   const sample = COLORS[0]
 
@@ -71,8 +63,6 @@ describe('getColorName', () => {
     expect(getColorName(sample, 'fr')).toBe(sample.name)
   })
 })
-
-// ──────── getColorNameByHex ────────
 
 describe('getColorNameByHex', () => {
   it('returns the Norwegian name for a known hex in Norwegian', () => {
@@ -90,8 +80,6 @@ describe('getColorNameByHex', () => {
     expect(getColorNameByHex('#ABCDEF', 'en')).toBe('#ABCDEF')
   })
 })
-
-// ──────── resolveColorDisplay ────────
 
 describe('resolveColorDisplay', () => {
   it('resolves a known Norwegian color name to its hex and display name', () => {
@@ -114,7 +102,6 @@ describe('resolveColorDisplay', () => {
   })
 
   it('falls back to raw name as displayName when hex has no matching entry', () => {
-    // Use a hex that is not in COLOR_MAP_BY_HEX (unknown color name → #ccc fallback)
     const result = resolveColorDisplay('Ghost', 'en')
     expect(result.displayName).toBe('Ghost')
   })

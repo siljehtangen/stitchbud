@@ -10,7 +10,6 @@ import { z } from 'zod'
 const COVER = 'cover'
 const MATERIAL = 'material'
 
-/** Re-fetch a project with all nested relations and validate it. */
 async function fetchProject(id: number): Promise<Project> {
   const { data, error } = await supabase.from('projects').select(PROJECT_SELECT).eq('id', id).single()
   raiseError(error, 'Project not found')
@@ -84,8 +83,6 @@ export const projectsApi = {
     if (data.clearEndDate) patch.end_date = null
     if (data.isPublic !== undefined) patch.is_public = data.isPublic
     if (data.pinterestBoardUrls !== undefined) {
-      // Keep only well-formed http(s) links so a stored `javascript:`/`data:`
-      // URL can never become an href (incl. in a friend's browser).
       const sanitized = data.pinterestBoardUrls
         .map(u => u.trim())
         .filter(u => u.length > 0 && isSafeHttpUrl(u))
@@ -143,8 +140,6 @@ export const projectsApi = {
     fileUrl: string,
     originalName: string
   ): Promise<Project> => {
-    // The source may be a signed URL (library images are signed on fetch); store
-    // the canonical public-object identifier so re-signing and deletion keep working.
     const { error } = await supabase.from('project_images').insert({
       project_id: id,
       stored_name: canonicalStoredName(fileUrl),

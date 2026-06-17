@@ -3,17 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { useToast } from '../context/ToastContext'
 
-/**
- * Returns a helper that shows a danger confirmation dialog, runs the action,
- * shows a success toast, and falls back to an error toast on failure.
- *
- * Usage:
- *   const confirmDelete = useConfirmDelete()
- *   await confirmDelete(t('delete_foo_confirm', { name }), async () => {
- *     await api.deleteFoo(id)
- *     onUpdate(...)
- *   }, 'foo_deleted_toast')
- */
 export function useConfirmDelete() {
   const { confirm } = useConfirmDialog()
   const { showToast } = useToast()

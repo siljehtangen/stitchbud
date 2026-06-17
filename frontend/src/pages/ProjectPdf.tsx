@@ -86,7 +86,6 @@ export interface PdfProps {
   categoryLabel: string
   labels: PdfLabels
   language: string
-  /** Pre-fetched base64 data URIs keyed by original URL, to avoid CORS issues at render time */
   imageData: Record<string, string>
   ownerLabel?: string
 }

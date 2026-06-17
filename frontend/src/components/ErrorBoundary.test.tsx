@@ -12,7 +12,6 @@ function ThrowingComponent({ shouldThrow }: { shouldThrow: boolean }) {
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    // The fallback text is translated; pin the language so assertions are stable.
     i18n.changeLanguage('en')
   })
 
@@ -54,7 +53,6 @@ describe('ErrorBoundary', () => {
   })
 
   it('resets to non-error state when Try again is clicked', async () => {
-    // Control the throw via a mutable flag so the child doesn't re-throw after reset
     let shouldThrow = true
     function Controlled() {
       if (shouldThrow) throw new Error('Test error')

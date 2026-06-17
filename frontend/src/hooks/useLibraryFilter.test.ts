@@ -3,8 +3,6 @@ import { renderHook, act } from '@testing-library/react'
 import { useLibraryFilter } from './useLibraryFilter'
 import type { LibraryItem } from '../types'
 
-// COLOR_ITEM_TYPES is ['YARN', 'FABRIC'] — mock the module to avoid pulling in
-// the full LibraryItemForm component (react-icons, API client, etc.)
 vi.mock('../components/LibraryItemForm', () => ({
   COLOR_ITEM_TYPES: ['YARN', 'FABRIC'],
 }))

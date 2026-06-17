@@ -17,9 +17,6 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   </ToastProvider>
 )
 
-// The confirm button shows confirmLabel = t('dialog_btn_remove') = 'dialog_btn_remove'
-// The cancel button shows cancelLabel = t('cancel') = 'cancel'
-
 describe('useConfirmDelete', () => {
   it('returns a function', () => {
     const { result } = renderHook(() => useConfirmDelete(), { wrapper })

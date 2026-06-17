@@ -84,11 +84,9 @@ function GridCanvas({
     const ctx = canvas.getContext('2d')!
     ctx.scale(dpr, dpr)
 
-    // Grid line background
     ctx.fillStyle = GRID_LINE_COLOR
     ctx.fillRect(0, 0, canvasW, canvasH)
 
-    // Draw each cell
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const cell = cellMap.get(`${r},${c}`)

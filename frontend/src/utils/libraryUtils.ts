@@ -7,7 +7,6 @@ export function libraryItemImageUrl(item: { images?: { storedName: string; isMai
 }
 
 export function isImageUrl(url: string): boolean {
-  // Signed storage URLs append ?token=… so the extension is not at the end of the string.
   const path = url.split(/[?#]/)[0]
   return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(path)
 }

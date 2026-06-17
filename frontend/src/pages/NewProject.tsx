@@ -27,7 +27,6 @@ export default function NewProject() {
   const [error, setError] = useState('')
   const coverRef = useRef<HTMLInputElement>(null)
 
-  // Revoke all blob preview URLs when the component unmounts
   useEffect(() => {
     return () => {
       coverImages.forEach(img => URL.revokeObjectURL(img.preview))
@@ -72,7 +71,6 @@ export default function NewProject() {
         tags: '',
         startDate: startDate ? new Date(startDate).getTime() : Date.now(),
       })
-      // Upload main image first so it's marked as main, then the rest in parallel
       const mainImg = coverImages.find(img => img.isMain)
       const others = coverImages.filter(img => !img.isMain)
       if (mainImg) await projectsApi.uploadCoverImage(project.id, mainImg.file)

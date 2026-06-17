@@ -1,6 +1,3 @@
-// Shared CORS headers for browser-invoked Edge Functions.
-// Set the ALLOWED_ORIGIN function secret to your app origin in production
-// (e.g. https://app.stitchbud.com); it falls back to '*' when unset.
 const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') ?? '*'
 
 export const corsHeaders = {

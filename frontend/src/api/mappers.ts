@@ -10,8 +10,6 @@ import type {
   RowCounter,
 } from '../types'
 
-// --- Database row shapes (snake_case, as returned by PostgREST / RPC) ---
-
 export interface DbProjectImage {
   id: number
   project_id: number
@@ -113,11 +111,9 @@ export interface DbLibraryItem {
 const COVER = 'cover'
 const MATERIAL = 'material'
 
-/** The nested-embed select string for a full project (PostgREST). */
 export const PROJECT_SELECT =
   '*, materials!project_id(*), project_images!project_id(*), project_files!project_id(*), pattern_grids!project_id(*), row_counters!project_id(*)'
 
-/** Parse the JSON-encoded pinterest_board_urls TEXT column into a string array. */
 export function parsePinterestUrls(raw: string | null | undefined): string[] {
   if (!raw) return []
   try {
@@ -128,13 +124,11 @@ export function parsePinterestUrls(raw: string | null | undefined): string[] {
   }
 }
 
-/** Split the comma-separated colors column into an array (matches StringListConverter). */
 export function parseColors(raw: string | null | undefined): string[] {
   if (!raw) return []
   return raw.split(',').filter(c => c.length > 0)
 }
 
-/** Mirror of the backend detectFileType: classify an attachment for display. */
 export function detectFileType(mimeType: string, originalName: string): string {
   const ext = originalName.includes('.') ? originalName.slice(originalName.lastIndexOf('.') + 1).toLowerCase() : ''
   if (mimeType.startsWith('image/')) return 'image'
@@ -198,7 +192,6 @@ function toRowCounter(rc: DbRowCounter): RowCounter {
   }
 }
 
-/** Convert a project row (with nested embeds) into the camelCase Project DTO. */
 export function rowToProject(row: DbProject): Project {
   const images = (row.project_images ?? []).slice().sort(byId)
   const coverImages = images.filter(i => (i.section ?? COVER) === COVER).map(toImage)
@@ -251,7 +244,6 @@ function toLibraryImage(img: DbLibraryItemImage): LibraryItemImage {
   }
 }
 
-/** Convert a library_items row (with nested images) into the LibraryItem DTO. */
 export function rowToLibraryItem(row: DbLibraryItem): LibraryItem {
   return {
     id: row.id,

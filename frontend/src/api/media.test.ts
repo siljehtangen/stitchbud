@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { LibraryItem, Project, ProjectImage, ProjectFile } from '../types'
 
-// Mock the supabase singleton so we can drive createSignedUrls. The real
-// client.ts (and its storagePathFromUrl) run against this mock.
 const createSignedUrls = vi.fn()
 vi.mock('../supabase', () => ({
   supabase: { storage: { from: () => ({ createSignedUrls }) } },
@@ -13,7 +11,6 @@ import { withSignedProjectMedia, withSignedProjectsMedia, withSignedLibraryMedia
 const BASE = 'https://abc.supabase.co/storage/v1/object/public/stitchbud-files/'
 const SIGN = 'https://abc.supabase.co/storage/v1/object/sign/stitchbud-files/'
 
-/** Make createSignedUrls return a signed URL for each requested path. */
 function mockSign(token = 'tok') {
   createSignedUrls.mockImplementation(async (paths: string[]) => ({
     data: paths.map(path => ({ path, signedUrl: `${SIGN}${path}?token=${token}`, error: null })),

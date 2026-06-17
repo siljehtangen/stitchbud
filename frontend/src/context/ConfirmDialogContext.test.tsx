@@ -10,11 +10,7 @@ vi.mock('react-i18next', () => ({
 function ConfirmButton({ onResult }: { onResult: (v: boolean) => void }) {
   const { confirm } = useConfirmDialog()
   return (
-    <button
-      onClick={() =>
-        confirm({ message: 'Are you sure?', confirmLabel: 'Yes' }).then(onResult)
-      }
-    >
+    <button onClick={() => confirm({ message: 'Are you sure?', confirmLabel: 'Yes' }).then(onResult)}>
       Open dialog
     </button>
   )
@@ -51,7 +47,6 @@ describe('ConfirmDialogContext', () => {
       </ConfirmDialogProvider>
     )
     await userEvent.click(screen.getByText('Open dialog'))
-    // use getByText to target the visible cancel button, not the aria-label backdrop
     await userEvent.click(screen.getByText('cancel'))
     expect(onResult).toHaveBeenCalledWith(false)
   })
@@ -93,7 +88,7 @@ describe('ConfirmDialogContext', () => {
   it('throws when useConfirmDialog is called outside its provider', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => render(<ConfirmButton onResult={vi.fn()} />)).toThrow(
-      'useConfirmDialog must be used within ConfirmDialogProvider',
+      'useConfirmDialog must be used within ConfirmDialogProvider'
     )
     consoleError.mockRestore()
   })

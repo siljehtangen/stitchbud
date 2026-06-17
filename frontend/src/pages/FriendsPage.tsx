@@ -56,7 +56,6 @@ export default function FriendsPage() {
       await friendsApi.sendRequest(emailInput.trim())
       showToast(t('friends_request_sent'))
       setEmailInput('')
-      // Refresh lists
       const [f, r] = await Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
       setFriends(f)
       setRequests(r)
@@ -115,7 +114,6 @@ export default function FriendsPage() {
     <div className="space-y-6">
       <h2 className="text-lg font-semibold text-gray-800">{t('nav_friends')}</h2>
 
-      {/* Add friend */}
       <div className="card space-y-3">
         <p className="text-sm font-medium text-gray-800">{t('friends_add_heading')}</p>
         <p className="text-xs text-warm-gray">{t('friends_add_hint')}</p>
@@ -142,7 +140,6 @@ export default function FriendsPage() {
         {sendError && <p className="text-xs text-red-500">{sendError}</p>}
       </div>
 
-      {/* Pending requests */}
       {requests.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-semibold text-gray-800">
@@ -176,7 +173,6 @@ export default function FriendsPage() {
         </div>
       )}
 
-      {/* Friends list */}
       <div className="space-y-2">
         <p className="text-sm font-semibold text-gray-800">
           {t('friends_list_heading')} ({friends.length})

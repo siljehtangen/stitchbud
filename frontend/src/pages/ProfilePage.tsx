@@ -51,7 +51,6 @@ function DangerAction({
       await onConfirm()
       setConfirming(false)
     } catch {
-      // Keep the confirm panel open so the user can retry after a failure.
       showToast(t('action_failed'), 'info')
     } finally {
       setPending(false)

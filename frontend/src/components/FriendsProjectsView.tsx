@@ -27,7 +27,6 @@ export function FriendsProjectsView({
   const [searchQuery, setSearchQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
 
-  // Focus the filter field when the dropdown opens (replaces autoFocus).
   useEffect(() => {
     if (dropdownOpen) searchRef.current?.focus()
   }, [dropdownOpen])

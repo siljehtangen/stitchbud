@@ -53,7 +53,6 @@ export function ColorMultiSelect({
     return () => document.removeEventListener('mousedown', handleClick)
   }, [close])
 
-  // Focus the search field when the dropdown opens (replaces autoFocus).
   useEffect(() => {
     if (open) searchRef.current?.focus()
   }, [open])

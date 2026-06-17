@@ -8,8 +8,6 @@ import {
 } from './projectOverviewMedia'
 import type { Project, Material, LibraryItem } from './types'
 
-// ──────── helpers ────────
-
 function makeProject(overrides: Partial<Project> = {}): Project {
   return {
     id: 1,
@@ -49,8 +47,6 @@ function makeMaterial(overrides: Partial<Material> = {}): Material {
 function makeImage(id: number, storedName: string, isMain = false) {
   return { id, storedName, originalName: 'img.jpg', section: 'cover', isMain, projectId: 1 }
 }
-
-// ──────── normalizeProject ────────
 
 describe('normalizeProject', () => {
   it('passes through a project with valid arrays unchanged', () => {
@@ -97,8 +93,6 @@ describe('normalizeProject', () => {
   })
 })
 
-// ──────── projectCoverImageUrls ────────
-
 describe('projectCoverImageUrls', () => {
   it('returns empty array when there are no cover images', () => {
     expect(projectCoverImageUrls(makeProject())).toEqual([])
@@ -128,8 +122,6 @@ describe('projectCoverImageUrls', () => {
     expect(projectCoverImageUrls(p)).toEqual([])
   })
 })
-
-// ──────── materialImageUrls ────────
 
 describe('materialImageUrls', () => {
   it('returns empty array when material has no images', () => {
@@ -213,8 +205,6 @@ describe('materialImageUrls', () => {
   })
 })
 
-// ──────── uniqueImageUrls ────────
-
 describe('uniqueImageUrls', () => {
   it('removes duplicate URLs', () => {
     expect(uniqueImageUrls(['a.jpg', 'b.jpg', 'a.jpg'])).toEqual(['a.jpg', 'b.jpg'])
@@ -232,8 +222,6 @@ describe('uniqueImageUrls', () => {
     expect(uniqueImageUrls(['c.jpg', 'a.jpg', 'b.jpg', 'c.jpg'])).toEqual(['c.jpg', 'a.jpg', 'b.jpg'])
   })
 })
-
-// ──────── libraryItemImagesForProject ────────
 
 function makeLibraryItem(overrides: Partial<LibraryItem> = {}): LibraryItem {
   return {

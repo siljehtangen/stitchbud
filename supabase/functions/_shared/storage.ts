@@ -3,11 +3,6 @@ export const BUCKET = 'stitchbud-files'
 const PUBLIC_MARKER = `/object/public/${BUCKET}/`
 const SIGNED_MARKER = `/object/sign/${BUCKET}/`
 
-/**
- * Extract the in-bucket object path from a managed Supabase Storage URL
- * (public-object or signed form). Any `?token=...` query is stripped. Returns
- * null for non-http values, foreign URLs, or paths containing "..".
- */
 export function storagePathFromUrl(url: string | null | undefined): string | null {
   if (!url || !url.startsWith('http')) return null
   let idx = url.indexOf(PUBLIC_MARKER)

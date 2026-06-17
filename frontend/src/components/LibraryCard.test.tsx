@@ -82,8 +82,6 @@ function renderCard(
 describe('LibraryCard', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  // ── view mode ──────────────────────────────────────────────────────────────
-
   it('renders item name', () => {
     renderCard()
     expect(screen.getByText('Merino Wool')).toBeInTheDocument()
@@ -111,8 +109,6 @@ describe('LibraryCard', () => {
     await userEvent.click(screen.getByTitle('delete'))
     expect(onDelete).toHaveBeenCalledWith(1)
   })
-
-  // ── edit mode ──────────────────────────────────────────────────────────────
 
   it('switches to edit mode when the edit button is clicked', async () => {
     renderCard()

@@ -5,7 +5,6 @@ export function useAsyncData<T>(fetchFn: () => Promise<T>, initial: T) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const fn = useRef(fetchFn)
-  // Always keep the ref pointing to the latest function so refetch uses fresh closures
   fn.current = fetchFn
 
   const [tick, setTick] = useState(0)

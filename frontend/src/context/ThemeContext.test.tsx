@@ -3,8 +3,6 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ThemeProvider, useTheme } from './ThemeContext'
 
-// jsdom in this project does not expose the full Storage API as a global,
-// so we stub localStorage with a real in-memory implementation.
 let store: Record<string, string> = {}
 vi.stubGlobal('localStorage', {
   getItem: (k: string) => store[k] ?? null,
@@ -37,8 +35,6 @@ describe('ThemeContext', () => {
     document.body.removeAttribute('data-theme')
   })
 
-  // ──────── initial theme ────────
-
   it('defaults to beige when localStorage has no saved theme', () => {
     render(
       <ThemeProvider>
@@ -57,8 +53,6 @@ describe('ThemeContext', () => {
     )
     expect(screen.getByTestId('theme').textContent).toBe('blue')
   })
-
-  // ──────── setTheme side-effects ────────
 
   it('updates the rendered theme when setTheme is called', async () => {
     render(
@@ -100,8 +94,6 @@ describe('ThemeContext', () => {
     )
     expect(document.body.getAttribute('data-theme')).toBe('green')
   })
-
-  // ──────── useTheme outside provider ────────
 
   it('returns the default beige theme when used outside the provider', () => {
     render(<ThemeDisplay />)

@@ -9,8 +9,6 @@ import {
   type DbLibraryItem,
 } from './mappers'
 
-// ──────── parsePinterestUrls ────────
-
 describe('parsePinterestUrls', () => {
   it('parses a JSON array of strings', () => {
     expect(parsePinterestUrls('["https://a.com","https://b.com"]')).toEqual(['https://a.com', 'https://b.com'])
@@ -31,8 +29,6 @@ describe('parsePinterestUrls', () => {
   })
 })
 
-// ──────── parseColors ────────
-
 describe('parseColors', () => {
   it('splits a comma-separated string', () => {
     expect(parseColors('red,blue,green')).toEqual(['red', 'blue', 'green'])
@@ -44,8 +40,6 @@ describe('parseColors', () => {
     expect(parseColors('')).toEqual([])
   })
 })
-
-// ──────── detectFileType ────────
 
 describe('detectFileType', () => {
   it('classifies images by mime type', () => {
@@ -66,8 +60,6 @@ describe('detectFileType', () => {
     expect(detectFileType('application/octet-stream', 'data.bin')).toBe('other')
   })
 })
-
-// ──────── rowToProject ────────
 
 const baseProjectRow: DbProject = {
   id: 1,
@@ -201,8 +193,6 @@ describe('rowToProject', () => {
     expect(p.rowCounter).toBeUndefined()
   })
 })
-
-// ──────── rowToLibraryItem ────────
 
 const libraryRow: DbLibraryItem = {
   id: 1,

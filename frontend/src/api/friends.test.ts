@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock the client module so no real Supabase calls are made.
 vi.mock('./client', () => ({
   supabase: { rpc: vi.fn(), from: vi.fn() },
   raiseError: (error: { message: string } | null) => {

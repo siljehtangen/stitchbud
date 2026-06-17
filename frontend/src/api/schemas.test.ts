@@ -1,8 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { projectSchema, libraryItemSchema, friendSchema, friendRequestSchema, safeParsed } from './schemas'
 
-// ──────── projectSchema ────────
-
 const minimalProject = {
   id: 1,
   name: 'Test',
@@ -87,8 +85,6 @@ describe('projectSchema', () => {
   })
 })
 
-// ──────── libraryItemSchema ────────
-
 const minimalLibraryItem = {
   id: 1,
   itemType: 'YARN',
@@ -150,8 +146,6 @@ describe('libraryItemSchema', () => {
   })
 })
 
-// ──────── friendSchema ────────
-
 describe('friendSchema', () => {
   it('parses a valid friend', () => {
     const result = friendSchema.safeParse({
@@ -178,8 +172,6 @@ describe('friendSchema', () => {
     expect(result.success).toBe(false)
   })
 })
-
-// ──────── friendRequestSchema ────────
 
 describe('friendRequestSchema', () => {
   it('parses a valid friend request', () => {
@@ -214,8 +206,6 @@ describe('friendRequestSchema', () => {
     expect(result.success).toBe(false)
   })
 })
-
-// ──────── safeParsed ────────
 
 describe('safeParsed', () => {
   it('returns parsed data when schema matches', () => {
