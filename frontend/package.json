@@ -57,7 +57,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "husky": "^9.1.7",
     "jsdom": "^29.0.2",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.0.7",
     "postcss": "^8.4.35",
     "prettier": "^3.8.3",
     "rollup-plugin-visualizer": "^7.0.1",
