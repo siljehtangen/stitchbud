@@ -35,7 +35,10 @@ vi.mock('../colors', () => ({
 
 vi.mock('./LibraryItemForm', () => ({
   Field: ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div><label>{label}</label>{children}</div>
+    <div>
+      <label>{label}</label>
+      {children}
+    </div>
   ),
   ColorPicker: () => null,
   MAX_LIBRARY_PHOTOS: 5,
@@ -60,7 +63,7 @@ function renderCard(
   callbacks: {
     onDelete?: (id: number) => void
     onUpdated?: (updated: LibraryItem) => void
-  } = {},
+  } = {}
 ) {
   const onDelete = callbacks.onDelete ?? (vi.fn() as (id: number) => void)
   const onUpdated = callbacks.onUpdated ?? (vi.fn() as (updated: LibraryItem) => void)
@@ -99,13 +102,13 @@ describe('LibraryCard', () => {
 
   it('shows camera placeholder when no image is set', () => {
     renderCard()
-    expect(screen.getByText('📷')).toBeInTheDocument()
+    expect(document.querySelector('svg')).toBeTruthy()
   })
 
   it('calls onDelete with item id when delete button is clicked', async () => {
     const onDelete = vi.fn()
     renderCard({}, { onDelete })
-    await userEvent.click(screen.getByText('×'))
+    await userEvent.click(screen.getByTitle('delete'))
     expect(onDelete).toHaveBeenCalledWith(1)
   })
 
@@ -113,23 +116,23 @@ describe('LibraryCard', () => {
 
   it('switches to edit mode when the edit button is clicked', async () => {
     renderCard()
-    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByTitle('edit'))
     expect(screen.getByText('save')).toBeInTheDocument()
     expect(screen.getByText('cancel')).toBeInTheDocument()
   })
 
   it('pre-fills the name input with the current item name', async () => {
     renderCard()
-    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByTitle('edit'))
     expect(screen.getByDisplayValue('Merino Wool')).toBeInTheDocument()
   })
 
   it('exits edit mode when cancel is clicked without saving', async () => {
     renderCard()
-    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByTitle('edit'))
     await userEvent.click(screen.getByText('cancel'))
     expect(screen.queryByText('save')).not.toBeInTheDocument()
-    expect(screen.getByText('✎')).toBeInTheDocument()
+    expect(screen.getByTitle('edit')).toBeInTheDocument()
   })
 
   it('calls libraryApi.update with the current name and calls onUpdated', async () => {
@@ -138,13 +141,10 @@ describe('LibraryCard', () => {
     const onUpdated = vi.fn() as (updated: LibraryItem) => void
 
     renderCard({}, { onUpdated })
-    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByTitle('edit'))
     await userEvent.click(screen.getByText('save'))
 
-    expect(libraryApi.update).toHaveBeenCalledWith(
-      1,
-      expect.objectContaining({ name: 'Merino Wool' }),
-    )
+    expect(libraryApi.update).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'Merino Wool' }))
     expect(onUpdated).toHaveBeenCalledWith(updatedItem)
   })
 
@@ -152,23 +152,20 @@ describe('LibraryCard', () => {
     vi.mocked(libraryApi.update).mockResolvedValue({ ...baseItem, name: 'New Name' })
 
     renderCard()
-    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByTitle('edit'))
     await userEvent.clear(screen.getByDisplayValue('Merino Wool'))
     await userEvent.type(screen.getByRole('textbox'), 'New Name')
     await userEvent.click(screen.getByText('save'))
 
-    expect(libraryApi.update).toHaveBeenCalledWith(
-      1,
-      expect.objectContaining({ name: 'New Name' }),
-    )
+    expect(libraryApi.update).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'New Name' }))
   })
 
   it('returns to view mode after a successful save', async () => {
     vi.mocked(libraryApi.update).mockResolvedValue(baseItem)
     renderCard()
-    await userEvent.click(screen.getByText('✎'))
+    await userEvent.click(screen.getByTitle('edit'))
     await userEvent.click(screen.getByText('save'))
     expect(screen.queryByText('save')).not.toBeInTheDocument()
-    expect(screen.getByText('✎')).toBeInTheDocument()
+    expect(screen.getByTitle('edit')).toBeInTheDocument()
   })
 })

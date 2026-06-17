@@ -8,6 +8,7 @@ import { PiYarnFill } from 'react-icons/pi'
 import { LibraryItemTypeFields } from './LibraryItemTypeFields'
 import { Field } from './Field'
 import { ColorPicker } from './ColorPicker'
+import { StarIcon, CloseIcon, PlusIcon } from './UiIcons'
 
 export { Field } from './Field'
 export { ColorPicker } from './ColorPicker'
@@ -222,14 +223,15 @@ export function LibraryItemForm({
                   className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
                   title={img.isMain ? t('main_image') : t('set_as_main')}
                 >
-                  ★
+                  <StarIcon className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
-                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white hidden group-hover:flex items-center justify-center transition-colors"
+                  title={t('delete')}
                 >
-                  ×
+                  <CloseIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
@@ -239,7 +241,7 @@ export function LibraryItemForm({
                 onClick={() => photoRef.current?.click()}
                 className="w-24 h-24 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-1 text-warm-gray flex-shrink-0"
               >
-                <span className="text-xl leading-none">+</span>
+                <PlusIcon className="w-6 h-6" />
                 <span className="text-xs text-center px-1">{t('upload_cover_image')}</span>
               </button>
             )}

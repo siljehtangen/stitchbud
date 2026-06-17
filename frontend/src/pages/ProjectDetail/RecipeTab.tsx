@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { useFileUpload } from '../../hooks/useFileUpload'
 import { projectsApi } from '../../api'
-import { fileTypeIcon } from '../../utils/libraryUtils'
+import { FileTypeIcon } from '../../components/FileTypeIcon'
+import { CloseIcon } from '../../components/UiIcons'
 import type { Project, ProjectFile } from '../../types'
 import { Field } from '../../components/LibraryItemForm'
 import { FilePreviewModal } from './FilePreviewModal'
@@ -143,10 +144,10 @@ export function RecipeTab({
                   />
                   <button
                     onClick={() => onPinterestChange(pinterestBoardUrls.filter((_, j) => j !== i))}
-                    className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+                    className="text-warm-gray hover:text-red-400 px-1 flex-shrink-0"
                     title={t('delete')}
                   >
-                    ×
+                    <CloseIcon className="w-5 h-5" />
                   </button>
                 </div>
                 {url && (
@@ -210,8 +211,8 @@ export function RecipeTab({
                         loading="lazy"
                       />
                     ) : (
-                      <span className="w-12 h-12 flex items-center justify-center text-2xl hover:opacity-70 transition-opacity">
-                        {fileTypeIcon(f.fileType)}
+                      <span className="w-12 h-12 flex items-center justify-center text-warm-gray hover:opacity-70 transition-opacity">
+                        <FileTypeIcon fileType={f.fileType} className="w-7 h-7" />
                       </span>
                     )}
                   </button>
@@ -242,10 +243,10 @@ export function RecipeTab({
                         'attachment_removed_toast'
                       )
                     }
-                    className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+                    className="text-warm-gray hover:text-red-400 px-1 flex-shrink-0"
                     title={t('delete')}
                   >
-                    ×
+                    <CloseIcon className="w-5 h-5" />
                   </button>
                 </div>
               )

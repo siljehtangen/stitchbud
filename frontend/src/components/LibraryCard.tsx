@@ -5,7 +5,9 @@ import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import { Field, ColorPicker, MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT, COLOR_ITEM_TYPES } from './LibraryItemForm'
 import { LibraryItemTypeFields } from './LibraryItemTypeFields'
-import { libraryItemImageUrl, isImageUrl, fileTypeIconFromUrl } from '../utils/libraryUtils'
+import { libraryItemImageUrl, isImageUrl } from '../utils/libraryUtils'
+import { FileTypeIcon, ImagePlaceholderIcon } from './FileTypeIcon'
+import { StarIcon, CloseIcon, EditIcon, PlusIcon, LoadingDotsIcon } from './UiIcons'
 import { useConfirmDelete } from '../hooks/useConfirmDelete'
 import { resolveColorDisplay } from '../colors'
 
@@ -126,8 +128,8 @@ export const LibraryCard = memo(function LibraryCard({
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-lg">
-                    {fileTypeIconFromUrl(displayUrl)}
+                  <div className="w-14 h-14 rounded-xl border-2 border-sand-green flex items-center justify-center text-warm-gray">
+                    <FileTypeIcon url={displayUrl} className="w-6 h-6" />
                   </div>
                 )}
               </div>
@@ -143,9 +145,9 @@ export const LibraryCard = memo(function LibraryCard({
                   />
                 ) : (
                   <div
-                    className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-lg ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}
+                    className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-warm-gray ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}
                   >
-                    {fileTypeIconFromUrl(img.storedName)}
+                    <FileTypeIcon url={img.storedName} className="w-6 h-6" />
                   </div>
                 )}
                 <button
@@ -154,7 +156,7 @@ export const LibraryCard = memo(function LibraryCard({
                   className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
                   title={img.isMain ? t('main_image') : t('set_as_main')}
                 >
-                  ★
+                  <StarIcon className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
@@ -167,9 +169,10 @@ export const LibraryCard = memo(function LibraryCard({
                       'library_photo_removed_toast'
                     )
                   }
-                  className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white text-sm leading-none hidden group-hover:flex items-center justify-center transition-colors"
+                  className="absolute top-0.5 right-0.5 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white hidden group-hover:flex items-center justify-center transition-colors"
+                  title={t('delete')}
                 >
-                  ×
+                  <CloseIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
@@ -181,7 +184,9 @@ export const LibraryCard = memo(function LibraryCard({
                 className="w-14 h-14 rounded-xl border-2 border-dashed border-soft-brown/30 hover:border-sand-green transition-colors bg-soft-brown/10 flex flex-col items-center justify-center gap-0.5 text-warm-gray flex-shrink-0"
                 title={t('lib_upload_image')}
               >
-                <span className="text-lg leading-none">{uploading ? '…' : '+'}</span>
+                <span className="text-lg leading-none">
+                  {uploading ? <LoadingDotsIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
+                </span>
                 <span className="text-[10px] text-center px-0.5 leading-tight">{t('upload_cover_image')}</span>
               </button>
             )}
@@ -249,12 +254,14 @@ export const LibraryCard = memo(function LibraryCard({
           isImageUrl(displayUrl) ? (
             <img src={displayUrl} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
           ) : (
-            <span className="flex items-center justify-center w-full h-full text-2xl">
-              {fileTypeIconFromUrl(displayUrl)}
+            <span className="flex items-center justify-center w-full h-full text-warm-gray">
+              <FileTypeIcon url={displayUrl} className="w-7 h-7" />
             </span>
           )
         ) : (
-          <span className="flex items-center justify-center w-full h-full text-2xl text-soft-brown/40">📷</span>
+          <span className="flex items-center justify-center w-full h-full text-soft-brown/40">
+            <ImagePlaceholderIcon className="w-7 h-7" />
+          </span>
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -282,13 +289,14 @@ export const LibraryCard = memo(function LibraryCard({
         className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
         title={t('edit')}
       >
-        ✎
+        <EditIcon />
       </button>
       <button
         onClick={() => onDelete(item.id)}
-        className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+        className="text-warm-gray hover:text-red-400 px-1 flex-shrink-0"
+        title={t('delete')}
       >
-        ×
+        <CloseIcon className="w-5 h-5" />
       </button>
     </div>
   )

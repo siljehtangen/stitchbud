@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { projectCoverImageUrls, materialImageUrls, uniqueImageUrls } from '../../projectOverviewMedia'
 import { COLOR_MAP_BY_HEX, getColorName } from '../../colors'
 import type { Project } from '../../types'
-import { fileTypeIcon } from '../../utils/libraryUtils'
+import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { PatternGridReadOnly } from './PatternGridReadOnly'
 import { Section } from './Section'
 
@@ -253,7 +253,7 @@ export function OverviewTab({
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
                   >
-                    <span>{fileTypeIcon(f.fileType)}</span>
+                    <FileTypeIcon fileType={f.fileType} />
                     <span className="text-gray-700 max-w-[8rem] truncate">{f.originalName}</span>
                   </a>
                 )

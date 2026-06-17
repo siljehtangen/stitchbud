@@ -10,9 +10,16 @@ import { TYPE_ICONS, LibraryItemForm } from '../../components/LibraryItemForm'
 import { LibraryFilterBar } from '../../components/LibraryFilterBar'
 import { itemSummary, libraryItemImageUrl } from '../../utils/libraryUtils'
 import { useLibraryFilter } from '../../hooks/useLibraryFilter'
+import { CloseIcon } from '../../components/UiIcons'
 
-export function MaterialsTab({ project, projectId, onUpdate }: {
-  project: Project; projectId: number; onUpdate: (p: Project) => void
+export function MaterialsTab({
+  project,
+  projectId,
+  onUpdate,
+}: {
+  project: Project
+  projectId: number
+  onUpdate: (p: Project) => void
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
@@ -25,12 +32,23 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
   const [newLibType, setNewLibType] = useState<LibraryItemType>('YARN')
   const [pendingItem, setPendingItem] = useState<LibraryItem | null>(null)
 
-  const { filterType, setFilterType, filterColors, setFilterColors, search, setSearch, showColorFilter, availableColors, filtered } = useLibraryFilter(libraryItems)
+  const {
+    filterType,
+    setFilterType,
+    filterColors,
+    setFilterColors,
+    search,
+    setSearch,
+    showColorFilter,
+    availableColors,
+    filtered,
+  } = useLibraryFilter(libraryItems)
 
   useEffect(() => {
     setLibraryLoading(true)
     setLibraryError(false)
-    libraryApi.getAll()
+    libraryApi
+      .getAll()
       .then(setLibraryItems)
       .catch(() => setLibraryError(true))
       .finally(() => setLibraryLoading(false))
@@ -50,10 +68,17 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
     let unit = ''
     if (item.itemType === 'YARN') {
       type = [item.yarnBrand, item.yarnMaterial].filter(Boolean).join(' ') || item.name
-      if (item.yarnAmountG) { amount = String(item.yarnAmountG); unit = 'g' }
-      else if (item.yarnAmountM) { amount = String(item.yarnAmountM); unit = 'm' }
+      if (item.yarnAmountG) {
+        amount = String(item.yarnAmountG)
+        unit = 'g'
+      } else if (item.yarnAmountM) {
+        amount = String(item.yarnAmountM)
+        unit = 'm'
+      }
     } else if (item.itemType === 'FABRIC') {
-      amount = [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`].filter(Boolean).join(' × ')
+      amount = [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`]
+        .filter(Boolean)
+        .join(' × ')
     } else if (item.itemType === 'KNITTING_NEEDLE') {
       type = item.needleSizeMm ? `${item.needleSizeMm} mm ${t('lib_knitting_needle')}` : item.name
       if (item.circularLengthCm) amount = `${item.circularLengthCm} cm`
@@ -71,13 +96,21 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
     setSaving(true)
     try {
       let updated = await projectsApi.addMaterial(projectId, {
-        name: item.name, type, itemType: item.itemType, color: colorName, colorHex, amount, unit,
+        name: item.name,
+        type,
+        itemType: item.itemType,
+        color: colorName,
+        colorHex,
+        amount,
+        unit,
       })
       const newMat = updated.materials.reduce((a, b) => (a.id > b.id ? a : b))
       if (libImgs.length > 0) {
-        await Promise.all(libImgs.map(img =>
-          projectsApi.registerMaterialImageByUrl(projectId, newMat.id, img.storedName, img.originalName || 'image')
-        ))
+        await Promise.all(
+          libImgs.map(img =>
+            projectsApi.registerMaterialImageByUrl(projectId, newMat.id, img.storedName, img.originalName || 'image')
+          )
+        )
         updated = await projectsApi.getOne(projectId)
       }
       onUpdate(updated)
@@ -85,7 +118,9 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
       showToast(t('material_added_toast'))
     } catch {
       showToast(t('upload_failed'), 'info')
-    } finally { setSaving(false) }
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleLibItemCreated(item: LibraryItem) {
@@ -114,29 +149,39 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg bg-soft-brown/20 flex items-center justify-center text-warm-gray flex-shrink-0 text-base pointer-events-none select-none" aria-hidden>
+                  <div
+                    className="w-12 h-12 rounded-lg bg-soft-brown/20 flex items-center justify-center text-warm-gray flex-shrink-0 text-base pointer-events-none select-none"
+                    aria-hidden
+                  >
                     {m.itemType ? TYPE_ICONS[m.itemType as LibraryItemType] : '·'}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-gray-800">{m.type}</p>
                   {(m.amount || m.unit) && (
-                    <p className="text-xs text-warm-gray">{m.amount}{m.amount && m.unit ? ` ${m.unit}` : ''}</p>
+                    <p className="text-xs text-warm-gray">
+                      {m.amount}
+                      {m.amount && m.unit ? ` ${m.unit}` : ''}
+                    </p>
                   )}
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => confirmDelete(
-                  t('delete_material_confirm', { name: m.type }),
-                  async () => {
-                    onUpdate(await projectsApi.deleteMaterial(projectId, m.id))
-                  },
-                  'material_removed_toast',
-                )}
-                className="text-warm-gray hover:text-red-400 text-xl px-1 leading-none flex-shrink-0"
+                onClick={() =>
+                  confirmDelete(
+                    t('delete_material_confirm', { name: m.type }),
+                    async () => {
+                      onUpdate(await projectsApi.deleteMaterial(projectId, m.id))
+                    },
+                    'material_removed_toast'
+                  )
+                }
+                className="text-warm-gray hover:text-red-400 px-1 flex-shrink-0"
                 title={t('delete')}
-              >×</button>
+              >
+                <CloseIcon className="w-5 h-5" />
+              </button>
             </div>
           </div>
         )
@@ -158,7 +203,12 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
           <div className="border border-sand-blue/40 rounded-lg p-3 space-y-2.5 bg-sand-blue/5">
             <div className="flex items-center gap-2">
               {libraryItemImageUrl(pendingItem) ? (
-                <img src={libraryItemImageUrl(pendingItem)!} alt={pendingItem.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                <img
+                  src={libraryItemImageUrl(pendingItem)!}
+                  alt={pendingItem.name}
+                  className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                  loading="lazy"
+                />
               ) : (
                 <div className="w-8 h-8 rounded-lg bg-soft-brown/20 flex items-center justify-center flex-shrink-0 text-sm">
                   {TYPE_ICONS[pendingItem.itemType]}
@@ -168,8 +218,11 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
               <button
                 type="button"
                 onClick={() => setPendingItem(null)}
-                className="text-warm-gray hover:text-red-400 text-lg leading-none"
-              >×</button>
+                className="text-warm-gray hover:text-red-400"
+                title={t('delete')}
+              >
+                <CloseIcon className="w-5 h-5" />
+              </button>
             </div>
             <div className="flex gap-2">
               <button
@@ -177,8 +230,12 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
                 disabled={saving}
                 onClick={() => void addFromLibrary(pendingItem, '')}
                 className="btn-primary text-sm flex-1"
-              >{saving ? t('saving') : t('add_library_to_project')}</button>
-              <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">{t('cancel')}</button>
+              >
+                {saving ? t('saving') : t('add_library_to_project')}
+              </button>
+              <button type="button" onClick={() => setPendingItem(null)} className="btn-ghost text-sm">
+                {t('cancel')}
+              </button>
             </div>
           </div>
         )}
@@ -199,7 +256,12 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
                   className="flex items-center gap-3 rounded-xl border border-sand-blue/15 bg-white/60 p-2.5 transition-colors hover:border-sand-green/35 hover:bg-sand-green/10"
                 >
                   {imgUrl ? (
-                    <img src={imgUrl} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" loading="lazy" />
+                    <img
+                      src={imgUrl}
+                      alt=""
+                      className="h-10 w-10 flex-shrink-0 rounded-lg object-cover"
+                      loading="lazy"
+                    />
                   ) : (
                     <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-soft-brown/20 text-base">
                       {TYPE_ICONS[item.itemType]}
@@ -235,9 +297,14 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
               {t('lib_not_found_hint')}{' '}
               <button
                 type="button"
-                onClick={() => { setNewLibType(filterType ?? 'YARN'); setCreatingInLib(true) }}
+                onClick={() => {
+                  setNewLibType(filterType ?? 'YARN')
+                  setCreatingInLib(true)
+                }}
                 className="text-sand-blue-deep underline hover:no-underline font-medium"
-              >{t('lib_create_new')}</button>
+              >
+                {t('lib_create_new')}
+              </button>
             </p>
           )}
         </div>
@@ -245,4 +312,3 @@ export function MaterialsTab({ project, projectId, onUpdate }: {
     </div>
   )
 }
-

@@ -12,19 +12,6 @@ export function isImageUrl(url: string): boolean {
   return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(path)
 }
 
-/** For ProjectFile.fileType strings: 'image' | 'pdf' | 'word' | 'other' */
-export function fileTypeIcon(ft: string): string {
-  return ({ image: '🖼️', pdf: '📄', word: '📝', other: '📎' } as Record<string, string>)[ft] ?? '📎'
-}
-
-/** For raw file URLs or stored names where no fileType is available */
-export function fileTypeIconFromUrl(url: string): string {
-  const path = url.split(/[?#]/)[0]
-  if (/\.pdf$/i.test(path)) return '📄'
-  if (/\.(doc|docx)$/i.test(path)) return '📝'
-  return '📎'
-}
-
 export function itemSummary(item: LibraryItem): string {
   if (item.itemType === 'YARN') {
     const parts = [item.yarnBrand, item.yarnMaterial].filter(Boolean).join(', ')

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useId } from 'react'
 import { resolveColorDisplay } from '../colors'
+import { CloseIcon } from './UiIcons'
 
 interface Props {
   availableColors: string[]
@@ -96,9 +97,9 @@ export function ColorMultiSelect({
                     e.stopPropagation()
                     toggle(name)
                   }}
-                  className="ml-0.5 leading-none hover:text-red-400 cursor-pointer"
+                  className="ml-0.5 hover:text-red-400 cursor-pointer"
                 >
-                  ×
+                  <CloseIcon className="w-3.5 h-3.5" />
                 </button>
               </span>
             )

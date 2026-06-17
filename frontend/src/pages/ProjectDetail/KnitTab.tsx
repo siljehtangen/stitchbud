@@ -6,9 +6,18 @@ import { projectsApi } from '../../api'
 import type { Project, ProjectCategory } from '../../types'
 import { RoundCounterWidget } from './RoundCounterWidget'
 import { PatternGridWidget } from './PatternGridWidget'
+import { CloseIcon, PlusIcon } from '../../components/UiIcons'
 
-export function KnitTab({ project, projectId, onUpdate, category }: {
-  project: Project; projectId: number; onUpdate: (p: Project) => void; category: ProjectCategory
+export function KnitTab({
+  project,
+  projectId,
+  onUpdate,
+  category,
+}: {
+  project: Project
+  projectId: number
+  onUpdate: (p: Project) => void
+  category: ProjectCategory
 }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
@@ -54,26 +63,36 @@ export function KnitTab({ project, projectId, onUpdate, category }: {
             onClick={() => setActiveGridIndex(i => Math.max(0, i - 1))}
             disabled={clampedIndex === 0}
             className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 disabled:opacity-30 text-warm-gray text-base leading-none"
-          >‹</button>
-          <span className="text-xs text-warm-gray tabular-nums">{clampedIndex + 1}/{grids.length}</span>
+          >
+            ‹
+          </button>
+          <span className="text-xs text-warm-gray tabular-nums">
+            {clampedIndex + 1}/{grids.length}
+          </span>
           <button
             onClick={() => setActiveGridIndex(i => Math.min(grids.length - 1, i + 1))}
             disabled={clampedIndex === grids.length - 1}
             className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 disabled:opacity-30 text-warm-gray text-base leading-none"
-          >›</button>
+          >
+            ›
+          </button>
         </>
       )}
       <button
         onClick={handleAddGrid}
         className="w-5 h-5 flex items-center justify-center rounded-full bg-sand-green hover:opacity-80 text-gray-700 text-xs font-bold ml-1"
         title={t('add_grid')}
-      >+</button>
+      >
+        <PlusIcon className="w-3 h-3" />
+      </button>
       {grids.length > 1 && activeGrid && (
         <button
           onClick={handleDeleteGrid}
-          className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 text-warm-gray text-sm leading-none"
+          className="w-5 h-5 flex items-center justify-center rounded hover:bg-soft-brown/20 text-warm-gray"
           title={t('delete_grid')}
-        >×</button>
+        >
+          <CloseIcon className="w-3.5 h-3.5" />
+        </button>
       )}
     </div>
   )
@@ -86,9 +105,13 @@ export function KnitTab({ project, projectId, onUpdate, category }: {
           <RoundCounterWidget
             counter={project.rowCounter!}
             onSave={async (spr, tr, cs) =>
-              onUpdate(await projectsApi.updateRowCounter(projectId, {
-                stitchesPerRound: spr, totalRounds: tr, checkedStitches: JSON.stringify(cs)
-              }))
+              onUpdate(
+                await projectsApi.updateRowCounter(projectId, {
+                  stitchesPerRound: spr,
+                  totalRounds: tr,
+                  checkedStitches: JSON.stringify(cs),
+                })
+              )
             }
           />
         </div>
@@ -103,9 +126,13 @@ export function KnitTab({ project, projectId, onUpdate, category }: {
             cellDataJson={activeGrid.cellData}
             showSymbols={category === 'KNITTING'}
             onSave={async (cells, r, c) =>
-              onUpdate(await projectsApi.updatePatternGrid(projectId, activeGrid.id, {
-                rows: r, cols: c, cellData: JSON.stringify(cells)
-              }))
+              onUpdate(
+                await projectsApi.updatePatternGrid(projectId, activeGrid.id, {
+                  rows: r,
+                  cols: c,
+                  cellData: JSON.stringify(cells),
+                })
+              )
             }
           />
         )}

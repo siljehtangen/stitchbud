@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName } from '../colors'
+import { CloseIcon } from './UiIcons'
 
 export function ColorPicker({ selected, onChange }: { selected: string[]; onChange: (colors: string[]) => void }) {
   const { t, i18n } = useTranslation()
@@ -33,9 +34,10 @@ export function ColorPicker({ selected, onChange }: { selected: string[]; onChan
                 <button
                   type="button"
                   onClick={() => toggle(name)}
-                  className="ml-0.5 text-warm-gray hover:text-red-400 leading-none"
+                  className="ml-0.5 text-warm-gray hover:text-red-400"
+                  title={t('delete')}
                 >
-                  ×
+                  <CloseIcon className="w-3.5 h-3.5" />
                 </button>
               </span>
             )

@@ -66,7 +66,7 @@
   "add_material_heading": "Add Material",
   "add_from_library": "Pick from library",
   "add_library_to_project": "Add to project",
-  "material_photos_hint": "Add up to 3 photos. ★ marks the main image used on cards and lists",
+  "material_photos_hint": "Add up to 3 photos. The starred image is used on cards and in lists.",
   "material_no_photos_from_library": "No photos on this library item. Add photos in the Library",
   "main_image": "Main image",
   "set_as_main": "Set as main",

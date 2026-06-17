@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { libraryItemImageUrl, isImageUrl, fileTypeIcon, fileTypeIconFromUrl, itemSummary } from './libraryUtils'
+import { libraryItemImageUrl, isImageUrl, itemSummary } from './libraryUtils'
 import type { LibraryItem } from '../types'
 
 describe('libraryItemImageUrl', () => {
@@ -46,39 +46,6 @@ describe('isImageUrl', () => {
 
   it('returns true for signed storage URLs with query params', () => {
     expect(isImageUrl('https://example.supabase.co/storage/v1/object/sign/bucket/library/1/a.jpg?token=abc')).toBe(true)
-  })
-})
-
-describe('fileTypeIcon', () => {
-  it('returns the correct icon for known file types', () => {
-    expect(fileTypeIcon('image')).toBe('🖼️')
-    expect(fileTypeIcon('pdf')).toBe('📄')
-    expect(fileTypeIcon('word')).toBe('📝')
-    expect(fileTypeIcon('other')).toBe('📎')
-  })
-
-  it('falls back to 📎 for unknown types', () => {
-    expect(fileTypeIcon('video')).toBe('📎')
-    expect(fileTypeIcon('')).toBe('📎')
-    expect(fileTypeIcon('spreadsheet')).toBe('📎')
-  })
-})
-
-describe('fileTypeIconFromUrl', () => {
-  it('returns pdf icon for .pdf URLs', () => {
-    expect(fileTypeIconFromUrl('report.pdf')).toBe('📄')
-    expect(fileTypeIconFromUrl('report.PDF')).toBe('📄')
-  })
-
-  it('returns word icon for .doc and .docx URLs', () => {
-    expect(fileTypeIconFromUrl('notes.doc')).toBe('📝')
-    expect(fileTypeIconFromUrl('notes.docx')).toBe('📝')
-  })
-
-  it('returns paperclip for unrecognised URLs', () => {
-    expect(fileTypeIconFromUrl('photo.png')).toBe('📎')
-    expect(fileTypeIconFromUrl('data.csv')).toBe('📎')
-    expect(fileTypeIconFromUrl('archive.zip')).toBe('📎')
   })
 })
 

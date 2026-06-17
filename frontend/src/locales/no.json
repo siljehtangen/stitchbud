@@ -66,7 +66,7 @@
   "add_material_heading": "Legg til materiale",
   "add_from_library": "Velg fra bibliotek",
   "add_library_to_project": "Legg til i prosjekt",
-  "material_photos_hint": "Legg til opptil 3 bilder. ★ viser hovedbildet som brukes på kort og i lister.",
+  "material_photos_hint": "Legg til opptil 3 bilder. Bildet merket med stjerne brukes på kort og i lister.",
   "material_no_photos_from_library": "Ingen bilder på dette bibliotekelementet. Legg til bilder i Bibliotek.",
   "main_image": "Hovedbilde",
   "set_as_main": "Bruk som hovedbilde",

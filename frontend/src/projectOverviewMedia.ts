@@ -18,7 +18,7 @@ export function projectCoverImageUrls(project: Project): string[] {
   return sorted.map(c => c.storedName).filter(Boolean)
 }
 
-/** All image URLs for a material: gallery rows (★ first). Stored names are full Supabase URLs. */
+/** All image URLs for a material: gallery rows (main image first). Stored names are full Supabase URLs. */
 export function materialImageUrls(m: Material): string[] {
   const rows = m.images ?? []
   const mainFirst = [...rows].sort((a, b) => (a.isMain === b.isMain ? 0 : a.isMain ? -1 : 1))

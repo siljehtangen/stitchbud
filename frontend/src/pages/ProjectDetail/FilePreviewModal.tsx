@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ProjectFile } from '../../types'
-import { fileTypeIcon } from '../../utils/libraryUtils'
+import { FileTypeIcon } from '../../components/FileTypeIcon'
+import { CloseIcon } from '../../components/UiIcons'
 
 export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose: () => void }) {
   const { t } = useTranslation()
@@ -25,12 +26,8 @@ export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose
       <div className="relative z-10 flex flex-col items-center gap-3 w-full max-w-4xl">
         <div className="flex items-center justify-between w-full">
           <span className="text-white text-sm font-medium truncate max-w-xs">{file.originalName}</span>
-          <button
-            onClick={onClose}
-            className="text-white/70 hover:text-white text-2xl leading-none ml-4 flex-shrink-0"
-            title={t('close')}
-          >
-            ×
+          <button onClick={onClose} className="text-white/70 hover:text-white ml-4 flex-shrink-0" title={t('close')}>
+            <CloseIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -86,7 +83,9 @@ export function FilePreviewModal({ file, onClose }: { file: ProjectFile; onClose
           />
         ) : (
           <div className="bg-white rounded-xl p-10 text-center">
-            <div className="text-6xl mb-4">{fileTypeIcon(file.fileType)}</div>
+            <div className="mb-4 flex justify-center text-warm-gray">
+              <FileTypeIcon fileType={file.fileType} className="w-16 h-16" />
+            </div>
             <p className="text-gray-800 font-medium mb-6">{file.originalName}</p>
             <a href={url} target="_blank" rel="noopener noreferrer" className="btn-primary">
               {t('open_file')}

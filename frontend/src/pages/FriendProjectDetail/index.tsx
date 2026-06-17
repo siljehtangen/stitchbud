@@ -11,7 +11,7 @@ import { projectCoverImageUrls, materialImageUrls } from '../../projectOverviewM
 import { OverviewTab } from '../ProjectDetail/OverviewTab'
 import { PinterestBoardEmbed } from '../ProjectDetail/RecipeTab'
 import { PatternGridReadOnly } from '../ProjectDetail/PatternGridReadOnly'
-import { fileTypeIcon } from '../../utils/libraryUtils'
+import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { FilePreviewModal } from '../ProjectDetail/FilePreviewModal'
 import type { ProjectFile } from '../../types'
 
@@ -222,7 +222,7 @@ export default function FriendProjectDetail() {
                       onClick={() => setPreviewFile(f)}
                       className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
                     >
-                      <span>{fileTypeIcon(f.fileType)}</span>
+                      <FileTypeIcon fileType={f.fileType} />
                       <span className="text-gray-700 max-w-[8rem] truncate">{f.originalName}</span>
                     </button>
                   )

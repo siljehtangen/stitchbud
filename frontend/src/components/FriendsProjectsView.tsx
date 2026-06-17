@@ -3,7 +3,7 @@ import { FiChevronRight, FiChevronDown } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { Friend, Project } from '../types'
-import { categoryLabel } from '../constants/categories'
+import { categoryLabel, CATEGORY_ICONS } from '../constants/categories'
 import { projectCoverImageUrls } from '../projectOverviewMedia'
 
 export function FriendsProjectsView({
@@ -174,8 +174,8 @@ function FriendProjectCard({
       {coverUrls[0] ? (
         <img src={coverUrls[0]} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy" />
       ) : (
-        <div className="w-12 h-12 rounded-xl bg-sand-blue/30 flex items-center justify-center text-2xl flex-shrink-0">
-          {project.category === 'KNITTING' ? '🧶' : project.category === 'CROCHET' ? '🪡' : '🧵'}
+        <div className="w-12 h-12 rounded-xl bg-sand-blue/30 flex items-center justify-center text-xl flex-shrink-0">
+          {CATEGORY_ICONS[project.category]}
         </div>
       )}
       <div className="flex-1 min-w-0">
