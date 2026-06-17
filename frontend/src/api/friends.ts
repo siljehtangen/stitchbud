@@ -3,6 +3,7 @@ import { normalizeProject } from '../projectOverviewMedia'
 import { supabase, raiseError } from './client'
 import { friendSchema, friendRequestSchema, projectSchema, safeParsed } from './schemas'
 import { rowToProject, type DbProject } from './mappers'
+import { withSignedProjectMedia, withSignedProjectsMedia } from './media'
 import { z } from 'zod'
 
 export const friendsApi = {
@@ -39,7 +40,8 @@ export const friendsApi = {
     const { data, error } = await supabase.rpc('get_friend_projects', { friend_user_id: friendUserId })
     raiseError(error, 'Failed to load friend projects')
     const mapped = ((data as DbProject[]) ?? []).map(rowToProject)
-    return safeParsed(z.array(projectSchema), mapped, 'Project[]').map(normalizeProject)
+    const projects = safeParsed(z.array(projectSchema), mapped, 'Project[]').map(normalizeProject)
+    return withSignedProjectsMedia(projects)
   },
 
   getFriendProject: async (friendUserId: string, projectId: number): Promise<Project> => {
@@ -48,6 +50,8 @@ export const friendsApi = {
       p_project_id: projectId,
     })
     raiseError(error, 'Failed to load friend project')
-    return normalizeProject(safeParsed(projectSchema, rowToProject(data as DbProject), 'Project'))
+    return withSignedProjectMedia(
+      normalizeProject(safeParsed(projectSchema, rowToProject(data as DbProject), 'Project'))
+    )
   },
 }
