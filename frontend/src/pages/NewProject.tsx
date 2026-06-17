@@ -155,7 +155,6 @@ export default function NewProject() {
           <textarea
             className="textarea"
             rows={3}
-            maxLength={255}
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder={t('description_placeholder')}
