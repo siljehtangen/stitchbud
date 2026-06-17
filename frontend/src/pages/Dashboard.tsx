@@ -8,7 +8,6 @@ import { CATEGORY_ICONS, categoryLabel } from '../constants/categories'
 import { useAsyncData } from '../hooks/useAsyncData'
 import { useProjectFilter } from '../hooks/useProjectFilter'
 
-
 export default function Dashboard() {
   const { data: projects, loading, error } = useAsyncData(() => projectsApi.getAll(), [])
   const { filter, setFilter, filtered, counts, newProjectPath } = useProjectFilter(projects)
@@ -22,9 +21,7 @@ export default function Dashboard() {
           {t('welcome_back')} <GiButterfly className="text-sand-green-dark text-xl" />
         </h2>
         <p className="text-sm text-warm-gray mt-1">
-          {projects.length === 0
-            ? t('start_first_project')
-            : t('you_have_projects_other', { count: projects.length })}
+          {projects.length === 0 ? t('start_first_project') : t('you_have_projects', { count: projects.length })}
         </p>
       </div>
 
@@ -51,10 +48,7 @@ export default function Dashboard() {
           </h3>
           <div className="flex items-center gap-2">
             {filter !== 'ALL' && (
-              <button
-                onClick={() => setFilter('ALL')}
-                className="text-xs text-warm-gray hover:text-gray-700"
-              >
+              <button onClick={() => setFilter('ALL')} className="text-xs text-warm-gray hover:text-gray-700">
                 {t('clear_filter')}
               </button>
             )}
@@ -71,10 +65,7 @@ export default function Dashboard() {
         ) : filtered.length === 0 ? (
           <div className="card text-center py-10">
             <p className="text-warm-gray text-sm">{t('no_projects_yet')}</p>
-            <button
-              onClick={() => navigate(newProjectPath)}
-              className="btn-primary mt-4 text-sm"
-            >
+            <button onClick={() => navigate(newProjectPath)} className="btn-primary mt-4 text-sm">
               {t('create_first_project')}
             </button>
           </div>

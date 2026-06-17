@@ -22,7 +22,7 @@
 
   "welcome_back": "Velkommen tilbake",
   "start_first_project": "Start ditt første prosjekt!",
-  "you_have_projects_one": "Du har 1 prosjekt",
+  "you_have_projects_one": "Du har ett prosjekt",
   "you_have_projects_other": "Du har {{count}} prosjekter",
   "recent_projects": "Nylige prosjekter",
   "clear_filter": "Fjern filter",
