@@ -62,7 +62,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
           />
         ) : (
           <div className="w-14 h-14 rounded-xl bg-soft-brown/10 flex items-center justify-center flex-shrink-0">
-            <span className="text-2xl">{CATEGORY_ICONS[project.category]}</span>
+            <span className="text-2xl text-sand-green-dark">{CATEGORY_ICONS[project.category]}</span>
           </div>
         )}
         <div className="flex-shrink-0 -mr-1">

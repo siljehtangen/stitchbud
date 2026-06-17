@@ -5,7 +5,7 @@ export const STORAGE_BUCKET = 'stitchbud-files'
 const PUBLIC_MARKER = `/object/public/${STORAGE_BUCKET}/`
 const SIGNED_MARKER = `/object/sign/${STORAGE_BUCKET}/`
 
-export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 const ALLOWED_UPLOAD_TYPES = new Set([
   'image/png',

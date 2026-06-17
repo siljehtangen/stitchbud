@@ -1,38 +1,74 @@
-import { useState } from 'react'
+import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { FiPlus, FiX } from 'react-icons/fi'
+import { FiPlus } from 'react-icons/fi'
 import { HiSparkles } from 'react-icons/hi2'
-import { projectsApi } from '../api'
-import type { ProjectCategory } from '../types'
-import ProjectCard from '../components/ProjectCard'
-import { CATEGORY_ICONS, categoryLabel, CATEGORY_ACCENT } from '../constants/categories'
+import { GiButterfly } from 'react-icons/gi'
+import { LiaUserFriendsSolid } from 'react-icons/lia'
+import { ImBooks } from 'react-icons/im'
+import { GrProjects } from 'react-icons/gr'
+import { dashboardApi } from '../api'
+import type { DashboardStats, ProjectCategory } from '../types'
+import { CATEGORY_ICONS, categoryLabel } from '../constants/categories'
+import { ITEM_TYPES, TYPE_ICONS } from '../components/LibraryItemForm'
+import { typeLabel } from '../utils/libraryUtils'
 import { useAsyncData } from '../hooks/useAsyncData'
-import { useProjectFilter } from '../hooks/useProjectFilter'
 import { useAuth } from '../context/AuthContext'
 
-const AUTOSAVE_DISMISS_KEY = 'dashboard_autosave_dismissed'
+const EMPTY_STATS: DashboardStats = {
+  projects: { KNITTING: 0, CROCHET: 0, SEWING: 0 },
+  library: { YARN: 0, FABRIC: 0, KNITTING_NEEDLE: 0, CROCHET_HOOK: 0 },
+  friends: 0,
+  sentRequests: 0,
+  incomingRequests: 0,
+}
+
+type StatTileProps = {
+  icon: ReactNode
+  count: number
+  label: string
+  onClick?: () => void
+}
+
+function StatTile({ icon, count, label, onClick }: StatTileProps) {
+  const Tag = onClick ? 'button' : 'div'
+  return (
+    <Tag
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className={`group flex flex-col items-start gap-1.5 rounded-xl border border-[rgb(var(--border-light))] bg-cream/50 px-3.5 py-3 md:px-4 md:py-3.5 text-left transition-all duration-200 ${
+        onClick ? 'cursor-pointer hover:border-sand-green-dark/25 hover:bg-cream' : ''
+      }`}
+    >
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sand-green/20 text-lg text-sand-green-dark transition-transform duration-200 group-hover:scale-105">
+        {icon}
+      </span>
+      <span className="font-serif text-2xl md:text-3xl leading-none text-ink tabular-nums">{count}</span>
+      <span className="text-[11px] md:text-xs text-warm-gray leading-tight">{label}</span>
+    </Tag>
+  )
+}
 
 export default function Dashboard() {
-  const { data: projects, loading, error } = useAsyncData(() => projectsApi.getAll(), [])
-  const { filter, setFilter, filtered, counts, newProjectPath } = useProjectFilter(projects)
+  const { data: stats } = useAsyncData(() => dashboardApi.getStats(), EMPTY_STATS)
+
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { user } = useAuth()
 
-  const [autosaveDismissed, setAutosaveDismissed] = useState(() => localStorage.getItem(AUTOSAVE_DISMISS_KEY) === '1')
-
   const fullName = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? null
   const firstName = typeof fullName === 'string' ? fullName.split(' ')[0] : null
 
-  function dismissAutosaveTip() {
-    localStorage.setItem(AUTOSAVE_DISMISS_KEY, '1')
-    setAutosaveDismissed(true)
-  }
+  const projectCounts = stats.projects
+  const libraryCounts = stats.library
+
+  const totalProjects = projectCounts.KNITTING + projectCounts.CROCHET + projectCounts.SEWING
+  const totalLibrary = Object.values(libraryCounts).reduce((sum, n) => sum + n, 0)
+  const totalFriends = stats.friends + stats.sentRequests
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      {/* Hero */}
+    <div className="space-y-6">
+      {/* Welcome */}
       <section className="relative overflow-hidden rounded-[1.5rem] border border-[rgb(var(--border-light))] bg-white shadow-warm">
         <div
           className="pointer-events-none absolute -top-16 -right-10 h-48 w-48 rounded-full bg-sand-green/25 blur-3xl"
@@ -44,117 +80,86 @@ export default function Dashboard() {
         />
 
         <div className="relative p-5 md:p-7">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="font-serif italic text-[28px] md:text-[38px] leading-[1.1] text-ink tracking-tight">
-                {firstName ? `${t('welcome_back')}, ${firstName}` : t('welcome_back')}
-              </h1>
-              <p className="mt-1.5 text-sm text-ink/55">
-                {projects.length === 0 ? t('start_first_project') : t('you_have_projects', { count: projects.length })}
-              </p>
-            </div>
-
-            <button
-              onClick={() => navigate(newProjectPath)}
-              className="btn-primary text-sm whitespace-nowrap inline-flex items-center gap-1.5 self-start shrink-0"
-            >
-              <FiPlus className="text-base" />
-              {t('add_project')}
-            </button>
+          <div className="flex items-center gap-3">
+            <h1 className="font-serif italic text-[28px] md:text-[38px] leading-[1.1] text-ink tracking-tight">
+              {firstName ? `${t('welcome_back')}, ${firstName}` : t('welcome_back')}
+            </h1>
+            <GiButterfly className="animate-butterfly text-sand-green-dark text-3xl md:text-4xl shrink-0" aria-hidden />
           </div>
-
-          <div className="mt-6 grid grid-cols-3 gap-2.5 md:gap-3">
-            {(['KNITTING', 'CROCHET', 'SEWING'] as ProjectCategory[]).map(cat => {
-              const accent = CATEGORY_ACCENT[cat]
-              const active = filter === cat
-              const count = counts[cat]
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(active ? 'ALL' : cat)}
-                  className={`group flex flex-col items-start gap-1.5 rounded-xl border px-3.5 py-3 md:px-4 md:py-3.5 text-left transition-all duration-200 cursor-pointer ${
-                    active
-                      ? 'border-sand-green-dark/40 bg-sand-green/20 shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.2)]'
-                      : 'border-[rgb(var(--border-light))] bg-cream/50 hover:border-sand-green-dark/25 hover:bg-cream'
-                  }`}
-                >
-                  <span
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition-transform duration-200 group-hover:scale-105"
-                    style={{ backgroundColor: accent.bg, color: accent.text }}
-                  >
-                    {CATEGORY_ICONS[cat]}
-                  </span>
-                  <span className="font-serif text-2xl md:text-3xl leading-none text-ink tabular-nums">{count}</span>
-                  <span className="text-[11px] md:text-xs text-warm-gray leading-tight">{categoryLabel(cat, t)}</span>
-                </button>
-              )
-            })}
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-sand-green/30 bg-sand-green/10 px-3.5 py-2.5 max-w-xl">
+            <HiSparkles className="mt-0.5 h-4 w-4 shrink-0 text-sand-green-dark" aria-hidden />
+            <p className="flex-1 min-w-0 text-xs md:text-sm text-ink/70 leading-relaxed">{t('home_welcome_message')}</p>
           </div>
-
-          {!autosaveDismissed && (
-            <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-sand-green/30 bg-sand-green/10 px-3.5 py-2.5">
-              <HiSparkles className="mt-0.5 h-4 w-4 shrink-0 text-sand-green-dark" aria-hidden />
-              <p className="flex-1 min-w-0 text-xs text-ink/70 leading-relaxed">
-                <span className="font-medium text-ink/85">{t('home_auto_save_title')}</span>
-                {' — '}
-                {t('home_auto_save_hint')}
-              </p>
-              <button
-                type="button"
-                onClick={dismissAutosaveTip}
-                aria-label={t('dismiss')}
-                className="shrink-0 rounded-lg p-1 text-warm-gray/70 hover:text-ink hover:bg-soft-brown/20 transition-colors"
-              >
-                <FiX className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* Projects list */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-serif text-xl md:text-2xl text-ink">
-            {filter === 'ALL' ? t('recent_projects') : categoryLabel(filter, t)}
-          </h2>
-          {filter !== 'ALL' && (
-            <button
-              onClick={() => setFilter('ALL')}
-              className="inline-flex items-center gap-1 text-xs text-warm-gray hover:text-ink transition-colors"
-            >
-              <FiX className="text-sm" />
-              {t('clear_filter')}
-            </button>
-          )}
-        </div>
-
-        {loading ? (
-          <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
-        ) : error ? (
-          <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
-        ) : filtered.length === 0 ? (
-          <div className="card text-center py-12">
-            <p className="text-warm-gray text-sm">{t('no_projects_yet')}</p>
-            <button
-              onClick={() => navigate(newProjectPath)}
-              className="btn-primary mt-4 text-sm inline-flex items-center gap-1.5"
-            >
-              <FiPlus className="text-base" />
-              {t('create_first_project')}
-            </button>
+      {/* Stats */}
+      <section className="card space-y-6 p-5 md:p-7">
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <GrProjects className="text-sand-green-dark text-lg" />
+            <h2 className="font-serif text-lg text-ink">{t('nav_projects')}</h2>
+            <span className="rounded-full bg-sand-green/25 px-2 py-0.5 text-xs font-medium text-ink/70 tabular-nums">
+              {totalProjects}
+            </span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {filtered.map(project => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={() => navigate(`/projects/${project.id}?tab=info`)}
+          <div className="grid grid-cols-3 gap-2.5 md:gap-3">
+            {(['KNITTING', 'CROCHET', 'SEWING'] as ProjectCategory[]).map(cat => (
+              <StatTile
+                key={cat}
+                icon={CATEGORY_ICONS[cat]}
+                count={projectCounts[cat]}
+                label={categoryLabel(cat, t)}
+                onClick={() => navigate('/projects')}
               />
             ))}
           </div>
-        )}
+        </div>
+
+        <div className="border-t border-[rgb(var(--border-light))] pt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <ImBooks className="text-sand-green-dark text-lg" />
+            <h2 className="font-serif text-lg text-ink">{t('nav_library')}</h2>
+            <span className="rounded-full bg-sand-green/25 px-2 py-0.5 text-xs font-medium text-ink/70 tabular-nums">
+              {totalLibrary}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 md:gap-3">
+            {ITEM_TYPES.map(type => (
+              <StatTile
+                key={type}
+                icon={TYPE_ICONS[type]}
+                count={libraryCounts[type]}
+                label={typeLabel(type, t)}
+                onClick={() => navigate('/library')}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-[rgb(var(--border-light))] pt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <LiaUserFriendsSolid className="text-sand-green-dark text-lg" />
+            <h2 className="font-serif text-lg text-ink">{t('nav_friends')}</h2>
+            <span className="rounded-full bg-sand-green/25 px-2 py-0.5 text-xs font-medium text-ink/70 tabular-nums">
+              {totalFriends}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 md:gap-3 max-w-md">
+            <StatTile
+              icon={<LiaUserFriendsSolid />}
+              count={stats.friends}
+              label={t('dashboard_friends_count')}
+              onClick={() => navigate('/friends')}
+            />
+            <StatTile
+              icon={<FiPlus />}
+              count={stats.sentRequests}
+              label={t('dashboard_sent_requests_count')}
+              onClick={() => navigate('/friends')}
+            />
+          </div>
+        </div>
       </section>
     </div>
   )

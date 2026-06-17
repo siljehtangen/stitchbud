@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StarIcon, CloseIcon, PlusIcon, LoadingDotsIcon } from './UiIcons'
 
-export type CoverGalleryItem = {
+type CoverGalleryItem = {
   key: string | number
   src: string
   name?: string

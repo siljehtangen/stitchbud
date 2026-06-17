@@ -1,9 +1,9 @@
 import { supabase } from './client'
 
-export { uploadFile, supabase } from './client'
 export { projectsApi } from './projects'
 export { libraryApi } from './library'
 export { friendsApi } from './friends'
+export { dashboardApi } from './dashboard'
 
 export const accountApi = {
   deleteAccount: async (): Promise<void> => {

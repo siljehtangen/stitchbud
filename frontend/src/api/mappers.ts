@@ -10,7 +10,7 @@ import type {
   RowCounter,
 } from '../types'
 
-export interface DbProjectImage {
+interface DbProjectImage {
   id: number
   project_id: number
   material_id: number | null
@@ -20,7 +20,7 @@ export interface DbProjectImage {
   is_main: boolean | null
 }
 
-export interface DbMaterial {
+interface DbMaterial {
   id: number
   project_id: number
   name: string | null
@@ -32,7 +32,7 @@ export interface DbMaterial {
   unit: string | null
 }
 
-export interface DbProjectFile {
+interface DbProjectFile {
   id: number
   project_id: number
   original_name: string | null
@@ -42,7 +42,7 @@ export interface DbProjectFile {
   uploaded_at: number
 }
 
-export interface DbPatternGrid {
+interface DbPatternGrid {
   id: number
   project_id: number
   rows: number
@@ -50,7 +50,7 @@ export interface DbPatternGrid {
   cell_data: string | null
 }
 
-export interface DbRowCounter {
+interface DbRowCounter {
   id: number
   project_id: number
   stitches_per_round: number
@@ -81,7 +81,7 @@ export interface DbProject {
   row_counters?: DbRowCounter[] | DbRowCounter | null
 }
 
-export interface DbLibraryItemImage {
+interface DbLibraryItemImage {
   id: number
   library_item_id: number
   original_name: string | null

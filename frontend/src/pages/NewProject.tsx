@@ -139,7 +139,7 @@ export default function NewProject() {
                     : 'border-soft-brown/30 hover:border-sand-green/50'
                 }`}
               >
-                <span className="text-2xl">{CATEGORY_ICONS[cat]}</span>
+                <span className="text-2xl text-sand-green-dark">{CATEGORY_ICONS[cat]}</span>
                 <span className="text-sm font-medium">{t(`category_${cat.toLowerCase()}` as const)}</span>
               </button>
             ))}

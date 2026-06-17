@@ -1,17 +1,54 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FiCheck, FiX, FiRefreshCw, FiUserPlus } from 'react-icons/fi'
+import { FiCheck, FiX, FiRefreshCw, FiUserPlus, FiClock } from 'react-icons/fi'
+import { LiaUserFriendsSolid } from 'react-icons/lia'
 import { useToast } from '../context/ToastContext'
 import { friendsApi } from '../api'
-import type { Friend, FriendRequest } from '../types'
+import type { Friend, FriendRequest, SentFriendRequest } from '../types'
 import { UserAvatar } from '../components/UserAvatar'
 
 const FRIEND_ERROR_KEYS: Record<string, string> = {
   'You cannot add yourself as a friend.': 'friend_err_self',
   'No user found with that email.': 'friend_err_no_user',
+  'No Stitchbud account found with that email.': 'friend_err_no_user',
   'You are already friends.': 'friend_err_already_friends',
   'You have already sent a friend request to this person.': 'friend_err_already_sent',
   'Profile not found. Please try again.': 'friend_err_profile',
+}
+
+type FriendsOverviewProps = {
+  friendsCount: number
+  sentCount: number
+  incomingCount: number
+}
+
+function FriendsOverview({ friendsCount, sentCount, incomingCount }: FriendsOverviewProps) {
+  const { t } = useTranslation()
+  return (
+    <div className="grid grid-cols-3 gap-2.5 md:gap-3">
+      <div className="rounded-xl border border-[rgb(var(--border-light))] bg-cream/50 px-3.5 py-3 md:py-3.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sand-green/20 text-sand-green-dark text-lg mb-1.5">
+          <LiaUserFriendsSolid />
+        </div>
+        <p className="font-serif text-2xl md:text-3xl leading-none text-ink tabular-nums">{friendsCount}</p>
+        <p className="text-[11px] md:text-xs text-warm-gray mt-1 leading-tight">{t('dashboard_friends_count')}</p>
+      </div>
+      <div className="rounded-xl border border-[rgb(var(--border-light))] bg-cream/50 px-3.5 py-3 md:py-3.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sand-green/20 text-sand-green-dark text-lg mb-1.5">
+          <FiUserPlus />
+        </div>
+        <p className="font-serif text-2xl md:text-3xl leading-none text-ink tabular-nums">{sentCount}</p>
+        <p className="text-[11px] md:text-xs text-warm-gray mt-1 leading-tight">{t('dashboard_sent_requests_count')}</p>
+      </div>
+      <div className="rounded-xl border border-[rgb(var(--border-light))] bg-cream/50 px-3.5 py-3 md:py-3.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sand-green/20 text-sand-green-dark text-lg mb-1.5">
+          <FiClock />
+        </div>
+        <p className="font-serif text-2xl md:text-3xl leading-none text-ink tabular-nums">{incomingCount}</p>
+        <p className="text-[11px] md:text-xs text-warm-gray mt-1 leading-tight">{t('friends_incoming_count')}</p>
+      </div>
+    </div>
+  )
 }
 
 export default function FriendsPage() {
@@ -20,6 +57,7 @@ export default function FriendsPage() {
 
   const [friends, setFriends] = useState<Friend[]>([])
   const [requests, setRequests] = useState<FriendRequest[]>([])
+  const [sentRequests, setSentRequests] = useState<SentFriendRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
@@ -28,16 +66,22 @@ export default function FriendsPage() {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
+  async function reloadFriends() {
+    const [f, r, s] = await Promise.all([
+      friendsApi.getFriends(),
+      friendsApi.getPendingRequests(),
+      friendsApi.getSentRequests(),
+    ])
+    setFriends(f)
+    setRequests(r)
+    setSentRequests(s)
+  }
+
   useEffect(() => {
     let active = true
     setLoading(true)
     setLoadError(false)
-    Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
-      .then(([f, r]) => {
-        if (!active) return
-        setFriends(f)
-        setRequests(r)
-      })
+    reloadFriends()
       .catch(() => {
         if (active) setLoadError(true)
       })
@@ -50,16 +94,15 @@ export default function FriendsPage() {
   }, [reloadKey])
 
   async function handleSendRequest() {
-    if (!emailInput.trim()) return
+    const email = emailInput.trim()
+    if (!email) return
     setSending(true)
     setSendError('')
     try {
-      await friendsApi.sendRequest(emailInput.trim())
-      showToast(t('friends_request_sent'))
+      const result = await friendsApi.sendRequest(email)
+      showToast(result.status === 'ACCEPTED' ? t('friends_accepted') : t('friends_request_sent'))
       setEmailInput('')
-      const [f, r] = await Promise.all([friendsApi.getFriends(), friendsApi.getPendingRequests()])
-      setFriends(f)
-      setRequests(r)
+      await reloadFriends()
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : ''
       const key = FRIEND_ERROR_KEYS[raw]
@@ -85,6 +128,16 @@ export default function FriendsPage() {
       await friendsApi.remove(req.friendshipId)
       setRequests(r => r.filter(r => r.friendshipId !== req.friendshipId))
       showToast(t('friends_declined_toast'))
+    } catch {
+      showToast(t('friends_action_failed'), 'info')
+    }
+  }
+
+  async function handleCancelSent(req: SentFriendRequest) {
+    try {
+      await friendsApi.remove(req.friendshipId)
+      setSentRequests(s => s.filter(r => r.friendshipId !== req.friendshipId))
+      showToast(t('friends_cancelled_toast'))
     } catch {
       showToast(t('friends_action_failed'), 'info')
     }
@@ -118,6 +171,8 @@ export default function FriendsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-serif text-3xl text-ink">{t('nav_friends')}</h1>
+
+      <FriendsOverview friendsCount={friends.length} sentCount={sentRequests.length} incomingCount={requests.length} />
 
       <div className="card space-y-3">
         <p className="text-sm font-medium text-ink">{t('friends_add_heading')}</p>
@@ -176,6 +231,33 @@ export default function FriendsPage() {
                   {t('friends_decline')}
                 </button>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {sentRequests.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-semibold text-ink">
+            {t('friends_sent_heading')} ({sentRequests.length})
+          </p>
+          {sentRequests.map(req => (
+            <div key={req.friendshipId} className="card flex items-center gap-3">
+              <UserAvatar name={req.recipientDisplayName} email={req.recipientEmail} color="blue" />
+              <div className="flex-1 min-w-0">
+                {req.recipientDisplayName && (
+                  <p className="text-sm font-medium text-ink truncate">{req.recipientDisplayName}</p>
+                )}
+                <p className="text-xs text-warm-gray truncate">{req.recipientEmail}</p>
+                <p className="text-[11px] text-warm-gray/80 mt-0.5">{t('friends_sent_pending')}</p>
+              </div>
+              <button
+                onClick={() => handleCancelSent(req)}
+                className="min-h-[44px] px-4 rounded-[14px] border border-[rgb(var(--border-light))] text-warm-gray text-sm hover:bg-soft-brown/10 transition-colors inline-flex items-center gap-1.5 flex-shrink-0"
+              >
+                <FiX className="text-base" />
+                {t('friends_cancel_request')}
+              </button>
             </div>
           ))}
         </div>

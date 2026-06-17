@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName, getColorNameByHex, resolveColorDisplay } from './colors'
+import { COLORS, COLOR_MAP, COLOR_MAP_BY_HEX, getColorName, resolveColorDisplay } from './colors'
 
 describe('COLORS', () => {
   it('every entry has a non-empty name, nameEn, and hex', () => {
@@ -61,23 +61,6 @@ describe('getColorName', () => {
   it('returns the Norwegian name for any other lang', () => {
     expect(getColorName(sample, 'no')).toBe(sample.name)
     expect(getColorName(sample, 'fr')).toBe(sample.name)
-  })
-})
-
-describe('getColorNameByHex', () => {
-  it('returns the Norwegian name for a known hex in Norwegian', () => {
-    const color = COLORS[0]
-    expect(getColorNameByHex(color.hex, 'no')).toBe(color.name)
-  })
-
-  it('returns the English name for a known hex in English', () => {
-    const color = COLORS[0]
-    expect(getColorNameByHex(color.hex, 'en')).toBe(color.nameEn)
-  })
-
-  it('returns the hex itself for an unknown hex', () => {
-    expect(getColorNameByHex('#ABCDEF', 'no')).toBe('#ABCDEF')
-    expect(getColorNameByHex('#ABCDEF', 'en')).toBe('#ABCDEF')
   })
 })
 

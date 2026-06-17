@@ -65,7 +65,7 @@ const S = StyleSheet.create({
 const MAX_PATTERN_ROWS = 60
 const MAX_PATTERN_COLS = 80
 
-export interface PdfLabels {
+interface PdfLabels {
   info: string
   materials: string
   recipe: string
@@ -76,7 +76,7 @@ export interface PdfLabels {
   createdBy: string
 }
 
-export interface PdfProps {
+interface PdfProps {
   project: Project
   name: string
   description: string

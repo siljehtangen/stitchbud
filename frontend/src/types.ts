@@ -112,6 +112,30 @@ export interface FriendRequest {
   createdAt: number
 }
 
+export interface SentFriendRequest {
+  friendshipId: number
+  recipientId: string
+  recipientDisplayName: string | null
+  recipientEmail: string
+  createdAt: number
+}
+
+export interface SendRequestResult {
+  status: 'PENDING' | 'ACCEPTED'
+  friendshipId: number
+  userId: string
+  displayName: string | null
+  email: string
+}
+
+export interface DashboardStats {
+  projects: Record<ProjectCategory, number>
+  library: Record<LibraryItemType, number>
+  friends: number
+  sentRequests: number
+  incomingRequests: number
+}
+
 export interface PatternCell {
   row: number
   col: number

@@ -5,9 +5,9 @@ import type { ProjectCategory } from '../types'
 export const CATEGORIES: ProjectCategory[] = ['KNITTING', 'CROCHET', 'SEWING']
 
 export const CATEGORY_ICONS: Record<ProjectCategory, React.ReactNode> = {
-  KNITTING: <GiChopsticks className="text-sand-green-dark" />,
-  CROCHET: <GiPirateHook className="text-sand-green-dark" />,
-  SEWING: <GiSewingMachine className="text-sand-green-dark" />,
+  KNITTING: <GiChopsticks />,
+  CROCHET: <GiPirateHook />,
+  SEWING: <GiSewingMachine />,
 }
 
 export function categoryLabel(cat: ProjectCategory, t: TFunction): string {
@@ -26,7 +26,7 @@ export function categoryBadgeClass(cat: ProjectCategory): string {
  * identical across crafts. Used for category badges, dashboard stat tiles, and
  * progress bars.
  */
-export type CraftAccent = {
+type CraftAccent = {
   base: string
   bg: string
   text: string

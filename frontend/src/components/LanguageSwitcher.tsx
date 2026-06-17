@@ -3,14 +3,14 @@ import { FiGlobe } from 'react-icons/fi'
 import i18n from '../i18n'
 import { useTheme, type Theme } from '../context/ThemeContext'
 
-export const THEMES: { id: Theme; color: string }[] = [
+const THEMES: { id: Theme; color: string }[] = [
   { id: 'beige', color: '#C8A87A' },
   { id: 'blue', color: '#6AA8C4' },
   { id: 'green', color: '#78A073' },
   { id: 'lavender', color: '#9A87CA' },
 ]
 
-export function setLang(lang: string) {
+function setLang(lang: string) {
   i18n.changeLanguage(lang)
   localStorage.setItem('lang', lang)
 }

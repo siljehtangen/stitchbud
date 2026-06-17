@@ -180,7 +180,7 @@ function FriendProjectCard({
       {coverUrls[0] ? (
         <img src={coverUrls[0]} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" loading="lazy" />
       ) : (
-        <div className="w-12 h-12 rounded-xl bg-sand-blue/30 flex items-center justify-center text-xl flex-shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-sand-blue/30 flex items-center justify-center text-xl text-sand-green-dark flex-shrink-0">
           {CATEGORY_ICONS[project.category]}
         </div>
       )}

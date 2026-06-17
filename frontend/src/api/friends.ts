@@ -1,7 +1,14 @@
-import type { Friend, FriendRequest, Project } from '../types'
+import type { Friend, FriendRequest, SentFriendRequest, SendRequestResult, Project } from '../types'
 import { normalizeProject } from '../projectOverviewMedia'
 import { supabase, raiseError } from './client'
-import { friendSchema, friendRequestSchema, projectSchema, safeParsed } from './schemas'
+import {
+  friendSchema,
+  friendRequestSchema,
+  sentFriendRequestSchema,
+  sendRequestResultSchema,
+  projectSchema,
+  safeParsed,
+} from './schemas'
 import { rowToProject, type DbProject } from './mappers'
 import { withSignedProjectMedia, withSignedProjectsMedia } from './media'
 import { z } from 'zod'
@@ -19,10 +26,16 @@ export const friendsApi = {
     return safeParsed(z.array(friendRequestSchema), data ?? [], 'FriendRequest[]')
   },
 
-  sendRequest: async (email: string): Promise<Friend> => {
+  getSentRequests: async (): Promise<SentFriendRequest[]> => {
+    const { data, error } = await supabase.rpc('get_sent_requests')
+    raiseError(error, 'Failed to load sent friend requests')
+    return safeParsed(z.array(sentFriendRequestSchema), data ?? [], 'SentFriendRequest[]')
+  },
+
+  sendRequest: async (email: string): Promise<SendRequestResult> => {
     const { data, error } = await supabase.rpc('send_friend_request', { target_email: email })
     raiseError(error, 'Failed to send friend request')
-    return safeParsed(friendSchema, data, 'Friend')
+    return safeParsed(sendRequestResultSchema, data, 'SendRequestResult')
   },
 
   acceptRequest: async (friendshipId: number): Promise<Friend> => {

@@ -112,6 +112,39 @@ export const friendRequestSchema = z.object({
   createdAt: z.number(),
 })
 
+export const sendRequestResultSchema = z.object({
+  status: z.enum(['PENDING', 'ACCEPTED']),
+  friendshipId: z.number(),
+  userId: z.string(),
+  displayName: z.string().nullable(),
+  email: z.string(),
+})
+
+export const dashboardStatsSchema = z.object({
+  projects: z.object({
+    KNITTING: z.number(),
+    CROCHET: z.number(),
+    SEWING: z.number(),
+  }),
+  library: z.object({
+    YARN: z.number(),
+    FABRIC: z.number(),
+    KNITTING_NEEDLE: z.number(),
+    CROCHET_HOOK: z.number(),
+  }),
+  friends: z.number(),
+  sentRequests: z.number(),
+  incomingRequests: z.number(),
+})
+
+export const sentFriendRequestSchema = z.object({
+  friendshipId: z.number(),
+  recipientId: z.string(),
+  recipientDisplayName: z.string().nullable(),
+  recipientEmail: z.string(),
+  createdAt: z.number(),
+})
+
 type SchemaIssue = z.ZodIssue
 type SchemaReporter = (context: string, issues: SchemaIssue[]) => void
 

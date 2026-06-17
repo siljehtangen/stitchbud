@@ -16,7 +16,6 @@ export { ColorPicker } from './ColorPicker'
 
 export const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
 export const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
-export const FILE_ACCEPT = 'image/*,.pdf,.doc,.docx'
 
 export const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
   YARN: <PiYarnFill className="text-sand-green-dark" />,

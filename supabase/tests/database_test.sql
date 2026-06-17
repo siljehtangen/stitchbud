@@ -5,7 +5,7 @@
 -- friend-request flow (auto-accept).
 
 begin;
-select plan(18);
+select plan(22);
 
 -- Use fixed UUIDs so auth.uid() (which casts the JWT sub to uuid) is happy.
 \set u1 '00000000-0000-0000-0000-000000000001'
@@ -16,6 +16,7 @@ select has_table('public', 'projects', 'projects table exists');
 select has_function('public', 'send_friend_request', ARRAY['text'], 'send_friend_request exists');
 select has_function('public', 'get_friend_project', ARRAY['text', 'bigint'], 'get_friend_project exists');
 select has_function('public', 'now_millis', 'now_millis exists');
+select has_function('public', 'get_dashboard_stats', 'get_dashboard_stats exists');
 
 -- ── Project creation side-effects (create_project_defaults trigger) ──────────
 select lives_ok(
@@ -78,9 +79,10 @@ values ('00000000-0000-0000-0000-000000000001', 'one@test.com', 'One', 0),
 
 -- Act as user 1 and send a request to user 2.
 select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-000000000001')::text, true);
-select lives_ok(
-  $$select send_friend_request('two@test.com')$$,
-  'user 1 can send a friend request to user 2'
+select is(
+  (select send_friend_request('two@test.com') ->> 'status'),
+  'PENDING',
+  'sending a new request returns PENDING status'
 );
 select is(
   (select status from friendships
@@ -88,6 +90,11 @@ select is(
       and recipient_id = '00000000-0000-0000-0000-000000000002'),
   'PENDING',
   'new friend request is PENDING'
+);
+select is(
+  jsonb_array_length(get_sent_requests()),
+  1,
+  'requester sees one outgoing pending request'
 );
 select throws_ok(
   $$select send_friend_request('two@test.com')$$,
@@ -102,11 +109,19 @@ select throws_ok(
   'cannot add yourself'
 );
 
+select throws_ok(
+  $$select send_friend_request('nobody@example.com')$$,
+  'P0001',
+  null,
+  'cannot send request to email without a Stitchbud account'
+);
+
 -- Act as user 2 and send back: should auto-accept the existing request.
 select set_config('request.jwt.claims', json_build_object('sub', '00000000-0000-0000-0000-000000000002')::text, true);
-select lives_ok(
-  $$select send_friend_request('one@test.com')$$,
-  'reverse request auto-accepts'
+select is(
+  (select send_friend_request('one@test.com') ->> 'status'),
+  'ACCEPTED',
+  'reverse request auto-accepts and returns ACCEPTED status'
 );
 select is(
   (select status from friendships
@@ -114,6 +129,11 @@ select is(
       and recipient_id = '00000000-0000-0000-0000-000000000002'),
   'ACCEPTED',
   'friendship is now ACCEPTED'
+);
+select is(
+  (get_dashboard_stats() ->> 'friends')::int,
+  1,
+  'dashboard stats report one accepted friend'
 );
 
 select * from finish();

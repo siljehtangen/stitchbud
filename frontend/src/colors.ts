@@ -72,12 +72,6 @@ export function getColorName(color: ColorOption, lang: string): string {
   return lang === 'en' ? color.nameEn : color.name
 }
 
-export function getColorNameByHex(hex: string, lang: string): string {
-  const color = COLOR_MAP_BY_HEX[hex]
-  if (!color) return hex
-  return getColorName(color, lang)
-}
-
 export function resolveColorDisplay(name: string, lang: string): { hex: string; displayName: string } {
   const hex = COLOR_MAP[name] ?? '#ccc'
   const colorEntry = COLOR_MAP_BY_HEX[hex]
