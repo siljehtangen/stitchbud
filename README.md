@@ -234,6 +234,16 @@ All API responses are validated at runtime with [Zod](https://zod.dev/) schemas 
 
 Run `npm run build` to generate `dist/stats.html` — a bundle size visualizer via [rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer).
 
+### Error monitoring (Sentry)
+
+The Sentry integration is wired up in code ([`src/sentry.ts`](frontend/src/sentry.ts)) but **off by default** — it only initialises when `VITE_SENTRY_DSN` is set, so local dev and the current build run with no error reporting. To turn it on later:
+
+1. **Set the DSN.** Add `VITE_SENTRY_DSN=<your-dsn>` to `frontend/.env.local` (local) or the Vercel project env (production). With no DSN, `initSentry()` is a no-op and `reportError()` does nothing — nothing else needs to change.
+2. **(Optional) Tag releases.** Set `VITE_SENTRY_RELEASE` in the build env (e.g. the git commit SHA) so events are attributed to a specific build.
+3. **(Optional) Readable production stack traces.** Frontend errors will report with *minified* stack traces until source maps are uploaded to Sentry. To get original-source traces, add [`@sentry/vite-plugin`](https://github.com/getsentry/sentry-javascript-bundler-plugins/tree/main/packages/vite-plugin) to the build with a `SENTRY_AUTH_TOKEN` secret (it uploads and then strips source maps so they aren't served publicly). Not needed until Sentry is actually in use.
+
+Once a DSN is present, uncaught errors (via the React error boundary) and API schema-drift warnings are sent automatically — no other code changes required.
+
 ---
 
 ## CI/CD
@@ -242,10 +252,10 @@ GitHub Actions runs on every push and pull request to `main`:
 
 | Job | Steps |
 |---|---|
-| `frontend` | Install → Lint → Type-check → Test with coverage → Build → Playwright E2E |
+| `frontend` | Install (`npm ci`) → Audit (`npm audit`) → Lint → Type-check → Test with coverage → Build → Playwright E2E |
 | `supabase` | `supabase start` (applies all migrations) → `supabase test db` (pgTAP) → Deno Edge Function tests |
 
-Both jobs must pass before a PR can be merged. Configuration: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Both jobs must pass before a PR can be merged. Configuration: [`.github/workflows/ci.yml`](.github/workflows/ci.yml). [Dependabot](.github/dependabot.yml) opens weekly PRs for npm and GitHub Actions updates.
 
 ---
 
@@ -294,6 +304,10 @@ Vercel ──(supabase-js + JWT)──▶ Supabase
 
 5. Deploy.
 6. Add the Vercel URL to **Supabase → Authentication → URL Configuration → Redirect URLs**.
+
+> **Security headers** — [`frontend/vercel.json`](frontend/vercel.json) sets a Content-Security-Policy plus HSTS, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` on every response. The CSP allowlists the Supabase project, Google avatar host, and Sentry ingest; update it if you add a new external origin (e.g. a different Supabase project ref).
+
+> **Sentry release** — set `VITE_SENTRY_RELEASE` in the Vercel build env (e.g. the git commit SHA) so production errors are tagged with the build that produced them. Leave unset to omit release tagging.
 
 ### Google OAuth — production redirect URLs
 
