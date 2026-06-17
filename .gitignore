@@ -8,6 +8,10 @@ frontend/dist/
 frontend/build/
 frontend/coverage/
 
+# Playwright (e2e test output)
+frontend/playwright-report/
+frontend/test-results/
+
 # Frontend - Next.js
 frontend/.next/
 
