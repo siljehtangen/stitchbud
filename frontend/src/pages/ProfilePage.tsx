@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { FiCheck, FiX, FiLogOut, FiRefreshCw, FiTrash2 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { accountApi } from '../api'
+import { accountApi, projectsApi, libraryApi, friendsApi } from '../api'
 import { UserAvatar } from '../components/UserAvatar'
+import { ThemeColorPicker, LanguageSwitcher } from '../components/LanguageSwitcher'
+import { useAsyncData } from '../hooks/useAsyncData'
 
 function DangerAction({
   title,
@@ -34,16 +36,18 @@ function DangerAction({
   const colors =
     tone === 'orange'
       ? {
-          border: 'border-orange-100',
-          warning: 'text-orange-600',
-          bg: 'bg-orange-500 hover:bg-orange-600',
-          trigger: 'border-orange-200 text-orange-500 hover:bg-orange-50',
+          row: 'bg-[#fdf6f1] border-[#ecd4c4]',
+          title: 'text-[#b06a4f]',
+          warning: 'text-[#b06a4f]',
+          bg: 'bg-[#c8956b] hover:brightness-95',
+          trigger: 'border-[#e2b79b] text-[#b06a4f] hover:bg-[#f7e8dd]',
         }
       : {
-          border: 'border-red-100',
-          warning: 'text-red-600',
-          bg: 'bg-red-500 hover:bg-red-600',
-          trigger: 'border-red-200 text-red-500 hover:bg-red-50',
+          row: 'bg-[#fdf3f1] border-[#ecc9c4]',
+          title: 'text-[#c0705f]',
+          warning: 'text-[#c0705f]',
+          bg: 'bg-[#c0705f] hover:brightness-95',
+          trigger: 'border-[#e2b0a8] text-[#c0705f] hover:bg-[#f8e6e2]',
         }
 
   async function handleConfirm() {
@@ -59,9 +63,9 @@ function DangerAction({
   }
 
   return (
-    <div className={`card border ${colors.border} space-y-3`}>
+    <div className={`rounded-[16px] border p-4 space-y-3 ${colors.row}`}>
       <div>
-        <p className="text-sm font-medium text-ink">{title}</p>
+        <p className={`text-sm font-semibold ${colors.title}`}>{title}</p>
         <p className="text-xs text-warm-gray mt-0.5">{description}</p>
       </div>
       {confirming ? (
@@ -99,6 +103,15 @@ function DangerAction({
   )
 }
 
+function StatTile({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="card flex flex-col items-center justify-center text-center py-5 px-2">
+      <span className="font-serif text-3xl leading-none text-ink">{value}</span>
+      <span className="text-xs text-warm-gray mt-1.5">{label}</span>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
@@ -108,59 +121,100 @@ export default function ProfilePage() {
   const email = user?.email ?? ''
   const avatarUrl = user?.user_metadata?.avatar_url ?? null
 
+  const { data: projects } = useAsyncData(() => projectsApi.getAll(), [])
+  const { data: materials } = useAsyncData(() => libraryApi.getAll(), [])
+  const { data: friends } = useAsyncData(() => friendsApi.getFriends(), [])
+
   async function handleSignOut() {
     await signOut()
     navigate('/', { replace: true })
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="mx-auto w-full max-w-[680px] space-y-6">
       <h1 className="font-serif text-3xl text-ink">{t('profile_heading')}</h1>
 
-      <div className="card flex items-center gap-4">
-        <UserAvatar name={displayName} email={email} avatarUrl={avatarUrl} size="lg" />
-        <div className="min-w-0">
-          {displayName && <p className="font-semibold text-ink truncate">{displayName}</p>}
+      {/* Header card */}
+      <div
+        className="relative overflow-hidden rounded-[22px] p-6 flex items-center gap-4"
+        style={{
+          background: 'linear-gradient(135deg, rgb(var(--secondary-light)), rgb(var(--accent-light)))',
+        }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-12 w-44 h-44 rounded-full opacity-50 blur-2xl"
+          style={{ background: 'radial-gradient(circle, rgba(255,255,255,.8), transparent 70%)' }}
+        />
+        <div className="relative rounded-full ring-[3px] ring-white shadow-warm">
+          <UserAvatar name={displayName} email={email} avatarUrl={avatarUrl} size="lg" />
+        </div>
+        <div className="relative min-w-0">
+          {displayName && <p className="font-serif text-2xl leading-tight text-ink truncate">{displayName}</p>}
           <p className="text-sm text-warm-gray truncate">{email}</p>
+          <p className="text-xs text-warm-gray/90 mt-1 italic">{t('profile_tagline')}</p>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatTile value={projects.length} label={t('profile_stat_projects')} />
+        <StatTile value={materials.length} label={t('profile_stat_materials')} />
+        <StatTile value={friends.length} label={t('profile_stat_friends')} />
+      </div>
+
+      {/* Preferences */}
+      <div className="card divide-y divide-[rgb(var(--border-light))] p-0">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <span className="text-sm font-medium text-ink">{t('profile_theme')}</span>
+          <ThemeColorPicker />
+        </div>
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <span className="text-sm font-medium text-ink">{t('profile_language')}</span>
+          <LanguageSwitcher />
         </div>
       </div>
 
       <button
         onClick={handleSignOut}
-        className="btn-secondary py-3 text-sm inline-flex items-center justify-center gap-1.5"
+        className="btn-secondary w-full py-3 text-sm inline-flex items-center justify-center gap-1.5"
       >
         <FiLogOut className="text-base" />
         {t('profile_sign_out')}
       </button>
 
-      <DangerAction
-        tone="orange"
-        title={t('reset_data_heading')}
-        description={t('reset_data_description')}
-        warning={t('reset_data_confirm_warning')}
-        triggerLabel={t('reset_data_btn')}
-        confirmLabel={t('reset_data_confirm_btn')}
-        pendingLabel={t('resetting')}
-        onConfirm={async () => {
-          await accountApi.resetData()
-          showToast(t('data_reset_toast'))
-        }}
-      />
+      {/* Danger zone */}
+      <div className="space-y-3 pt-2">
+        <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#b06a4f]">{t('profile_danger_zone')}</p>
+        <DangerAction
+          tone="orange"
+          title={t('reset_data_heading')}
+          description={t('reset_data_description')}
+          warning={t('reset_data_confirm_warning')}
+          triggerLabel={t('reset_data_btn')}
+          confirmLabel={t('reset_data_confirm_btn')}
+          pendingLabel={t('resetting')}
+          onConfirm={async () => {
+            await accountApi.resetData()
+            showToast(t('data_reset_toast'))
+          }}
+        />
 
-      <DangerAction
-        tone="red"
-        title={t('delete_account_heading')}
-        description={t('delete_account_description')}
-        warning={t('delete_account_confirm_warning')}
-        triggerLabel={t('delete_account_btn')}
-        confirmLabel={t('delete_account_confirm_btn')}
-        pendingLabel={t('deleting')}
-        onConfirm={async () => {
-          await accountApi.deleteAccount()
-          await signOut()
-          navigate('/', { replace: true })
-        }}
-      />
+        <DangerAction
+          tone="red"
+          title={t('delete_account_heading')}
+          description={t('delete_account_description')}
+          warning={t('delete_account_confirm_warning')}
+          triggerLabel={t('delete_account_btn')}
+          confirmLabel={t('delete_account_confirm_btn')}
+          pendingLabel={t('deleting')}
+          onConfirm={async () => {
+            await accountApi.deleteAccount()
+            await signOut()
+            navigate('/', { replace: true })
+          }}
+        />
+      </div>
     </div>
   )
 }

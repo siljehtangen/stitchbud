@@ -146,7 +146,7 @@ export function LibraryItemForm({
           {t('lib_item_type')}
           <span className="text-red-500 ml-0.5">*</span>
         </label>
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {ITEM_TYPES.map(type => (
             <button
               key={type}
@@ -156,13 +156,13 @@ export function LibraryItemForm({
                 setColors([])
                 clearLibraryPhotos()
               }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-[14px] border-2 text-xs font-medium transition-all ${
                 selectedType === type
-                  ? 'bg-sand-green text-ink'
-                  : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
+                  ? 'border-sand-green-dark bg-sand-green/15 text-ink'
+                  : 'border-[rgb(var(--border-light))] bg-white text-warm-gray hover:border-sand-green/50'
               }`}
             >
-              <span>{TYPE_ICONS[type]}</span>
+              <span className="text-xl">{TYPE_ICONS[type]}</span>
               <span>{typeLabel(type, t)}</span>
             </button>
           ))}
@@ -256,7 +256,7 @@ export function LibraryItemForm({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-2 pt-1">
+      <div className="border-t border-[rgb(var(--border-light))] pt-3 flex items-center justify-end gap-2">
         {onCancel && (
           <button type="button" onClick={onCancel} className="btn-ghost text-sm inline-flex items-center gap-1.5">
             <FiX className="text-base" />

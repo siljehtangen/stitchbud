@@ -8,7 +8,7 @@ import { CATEGORY_ICONS, CATEGORIES } from '../constants/categories'
 import { MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../components/LibraryItemForm'
 import { CoverImageGallery } from '../components/CoverImageGallery'
 import { DateField } from '../components/DateField'
-import { FiArrowLeft, FiPlus } from 'react-icons/fi'
+import { FiArrowLeft, FiPlus, FiX } from 'react-icons/fi'
 
 type CoverImageEntry = { file: File; preview: string; isMain: boolean }
 
@@ -94,7 +94,7 @@ export default function NewProject() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-[620px] space-y-5">
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
@@ -103,18 +103,25 @@ export default function NewProject() {
         >
           <FiArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-serif text-3xl text-ink">{t('new_project')}</h1>
+        <div>
+          <h1 className="font-serif text-3xl text-ink leading-tight">{t('new_project')}</h1>
+          <p className="text-sm text-warm-gray">{t('new_project_sub')}</p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-        <CoverImageGallery
-          items={coverImages.map((img, i) => ({ key: i, src: img.preview, isMain: img.isMain }))}
-          max={MAX_LIBRARY_PHOTOS}
-          onSetMain={key => setMainImage(key as number)}
-          onRemove={key => removeImage(key as number)}
-          onAdd={() => coverRef.current?.click()}
-          onFile={addCoverFile}
-        />
+      <form onSubmit={handleSubmit} className="card space-y-5 p-6 sm:p-7">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-ink/80">{t('cover_photos_label')}</label>
+          <p className="text-xs text-warm-gray -mt-1">{t('cover_photos_hint')}</p>
+          <CoverImageGallery
+            items={coverImages.map((img, i) => ({ key: i, src: img.preview, isMain: img.isMain }))}
+            max={MAX_LIBRARY_PHOTOS}
+            onSetMain={key => setMainImage(key as number)}
+            onRemove={key => removeImage(key as number)}
+            onAdd={() => coverRef.current?.click()}
+            onFile={addCoverFile}
+          />
+        </div>
         <input
           ref={coverRef}
           type="file"
@@ -151,7 +158,7 @@ export default function NewProject() {
             {t('project_name_label')} <span className="text-red-500">*</span>
           </label>
           <input
-            className="input"
+            className="input max-w-none"
             value={name}
             onChange={e => {
               setName(e.target.value)
@@ -164,7 +171,7 @@ export default function NewProject() {
         <div>
           <label className="block text-sm font-medium text-ink/80 mb-1.5">{t('description_label')}</label>
           <textarea
-            className="textarea"
+            className="textarea max-w-none"
             rows={3}
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -183,7 +190,18 @@ export default function NewProject() {
           <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
         )}
 
-        <div className="flex justify-end">
+        <div className="border-t border-[rgb(var(--border-light))] -mx-6 sm:-mx-7" />
+
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={saving}
+            className="btn-ghost text-sm inline-flex items-center gap-1.5"
+          >
+            <FiX className="text-base" />
+            {t('cancel')}
+          </button>
           <button
             type="submit"
             disabled={saving}

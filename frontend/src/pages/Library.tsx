@@ -78,9 +78,18 @@ export default function Library() {
   )
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-3xl text-ink">{adding ? t('lib_create_new') : t('library_heading')}</h1>
+    <div className="mx-auto w-full max-w-[940px] space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-serif text-3xl text-ink leading-tight">
+            {adding ? t('lib_create_new') : t('library_heading')}
+          </h1>
+          <p className="text-sm text-warm-gray">
+            {adding
+              ? t('lib_create_sub')
+              : t('library_count', { materials: items.length, colors: availableColors.length })}
+          </p>
+        </div>
         {!adding && (
           <button
             onClick={() => {
@@ -96,7 +105,7 @@ export default function Library() {
       </div>
 
       {adding ? (
-        <div className="card">
+        <div className="card mx-auto w-full max-w-[600px] p-6 sm:p-7">
           <LibraryItemForm
             selectedType={selectedType}
             onTypeChange={setSelectedType}

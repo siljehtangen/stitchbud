@@ -53,9 +53,14 @@ export default function Projects() {
   }, [mode])
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-[940px] space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="font-serif text-3xl text-ink">{t('nav_projects')}</h1>
+        <div>
+          <h1 className="font-serif text-3xl text-ink leading-tight">{t('nav_projects')}</h1>
+          {mode === 'mine' && !loading && !error && (
+            <p className="text-sm text-warm-gray">{t('projects_count', { n: projects.length })}</p>
+          )}
+        </div>
         <button
           onClick={() => navigate(newProjectPath)}
           className="btn-primary text-sm whitespace-nowrap inline-flex items-center gap-1.5"
