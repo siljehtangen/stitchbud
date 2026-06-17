@@ -57,11 +57,12 @@ Stitchbud runs entirely on Supabase — there is no separate backend server to h
 | Privileged ops | Supabase Edge Function (Deno/TypeScript) for account deletion |
 | Database | PostgreSQL (Supabase) · migrations via Supabase CLI |
 | Auth | Supabase Auth · Google OAuth 2.0 (JWT) |
-| Storage | Supabase Storage (image and file uploads) |
+| Storage | Supabase Storage — **private** `stitchbud-files` bucket; short-lived signed URLs; server-enforced size/type limits |
 | Frontend | React 18 · TypeScript · Vite · Tailwind CSS · React Router v6 · i18next · supabase-js |
 | Build | npm · Supabase CLI |
 | Testing | Vitest · React Testing Library · Playwright (E2E) · pgTAP (database) · Deno (Edge Function) |
 | Quality | ESLint · Prettier · Husky · Zod (runtime validation) |
+| Monitoring | Sentry (optional) — frontend error & API schema-drift reporting |
 | CI/CD | GitHub Actions · Vercel · Supabase |
 
 ---
@@ -98,8 +99,11 @@ The schema is owned by the ordered SQL files in `supabase/migrations/`:
 2. `..._column_defaults.sql` — defaults that let the client insert rows directly (timestamps are Unix epoch milliseconds).
 3. `..._rls.sql` — Row-Level Security: owners access their own rows; child tables inherit ownership from their parent.
 4. `..._functions_and_triggers.sql` — profile sync from `auth.users`, project-creation side effects, image limits / main-image promotion, `updated_at` maintenance, and the friendship + friend-project functions.
-5. `..._storage.sql` — the public `stitchbud-files` bucket and its access policies.
+5. `..._storage.sql` — the `stitchbud-files` bucket and its access policies.
 6. `..._api_grants.sql` — PostgREST privileges for the `authenticated` role (tables, sequences, RPC functions).
+7. `..._fk_project_images_material.sql` — FK from `project_images.material_id` to `materials` (`on delete set null`).
+8. `..._storage_upload_limits.sql` — server-enforced `file_size_limit` (25 MB) and `allowed_mime_types` on the bucket.
+9. `..._storage_private_bucket.sql` — makes the bucket **private** and restricts object reads to the owner (and friends, for public-project media). Objects are served via short-lived signed URLs minted client-side at fetch time (`frontend/src/api/media.ts`).
 
 To change the schema, add a new migration with `supabase migration new <name>` — never edit an applied migration.
 
@@ -122,6 +126,8 @@ Create `frontend/.env.local`:
 ```env
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<your-anon-key>
+# Optional — enables Sentry error reporting. Leave unset to disable (e.g. in dev).
+VITE_SENTRY_DSN=<your-sentry-dsn>
 ```
 
 ---
@@ -188,15 +194,15 @@ npm run test:coverage     # single run with coverage report + threshold check
 
 Coverage is enforced via thresholds in `vite.config.ts`. HTML report: `frontend/coverage/`.
 
-**~232 tests across 21 files:**
+**~259 tests across 26 files:**
 
 | Area | Files |
 |---|---|
 | Hooks | `useAutoSave`, `useAsyncData`, `useDebouncedCallback`, `useLibraryFilter`, `useProjectFilter`, `useConfirmDelete`, `useFileUpload`, `useProjectTabs` |
 | Context | `ToastContext`, `ConfirmDialogContext`, `ThemeContext` |
 | Components | `ProjectCard`, `LibraryCard`, `Field`, `ErrorBoundary` |
-| API | `schemas` (Zod validation), `mappers` (row→DTO conversion, file-type detection) |
-| Utilities | `libraryUtils`, `projectUtils`, `projectOverviewMedia`, `colors` |
+| API | `schemas` (Zod validation), `mappers` (row→DTO conversion, file-type detection), `client` (storage-path parsing), `media` (signed-URL resolution) |
+| Utilities | `libraryUtils`, `projectUtils`, `projectOverviewMedia`, `colors`, `url` (link-safety validation) |
 
 ### E2E
 
@@ -224,7 +230,7 @@ npm run type-check    # tsc --noEmit
 
 A [Husky](https://typicode.com/husky) pre-commit hook runs `lint-staged` on every commit — ESLint + Prettier are applied to all staged `.ts`/`.tsx` files.
 
-All API responses are validated at runtime with [Zod](https://zod.dev/) schemas in `src/api/schemas.ts`. Schema mismatches log a `console.warn` but never crash the UI.
+All API responses are validated at runtime with [Zod](https://zod.dev/) schemas in `src/api/schemas.ts`. Schema mismatches never crash the UI — they log a `console.warn` by default, and are forwarded to Sentry when `VITE_SENTRY_DSN` is configured (via `setSchemaMismatchReporter`, wired up in `src/sentry.ts`).
 
 Run `npm run build` to generate `dist/stats.html` — a bundle size visualizer via [rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer).
 
@@ -265,8 +271,13 @@ Vercel ──(supabase-js + JWT)──▶ Supabase
    supabase functions deploy delete-account
    ```
 
-3. The `stitchbud-files` storage bucket and all access policies are created by the migrations. (`supabase db push` runs them on the remote database.)
-4. No secrets to set: the Edge Function uses the platform-provided `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` automatically.
+3. The `stitchbud-files` storage bucket and all access policies are created by the migrations. (`supabase db push` runs them on the remote database.) The bucket is **private**, so deploy the frontend (which mints signed URLs) close to running `db push` — an older deployed frontend cannot display images once the bucket is private.
+4. The Edge Function uses the platform-provided `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` automatically. Optionally set `ALLOWED_ORIGIN` to lock the function's CORS to your frontend origin (it defaults to `*`):
+
+   ```bash
+   supabase secrets set ALLOWED_ORIGIN=https://<your-app-domain>
+   supabase functions deploy delete-account   # redeploy to pick up the secret
+   ```
 
 ### Vercel (frontend)
 
@@ -279,6 +290,7 @@ Vercel ──(supabase-js + JWT)──▶ Supabase
 |---|---|
 | `VITE_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | your project's anon/public key |
+| `VITE_SENTRY_DSN` | *(optional)* your Sentry DSN — enables error reporting |
 
 5. Deploy.
 6. Add the Vercel URL to **Supabase → Authentication → URL Configuration → Redirect URLs**.
