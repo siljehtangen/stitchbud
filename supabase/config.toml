@@ -31,12 +31,14 @@ port = 54324
 enabled = true
 file_size_limit = "50MiB"
 
-# Public bucket used for project/library images and file attachments.
-# The bucket and its access policies are also created in SQL migrations so a
-# remote `supabase db push` provisions them too.
+# Bucket for project/library images and file attachments. The bucket and its
+# access policies are also created in SQL migrations so a remote
+# `supabase db push` provisions them too. The migrations make it private and
+# cap uploads at 25 MB; these values mirror that so local dev matches prod
+# (otherwise a file that uploads locally could be rejected in production).
 [storage.buckets.stitchbud-files]
-public = true
-file_size_limit = "50MiB"
+public = false
+file_size_limit = "25MiB"
 
 [auth]
 enabled = true
