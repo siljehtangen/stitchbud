@@ -7,7 +7,9 @@ export function libraryItemImageUrl(item: { images?: { storedName: string; isMai
 }
 
 export function isImageUrl(url: string): boolean {
-  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url)
+  // Signed storage URLs append ?token=… so the extension is not at the end of the string.
+  const path = url.split(/[?#]/)[0]
+  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(path)
 }
 
 /** For ProjectFile.fileType strings: 'image' | 'pdf' | 'word' | 'other' */
@@ -17,23 +19,29 @@ export function fileTypeIcon(ft: string): string {
 
 /** For raw file URLs or stored names where no fileType is available */
 export function fileTypeIconFromUrl(url: string): string {
-  if (/\.pdf$/i.test(url)) return '📄'
-  if (/\.(doc|docx)$/i.test(url)) return '📝'
+  const path = url.split(/[?#]/)[0]
+  if (/\.pdf$/i.test(path)) return '📄'
+  if (/\.(doc|docx)$/i.test(path)) return '📝'
   return '📎'
 }
 
 export function itemSummary(item: LibraryItem): string {
   if (item.itemType === 'YARN') {
     const parts = [item.yarnBrand, item.yarnMaterial].filter(Boolean).join(', ')
-    const amounts = [item.yarnAmountG && `${item.yarnAmountG}g`, item.yarnAmountM && `${item.yarnAmountM}m`].filter(Boolean).join(' / ')
+    const amounts = [item.yarnAmountG && `${item.yarnAmountG}g`, item.yarnAmountM && `${item.yarnAmountM}m`]
+      .filter(Boolean)
+      .join(' / ')
     return [parts, amounts].filter(Boolean).join(' · ')
   }
   if (item.itemType === 'FABRIC')
-    return [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`].filter(Boolean).join(' × ')
+    return [item.fabricLengthCm && `${item.fabricLengthCm}cm`, item.fabricWidthCm && `${item.fabricWidthCm}cm`]
+      .filter(Boolean)
+      .join(' × ')
   if (item.itemType === 'KNITTING_NEEDLE')
-    return [item.needleSizeMm && `${item.needleSizeMm} mm`, item.circularLengthCm && `${item.circularLengthCm} cm`].filter(Boolean).join(', ')
-  if (item.itemType === 'CROCHET_HOOK')
-    return item.hookSizeMm ? `${item.hookSizeMm} mm` : ''
+    return [item.needleSizeMm && `${item.needleSizeMm} mm`, item.circularLengthCm && `${item.circularLengthCm} cm`]
+      .filter(Boolean)
+      .join(', ')
+  if (item.itemType === 'CROCHET_HOOK') return item.hookSizeMm ? `${item.hookSizeMm} mm` : ''
   return ''
 }
 

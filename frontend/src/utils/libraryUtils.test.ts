@@ -33,18 +33,19 @@ describe('libraryItemImageUrl', () => {
 })
 
 describe('isImageUrl', () => {
-  it.each(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'])(
-    'returns true for %s extension',
-    ext => {
-      expect(isImageUrl(`photo${ext}`)).toBe(true)
-      expect(isImageUrl(`photo${ext.toUpperCase()}`)).toBe(true)
-    },
-  )
+  it.each(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'])('returns true for %s extension', ext => {
+    expect(isImageUrl(`photo${ext}`)).toBe(true)
+    expect(isImageUrl(`photo${ext.toUpperCase()}`)).toBe(true)
+  })
 
   it('returns false for non-image extensions', () => {
     expect(isImageUrl('document.pdf')).toBe(false)
     expect(isImageUrl('notes.txt')).toBe(false)
     expect(isImageUrl('file.doc')).toBe(false)
+  })
+
+  it('returns true for signed storage URLs with query params', () => {
+    expect(isImageUrl('https://example.supabase.co/storage/v1/object/sign/bucket/library/1/a.jpg?token=abc')).toBe(true)
   })
 })
 
