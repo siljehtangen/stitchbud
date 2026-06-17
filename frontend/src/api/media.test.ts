@@ -6,7 +6,12 @@ vi.mock('../supabase', () => ({
   supabase: { storage: { from: () => ({ createSignedUrls }) } },
 }))
 
-import { withSignedProjectMedia, withSignedProjectsMedia, withSignedLibraryMedia } from './media'
+import {
+  withSignedProjectMedia,
+  withSignedProjectsMedia,
+  withSignedLibraryMedia,
+  withSignedLibraryItemsMedia,
+} from './media'
 
 const BASE = 'https://abc.supabase.co/storage/v1/object/public/stitchbud-files/'
 const SIGN = 'https://abc.supabase.co/storage/v1/object/sign/stitchbud-files/'
@@ -154,5 +159,44 @@ describe('withSignedLibraryMedia', () => {
     const signed = await withSignedLibraryMedia(item)
     expect(createSignedUrls).not.toHaveBeenCalled()
     expect(signed).toEqual(item)
+  })
+})
+
+describe('withSignedLibraryItemsMedia', () => {
+  it('signs images across multiple library items in one call', async () => {
+    mockSign()
+    const items: LibraryItem[] = [
+      {
+        id: 1,
+        itemType: 'YARN',
+        name: 'Wool',
+        images: [
+          { id: 1, storedName: `${BASE}library/1/a.jpg`, originalName: 'a.jpg', isMain: true, libraryItemId: 1 },
+        ],
+        colors: [],
+        createdAt: 0,
+      },
+      {
+        id: 2,
+        itemType: 'FABRIC',
+        name: 'Cotton',
+        images: [
+          { id: 2, storedName: `${BASE}library/2/b.jpg`, originalName: 'b.jpg', isMain: true, libraryItemId: 2 },
+        ],
+        colors: [],
+        createdAt: 0,
+      },
+    ]
+    const signed = await withSignedLibraryItemsMedia(items)
+    expect(createSignedUrls).toHaveBeenCalledTimes(1)
+    expect(signed[0].images?.[0].storedName).toBe(`${SIGN}library/1/a.jpg?token=tok`)
+    expect(signed[1].images?.[0].storedName).toBe(`${SIGN}library/2/b.jpg?token=tok`)
+  })
+
+  it('returns items unchanged when there is nothing to sign', async () => {
+    const items: LibraryItem[] = [{ id: 1, itemType: 'YARN', name: 'Wool', colors: [], createdAt: 0 }]
+    const signed = await withSignedLibraryItemsMedia(items)
+    expect(createSignedUrls).not.toHaveBeenCalled()
+    expect(signed).toEqual(items)
   })
 })

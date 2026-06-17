@@ -15,6 +15,52 @@ const from = vi.mocked(supabase.from)
 
 beforeEach(() => vi.clearAllMocks())
 
+describe('friendsApi.getPendingRequests', () => {
+  it('calls get_pending_requests and returns the rows', async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          friendshipId: 2,
+          requesterId: 'u3',
+          requesterDisplayName: 'Three',
+          requesterEmail: 'three@test.com',
+          createdAt: 50,
+        },
+      ],
+      error: null,
+    } as never)
+
+    const requests = await friendsApi.getPendingRequests()
+
+    expect(rpc).toHaveBeenCalledWith('get_pending_requests')
+    expect(requests).toHaveLength(1)
+    expect(requests[0].requesterEmail).toBe('three@test.com')
+  })
+})
+
+describe('friendsApi.getSentRequests', () => {
+  it('calls get_sent_requests and returns the rows', async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          friendshipId: 4,
+          recipientId: 'u4',
+          recipientDisplayName: null,
+          recipientEmail: 'four@test.com',
+          createdAt: 100,
+        },
+      ],
+      error: null,
+    } as never)
+
+    const requests = await friendsApi.getSentRequests()
+
+    expect(rpc).toHaveBeenCalledWith('get_sent_requests')
+    expect(requests).toHaveLength(1)
+    expect(requests[0].recipientEmail).toBe('four@test.com')
+  })
+})
+
 describe('friendsApi.getFriends', () => {
   it('calls the get_friends RPC and returns the rows', async () => {
     rpc.mockResolvedValue({
@@ -38,7 +84,13 @@ describe('friendsApi.getFriends', () => {
 describe('friendsApi.sendRequest', () => {
   it('passes the target email to send_friend_request', async () => {
     rpc.mockResolvedValue({
-      data: { friendshipId: 5, userId: 'u2', displayName: null, email: 'two@test.com' },
+      data: {
+        status: 'PENDING',
+        friendshipId: 5,
+        userId: 'u2',
+        displayName: null,
+        email: 'two@test.com',
+      },
       error: null,
     } as never)
 
@@ -66,6 +118,35 @@ describe('friendsApi.acceptRequest', () => {
     await friendsApi.acceptRequest(7)
 
     expect(rpc).toHaveBeenCalledWith('accept_friend_request', { p_friendship_id: 7 })
+  })
+})
+
+describe('friendsApi.getFriendProjects', () => {
+  it('maps RPC rows into camelCase projects', async () => {
+    rpc.mockResolvedValue({
+      data: [
+        {
+          id: 1,
+          user_id: 'u2',
+          name: 'Hat',
+          category: 'KNITTING',
+          is_public: true,
+          created_at: 1,
+          updated_at: 2,
+          notes: '',
+          recipe_text: '',
+          pinterest_board_urls: '[]',
+          craft_details: '{}',
+        },
+      ],
+      error: null,
+    } as never)
+
+    const projects = await friendsApi.getFriendProjects('u2')
+
+    expect(rpc).toHaveBeenCalledWith('get_friend_projects', { friend_user_id: 'u2' })
+    expect(projects).toHaveLength(1)
+    expect(projects[0].name).toBe('Hat')
   })
 })
 

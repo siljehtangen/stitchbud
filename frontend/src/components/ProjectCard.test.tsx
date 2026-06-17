@@ -7,8 +7,7 @@ import type { Project } from '../types'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: Record<string, unknown>) =>
-      opts ? `${key}:${JSON.stringify(opts)}` : key,
+    t: (key: string, opts?: Record<string, unknown>) => (opts ? `${key}:${JSON.stringify(opts)}` : key),
   }),
 }))
 
@@ -63,7 +62,14 @@ describe('ProjectCard', () => {
 
   it('renders up to 3 material type badges and an overflow count', () => {
     const materials = ['Yarn', 'Needle', 'Hook', 'Fabric'].map((type, i) => ({
-      id: i + 1, name: type, type, color: '', colorHex: '', amount: '', unit: '', images: [],
+      id: i + 1,
+      name: type,
+      type,
+      color: '',
+      colorHex: '',
+      amount: '',
+      unit: '',
+      images: [],
     }))
     render(<ProjectCard project={makeProject({ materials })} onClick={vi.fn()} />)
     expect(screen.getByText('Yarn')).toBeInTheDocument()
@@ -89,6 +95,14 @@ describe('ProjectCard', () => {
   it('shows 0% when no stitches are checked', () => {
     const project = makeProject({
       rowCounter: { id: 1, stitchesPerRound: 10, totalRounds: 10, checkedStitches: '[]' },
+    })
+    render(<ProjectCard project={project} onClick={vi.fn()} />)
+    expect(screen.getByText('0%')).toBeInTheDocument()
+  })
+
+  it('shows 0% when checkedStitches JSON is malformed', () => {
+    const project = makeProject({
+      rowCounter: { id: 1, stitchesPerRound: 10, totalRounds: 10, checkedStitches: 'not-json' },
     })
     render(<ProjectCard project={project} onClick={vi.fn()} />)
     expect(screen.getByText('0%')).toBeInTheDocument()

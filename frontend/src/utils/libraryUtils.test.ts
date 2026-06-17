@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { libraryItemImageUrl, isImageUrl, itemSummary } from './libraryUtils'
+import type { TFunction } from 'i18next'
+import { libraryItemImageUrl, isImageUrl, itemSummary, typeLabel } from './libraryUtils'
 import type { LibraryItem } from '../types'
 
 describe('libraryItemImageUrl', () => {
@@ -102,5 +103,37 @@ describe('itemSummary', () => {
   it('returns empty string for a CROCHET_HOOK with no size', () => {
     const item: LibraryItem = { ...base, itemType: 'CROCHET_HOOK' }
     expect(itemSummary(item)).toBe('')
+  })
+
+  it('formats a FABRIC item with only length', () => {
+    const item: LibraryItem = { ...base, itemType: 'FABRIC', fabricLengthCm: 100 }
+    expect(itemSummary(item)).toBe('100cm')
+  })
+
+  it('formats a KNITTING_NEEDLE item with only size', () => {
+    const item: LibraryItem = { ...base, itemType: 'KNITTING_NEEDLE', needleSizeMm: '5.0' }
+    expect(itemSummary(item)).toBe('5.0 mm')
+  })
+
+  it('returns empty string for an unknown item type', () => {
+    const item = { ...base, itemType: 'OTHER' } as unknown as LibraryItem
+    expect(itemSummary(item)).toBe('')
+  })
+})
+
+describe('typeLabel', () => {
+  const t = ((key: string) => `translated:${key}`) as TFunction
+
+  it.each([
+    ['YARN', 'lib_yarn'],
+    ['FABRIC', 'lib_fabric'],
+    ['KNITTING_NEEDLE', 'lib_knitting_needle'],
+    ['CROCHET_HOOK', 'lib_crochet_hook'],
+  ] as const)('translates %s', (type, key) => {
+    expect(typeLabel(type, t)).toBe(`translated:${key}`)
+  })
+
+  it('returns the raw type for unknown values', () => {
+    expect(typeLabel('UNKNOWN' as unknown as LibraryItem['itemType'], t)).toBe('UNKNOWN')
   })
 })

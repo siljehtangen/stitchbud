@@ -1,5 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
-import { projectSchema, libraryItemSchema, friendSchema, friendRequestSchema, safeParsed } from './schemas'
+import {
+  projectSchema,
+  libraryItemSchema,
+  friendSchema,
+  friendRequestSchema,
+  safeParsed,
+  setSchemaMismatchReporter,
+} from './schemas'
 
 const minimalProject = {
   id: 1,
@@ -221,5 +228,16 @@ describe('safeParsed', () => {
     expect(result).toBe(badData)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('test-ctx'), expect.anything())
     warn.mockRestore()
+  })
+
+  it('uses a custom mismatch reporter when configured', () => {
+    const reporter = vi.fn()
+    setSchemaMismatchReporter(reporter)
+    const badData = { unexpected: true }
+    safeParsed(friendSchema, badData, 'custom-ctx')
+    expect(reporter).toHaveBeenCalledWith('custom-ctx', expect.any(Array))
+    setSchemaMismatchReporter((context, issues) => {
+      console.warn(`[API] Schema mismatch for ${context}:`, issues)
+    })
   })
 })
