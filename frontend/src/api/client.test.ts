@@ -31,6 +31,16 @@ describe('storagePathFromUrl', () => {
   it('rejects path traversal', () => {
     expect(storagePathFromUrl(`${BASE}../secret.jpg`)).toBeNull()
   })
+
+  it('extracts the path from a signed URL and strips the token query', () => {
+    const signed =
+      'https://abc.supabase.co/storage/v1/object/sign/stitchbud-files/project-covers/1/123.jpg?token=abc.def.ghi'
+    expect(storagePathFromUrl(signed)).toBe('project-covers/1/123.jpg')
+  })
+
+  it('strips a query string from a public URL', () => {
+    expect(storagePathFromUrl(`${BASE}library/9/a.png?x=1`)).toBe('library/9/a.png')
+  })
 })
 
 describe('raiseError', () => {
