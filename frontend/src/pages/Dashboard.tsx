@@ -88,7 +88,15 @@ export default function Dashboard() {
           </div>
           <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-sand-green/30 bg-sand-green/10 px-3.5 py-2.5 max-w-xl">
             <HiSparkles className="mt-0.5 h-4 w-4 shrink-0 text-sand-green-dark" aria-hidden />
-            <p className="flex-1 min-w-0 text-xs md:text-sm text-ink/70 leading-relaxed">{t('home_welcome_message')}</p>
+            <p className="flex-1 min-w-0 text-xs md:text-sm text-ink/70 leading-relaxed">
+              {t('home_welcome_message')}{' '}
+              <a
+                href="mailto:stitchbud.dev@gmail.com"
+                className="text-sand-green-dark underline underline-offset-2 hover:text-sand-green-dark/80"
+              >
+                stitchbud.dev@gmail.com
+              </a>
+            </p>
           </div>
         </div>
       </section>
