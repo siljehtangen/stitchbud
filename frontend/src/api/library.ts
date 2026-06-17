@@ -2,6 +2,7 @@ import type { LibraryItem } from '../types'
 import { supabase, getUserId, uploadFile, deleteUploadedFile, raiseError } from './client'
 import { libraryItemSchema, safeParsed } from './schemas'
 import { rowToLibraryItem, type DbLibraryItem } from './mappers'
+import { withSignedLibraryMedia, withSignedLibraryItemsMedia } from './media'
 import { z } from 'zod'
 
 const LIBRARY_SELECT = '*, library_item_images(*)'
@@ -13,7 +14,7 @@ function colorsToColumn(colors?: string[]): string {
 async function fetchItem(id: number): Promise<LibraryItem> {
   const { data, error } = await supabase.from('library_items').select(LIBRARY_SELECT).eq('id', id).single()
   raiseError(error, 'Library item not found')
-  return safeParsed(libraryItemSchema, rowToLibraryItem(data as DbLibraryItem), 'LibraryItem')
+  return withSignedLibraryMedia(safeParsed(libraryItemSchema, rowToLibraryItem(data as DbLibraryItem), 'LibraryItem'))
 }
 
 interface LibraryFields {
@@ -54,7 +55,8 @@ export const libraryApi = {
       .order('created_at', { ascending: false })
     raiseError(error, 'Failed to load library')
     const mapped = ((data as DbLibraryItem[]) ?? []).map(rowToLibraryItem)
-    return safeParsed(z.array(libraryItemSchema), mapped, 'LibraryItem[]')
+    const items = safeParsed(z.array(libraryItemSchema), mapped, 'LibraryItem[]')
+    return withSignedLibraryItemsMedia(items)
   },
 
   create: async (data: { itemType: string; name: string } & LibraryFields): Promise<LibraryItem> => {
