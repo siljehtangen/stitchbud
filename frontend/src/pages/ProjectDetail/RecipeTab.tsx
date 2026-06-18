@@ -7,7 +7,6 @@ import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { CloseIcon } from '../../components/UiIcons'
 import { FiPlus, FiRotateCw } from 'react-icons/fi'
 import type { Project, ProjectFile } from '../../types'
-import { Field } from '../../components/LibraryItemForm'
 import { FileDropzone } from '../../components/FileDropzone'
 import { FilePreviewModal } from './FilePreviewModal'
 import { safeHttpUrl } from '../../utils/url'
@@ -93,19 +92,21 @@ export function RecipeTab({
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <Field label={t('recipe_label')}>
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div className="card space-y-2.5">
+        <h3 className="font-serif text-lg leading-none text-ink">{t('recipe_label')}</h3>
         <textarea
-          className="textarea"
+          className="textarea max-w-none"
           rows={10}
           value={recipeText}
           onChange={e => onRecipeChange(e.target.value)}
           placeholder={t('recipe_placeholder')}
         />
-      </Field>
-      <div>
+      </div>
+
+      <div className="card">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-ink/80">{t('pinterest_label')}</span>
+          <h3 className="font-serif text-lg leading-none text-ink">{t('pinterest_label')}</h3>
           {pinterestBoardUrls.length > 0 && pinterestBoardUrls.length < MAX_PINTEREST_BOARDS && (
             <button
               onClick={() => onPinterestChange([...pinterestBoardUrls, ''])}
@@ -164,8 +165,8 @@ export function RecipeTab({
         )}
       </div>
 
-      <div>
-        <span className="text-sm font-medium text-ink/80 block mb-2">{t('attachments_label')}</span>
+      <div className="card">
+        <h3 className="font-serif text-lg leading-none text-ink mb-3">{t('attachments_label')}</h3>
 
         <FileDropzone
           accept="image/*,.pdf,.doc,.docx"
@@ -189,7 +190,10 @@ export function RecipeTab({
             {files.map(f => {
               const url = f.storedName
               return (
-                <div key={f.id} className="card flex items-center gap-3">
+                <div
+                  key={f.id}
+                  className="flex items-center gap-3 rounded-xl border border-[rgb(var(--border-light))] bg-white/60 p-2.5"
+                >
                   <button
                     onClick={() => setPreviewFile(f)}
                     className="flex-shrink-0 focus:outline-none"

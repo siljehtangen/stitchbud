@@ -52,8 +52,12 @@ export function InfoTab({
   }
 
   return (
-    <div className="space-y-4 max-w-lg">
+    <div className="card mx-auto max-w-lg space-y-5">
       <div className="space-y-2">
+        <div>
+          <span className="block text-sm font-medium text-ink/80">{t('cover_photos_label')}</span>
+          <span className="block text-xs text-warm-gray">{t('cover_photos_hint')}</span>
+        </div>
         <CoverImageGallery
           items={(project.coverImages ?? []).map(img => ({
             key: img.id,
@@ -98,11 +102,11 @@ export function InfoTab({
           placeholder={t('describe_project')}
         />
       </Field>
-      <div className="flex flex-wrap gap-3">
-        <Field label={t('start_date_label')}>
+      <div className="flex flex-wrap gap-4">
+        <Field label={t('start_date_label')} className="flex-1 min-w-[180px]">
           <DateField value={startDate} onChange={v => onInfoChange('startDate', v)} />
         </Field>
-        <Field label={t('end_date_label')}>
+        <Field label={t('end_date_label')} className="flex-1 min-w-[180px]">
           <DateField value={endDate} onChange={v => onInfoChange('endDate', v)} />
         </Field>
       </div>

@@ -8,7 +8,8 @@ import { HiLockClosed, HiGlobeAlt } from 'react-icons/hi2'
 import { FiArrowLeft, FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import { useProjectTabs, type ProjectTab } from '../../hooks/useProjectTabs'
 import { ProjectTabBar } from '../../components/ProjectTabBar'
-import { categoryLabel } from '../../constants/categories'
+import { categoryLabel, categoryBadgeClass, CATEGORY_ICONS } from '../../constants/categories'
+import { projectCoverImageUrls } from '../../projectOverviewMedia'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
 import { useConfirmDialog } from '../../context/ConfirmDialogContext'
 import { useDebouncedCallback } from '../../hooks/useDebouncedCallback'
@@ -176,10 +177,30 @@ export default function ProjectDetail() {
   if (!project) return <div className="text-center py-20 text-warm-gray">{t('project_not_found')}</div>
 
   const isSewing = project.category === 'SEWING'
+  const coverUrl = projectCoverImageUrls(project)[0]
+
+  async function togglePrivacy() {
+    const next = !isPublic
+    const confirmed = await confirm({
+      message: next ? t('change_to_public_confirm') : t('change_to_private_confirm'),
+      confirmLabel: next ? t('make_public') : t('make_private'),
+      tone: 'neutral',
+    })
+    if (!confirmed) return
+    setIsPublic(next)
+    try {
+      const updated = await projectsApi.update(projectId, { isPublic: next })
+      setProject(updated)
+      showToast(t(next ? 'project_made_public_toast' : 'project_made_private_toast'))
+    } catch {
+      setIsPublic(!next)
+      showToast(t('save_failed'), 'info')
+    }
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <button
           onClick={() => navigate(-1)}
           className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-full border border-[rgb(var(--border-light))] bg-white text-ink hover:bg-cream transition-colors"
@@ -187,41 +208,48 @@ export default function ProjectDetail() {
         >
           <FiArrowLeft className="w-5 h-5" />
         </button>
+
+        {coverUrl ? (
+          <img
+            src={coverUrl}
+            alt={project.name}
+            className="w-12 h-12 sm:w-[52px] sm:h-[52px] flex-shrink-0 rounded-2xl object-cover pointer-events-none select-none"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 sm:w-[52px] sm:h-[52px] flex-shrink-0 rounded-2xl flex items-center justify-center text-2xl bg-sand-green/20 text-sand-green-dark"
+            aria-hidden
+          >
+            {CATEGORY_ICONS[project.category]}
+          </div>
+        )}
+
         <div className="flex-1 min-w-0">
-          <h2 className="font-serif text-2xl text-ink truncate">{project.name}</h2>
-          <span className="text-xs text-warm-gray">{categoryLabel(project.category, t)}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-serif text-2xl sm:text-3xl leading-tight text-ink truncate">{project.name}</h2>
+            <span className={categoryBadgeClass(project.category)}>
+              <span className="text-[0.9em] leading-none flex items-center">{CATEGORY_ICONS[project.category]}</span>
+              {categoryLabel(project.category, t)}
+            </span>
+          </div>
+          <button
+            onClick={togglePrivacy}
+            title={isPublic ? t('project_public') : t('project_private')}
+            className="mt-1 inline-flex items-center gap-1.5 text-xs text-warm-gray hover:text-ink/80 transition-colors"
+            aria-label={isPublic ? t('project_public') : t('project_private')}
+          >
+            {isPublic ? <HiGlobeAlt className="h-3.5 w-3.5" /> : <HiLockClosed className="h-3.5 w-3.5" />}
+            <span>{isPublic ? t('project_public') : t('project_private')}</span>
+          </button>
         </div>
-        <button
-          onClick={async () => {
-            const next = !isPublic
-            const confirmed = await confirm({
-              message: next ? t('change_to_public_confirm') : t('change_to_private_confirm'),
-              confirmLabel: next ? t('make_public') : t('make_private'),
-              tone: 'neutral',
-            })
-            if (!confirmed) return
-            setIsPublic(next)
-            try {
-              const updated = await projectsApi.update(projectId, { isPublic: next })
-              setProject(updated)
-              showToast(t(next ? 'project_made_public_toast' : 'project_made_private_toast'))
-            } catch {
-              setIsPublic(!next)
-              showToast(t('save_failed'), 'info')
-            }
-          }}
-          title={isPublic ? t('project_public') : t('project_private')}
-          className="px-1 py-1 text-warm-gray hover:text-ink/80 transition-colors"
-          aria-label={isPublic ? t('project_public') : t('project_private')}
-        >
-          {isPublic ? <HiGlobeAlt className="h-5 w-5" /> : <HiLockClosed className="h-5 w-5" />}
-        </button>
+
         <button
           onClick={handleDelete}
-          className="text-sm text-red-400 hover:text-red-600 px-2 py-1 inline-flex items-center gap-1.5"
+          className="flex-shrink-0 text-sm text-red-400 hover:text-red-600 px-2 py-1 inline-flex items-center gap-1.5"
         >
           <FiTrash2 className="text-base" />
-          {t('delete')}
+          <span className="hidden sm:inline">{t('delete')}</span>
         </button>
       </div>
 

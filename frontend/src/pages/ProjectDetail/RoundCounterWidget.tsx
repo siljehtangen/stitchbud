@@ -131,7 +131,7 @@ export function RoundCounterWidget({
     <div className="space-y-3">
       <div className="flex items-end justify-between flex-wrap gap-1">
         <div className="flex items-baseline gap-2">
-          <span className="font-serif text-3xl leading-none text-ink">{completedRounds}</span>
+          <span className="font-serif text-4xl leading-none text-ink">{completedRounds}</span>
           <span className="text-sm text-warm-gray">
             / {rounds} {t('total_rounds').toLowerCase()}
           </span>

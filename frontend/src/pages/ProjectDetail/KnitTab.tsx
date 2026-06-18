@@ -7,7 +7,7 @@ import type { Project, ProjectCategory } from '../../types'
 import { RoundCounterWidget } from './RoundCounterWidget'
 import { PatternGridWidget } from './PatternGridWidget'
 import { CloseIcon, PlusIcon } from '../../components/UiIcons'
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { FiChevronLeft, FiChevronRight, FiHash, FiGrid } from 'react-icons/fi'
 import { CATEGORY_ACCENT } from '../../constants/categories'
 
 export function KnitTab({
@@ -57,8 +57,9 @@ export function KnitTab({
   }
 
   const gridHeader = (
-    <div className="flex items-center gap-1 mb-2">
-      <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide">{t('pattern_grid')}</h3>
+    <div className="flex items-center gap-1 mb-3">
+      <FiGrid className="text-sand-green-dark text-sm mr-1" aria-hidden />
+      <h3 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('pattern_grid')}</h3>
       {grids.length > 1 && (
         <>
           <button
@@ -84,10 +85,10 @@ export function KnitTab({
       )}
       <button
         onClick={handleAddGrid}
-        className="w-5 h-5 flex items-center justify-center rounded-full bg-sand-green hover:opacity-80 text-ink/80 text-xs font-bold ml-1"
+        className="w-6 h-6 flex items-center justify-center rounded-full bg-sand-green-dark hover:brightness-95 text-white ml-1 transition-all"
         title={t('add_grid')}
       >
-        <PlusIcon className="w-3 h-3" />
+        <PlusIcon className="w-3.5 h-3.5" />
       </button>
       {grids.length > 1 && activeGrid && (
         <button
@@ -102,10 +103,13 @@ export function KnitTab({
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {hasCounter && (
-        <div>
-          <h3 className="text-sm font-semibold text-warm-gray uppercase tracking-wide mb-2">{t('round_counter')}</h3>
+        <div className="card">
+          <div className="flex items-center gap-1 mb-3">
+            <FiHash className="text-sand-green-dark text-sm mr-1" aria-hidden />
+            <h3 className="text-xs font-semibold text-sand-blue-deep uppercase tracking-wider">{t('round_counter')}</h3>
+          </div>
           <RoundCounterWidget
             counter={project.rowCounter!}
             accent={CATEGORY_ACCENT[category].base}
@@ -126,7 +130,7 @@ export function KnitTab({
           />
         </div>
       )}
-      <div>
+      <div className="card">
         {gridHeader}
         {activeGrid && (
           <PatternGridWidget
