@@ -7,7 +7,7 @@ import type { LibraryItem, LibraryItemType } from '../types'
 import { ITEM_TYPES, TYPE_ICONS, LibraryItemForm } from '../components/LibraryItemForm'
 import { LibraryFilterBar } from '../components/LibraryFilterBar'
 import { LibraryCard } from '../components/LibraryCard'
-import { itemSummary, typeLabel } from '../utils/libraryUtils'
+import { typeLabel } from '../utils/libraryUtils'
 import { useLibraryFilter } from '../hooks/useLibraryFilter'
 import { useConfirmDelete } from '../hooks/useConfirmDelete'
 import { useAsyncData } from '../hooks/useAsyncData'
@@ -92,6 +92,7 @@ export default function Library() {
         </div>
         {!adding && (
           <button
+            type="button"
             onClick={() => {
               setSelectedType(filterType ?? 'YARN')
               setAdding(true)
@@ -130,7 +131,7 @@ export default function Library() {
             <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
           ) : error ? (
             <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
-          ) : filtered.length === 0 && !adding ? (
+          ) : filtered.length === 0 ? (
             <div className="card text-center py-10">
               <p className="text-warm-gray text-sm">{t('library_empty')}</p>
             </div>
@@ -144,13 +145,7 @@ export default function Library() {
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                     {groupItems.map(item => (
-                      <LibraryCard
-                        key={item.id}
-                        item={item}
-                        subtitle={itemSummary(item)}
-                        onDelete={handleDelete}
-                        onUpdated={handleUpdated}
-                      />
+                      <LibraryCard key={item.id} item={item} onDelete={handleDelete} onUpdated={handleUpdated} />
                     ))}
                   </div>
                 </div>

@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import type { TFunction } from 'i18next'
-import { libraryItemImageUrl, isImageUrl, itemSummary, typeLabel } from './libraryUtils'
+import {
+  libraryItemImageUrl,
+  isImageUrl,
+  itemSummary,
+  typeLabel,
+  parseOptionalInt,
+  libraryFieldsToPayload,
+} from './libraryUtils'
 import type { LibraryItem } from '../types'
 
 describe('libraryItemImageUrl', () => {
@@ -135,5 +142,57 @@ describe('typeLabel', () => {
 
   it('returns the raw type for unknown values', () => {
     expect(typeLabel('UNKNOWN' as unknown as LibraryItem['itemType'], t)).toBe('UNKNOWN')
+  })
+})
+
+describe('parseOptionalInt', () => {
+  it('returns undefined for empty or non-numeric input', () => {
+    expect(parseOptionalInt('')).toBeUndefined()
+    expect(parseOptionalInt('abc')).toBeUndefined()
+  })
+
+  it('parses valid integers', () => {
+    expect(parseOptionalInt('100')).toBe(100)
+    expect(parseOptionalInt(' 50 ')).toBe(50)
+  })
+})
+
+describe('libraryFieldsToPayload', () => {
+  const baseFields = {
+    name: 'Test Yarn',
+    colors: ['Red'],
+    yarnBrand: 'Drops',
+    yarnMaterial: 'Wool',
+    yarnAmountG: '100',
+    yarnAmountM: '200',
+    fabricLength: '',
+    fabricWidth: '',
+    needleSize: '',
+    circularLength: '',
+    hookSize: '',
+  }
+
+  it('maps yarn fields with safe integer parsing', () => {
+    expect(libraryFieldsToPayload('YARN', baseFields)).toEqual({
+      name: 'Test Yarn',
+      colors: ['Red'],
+      yarnBrand: 'Drops',
+      yarnMaterial: 'Wool',
+      yarnAmountG: 100,
+      yarnAmountM: 200,
+      fabricLengthCm: undefined,
+      fabricWidthCm: undefined,
+      needleSizeMm: undefined,
+      circularLengthCm: undefined,
+      hookSizeMm: undefined,
+    })
+  })
+
+  it('ignores invalid numeric input', () => {
+    expect(libraryFieldsToPayload('YARN', { ...baseFields, yarnAmountG: 'not-a-number' }).yarnAmountG).toBeUndefined()
+  })
+
+  it('uses fallback name when field name is empty', () => {
+    expect(libraryFieldsToPayload('YARN', { ...baseFields, name: '  ' }, 'Fallback').name).toBe('Fallback')
   })
 })

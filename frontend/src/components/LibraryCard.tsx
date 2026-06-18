@@ -1,7 +1,7 @@
 import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LibraryItem } from '../types'
-import { libraryItemImageUrl, isImageUrl } from '../utils/libraryUtils'
+import { itemSummary, libraryItemImageUrl, isImageUrl } from '../utils/libraryUtils'
 import { FileTypeIcon, ImagePlaceholderIcon } from './FileTypeIcon'
 import { CloseIcon, EditIcon } from './UiIcons'
 import { resolveColorDisplay } from '../colors'
@@ -9,12 +9,10 @@ import { EditLibraryItemDialog } from './EditLibraryItemDialog'
 
 export const LibraryCard = memo(function LibraryCard({
   item,
-  subtitle,
   onDelete,
   onUpdated,
 }: {
   item: LibraryItem
-  subtitle: string
   onDelete: (id: number) => void
   onUpdated: (updated: LibraryItem) => void
 }) {
@@ -22,6 +20,7 @@ export const LibraryCard = memo(function LibraryCard({
   const [editing, setEditing] = useState(false)
 
   const displayUrl = libraryItemImageUrl(item)
+  const subtitle = itemSummary(item)
 
   return (
     <>
@@ -36,7 +35,10 @@ export const LibraryCard = memo(function LibraryCard({
               </span>
             )
           ) : (
-            <span className="flex items-center justify-center w-full h-full text-soft-brown/40">
+            <span
+              className="flex items-center justify-center w-full h-full text-soft-brown/40"
+              data-testid="library-card-placeholder"
+            >
               <ImagePlaceholderIcon className="w-7 h-7" />
             </span>
           )}
@@ -66,16 +68,20 @@ export const LibraryCard = memo(function LibraryCard({
           )}
         </div>
         <button
+          type="button"
           onClick={() => setEditing(true)}
           className="text-warm-gray hover:text-sand-blue-deep text-sm px-1 flex-shrink-0"
           title={t('edit')}
+          aria-label={t('edit')}
         >
           <EditIcon />
         </button>
         <button
+          type="button"
           onClick={() => onDelete(item.id)}
           className="text-warm-gray hover:text-[#b06a4f] px-1 flex-shrink-0"
           title={t('delete')}
+          aria-label={t('delete')}
         >
           <CloseIcon className="w-5 h-5" />
         </button>

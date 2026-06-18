@@ -98,6 +98,7 @@ export function MaterialsTab({
                   }
                   className="flex-shrink-0 px-1 text-warm-gray hover:text-[#b06a4f]"
                   title={t('delete')}
+                  aria-label={t('delete')}
                 >
                   <CloseIcon className="h-5 w-5" />
                 </button>

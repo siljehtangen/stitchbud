@@ -1,6 +1,45 @@
 import type { LibraryItem, LibraryItemType } from '../types'
 import type { TFunction } from 'i18next'
 
+const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
+
+export type LibraryFormFields = {
+  name: string
+  colors: string[]
+  yarnBrand: string
+  yarnMaterial: string
+  yarnAmountG: string
+  yarnAmountM: string
+  fabricLength: string
+  fabricWidth: string
+  needleSize: string
+  circularLength: string
+  hookSize: string
+}
+
+export function parseOptionalInt(value: string): number | undefined {
+  if (!value.trim()) return undefined
+  const n = parseInt(value, 10)
+  return Number.isFinite(n) ? n : undefined
+}
+
+export function libraryFieldsToPayload(itemType: LibraryItemType, fields: LibraryFormFields, fallbackName?: string) {
+  const hasColors = COLOR_ITEM_TYPES.includes(itemType)
+  return {
+    name: fields.name.trim() || fallbackName || fields.name,
+    colors: hasColors ? fields.colors : undefined,
+    yarnBrand: itemType === 'YARN' ? fields.yarnBrand || undefined : undefined,
+    yarnMaterial: itemType === 'YARN' ? fields.yarnMaterial || undefined : undefined,
+    yarnAmountG: itemType === 'YARN' ? parseOptionalInt(fields.yarnAmountG) : undefined,
+    yarnAmountM: itemType === 'YARN' ? parseOptionalInt(fields.yarnAmountM) : undefined,
+    fabricLengthCm: itemType === 'FABRIC' ? parseOptionalInt(fields.fabricLength) : undefined,
+    fabricWidthCm: itemType === 'FABRIC' ? parseOptionalInt(fields.fabricWidth) : undefined,
+    needleSizeMm: itemType === 'KNITTING_NEEDLE' ? fields.needleSize || undefined : undefined,
+    circularLengthCm: itemType === 'KNITTING_NEEDLE' ? parseOptionalInt(fields.circularLength) : undefined,
+    hookSizeMm: itemType === 'CROCHET_HOOK' ? fields.hookSize || undefined : undefined,
+  }
+}
+
 export function libraryItemImageUrl(item: { images?: { storedName: string; isMain: boolean }[] }): string | undefined {
   const main = item.images?.find(i => i.isMain) ?? item.images?.[0]
   return main?.storedName

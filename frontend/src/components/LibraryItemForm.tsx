@@ -1,8 +1,9 @@
 import { useState, useRef, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../context/ToastContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
-import { typeLabel } from '../utils/libraryUtils'
+import { typeLabel, libraryFieldsToPayload } from '../utils/libraryUtils'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
 import { LibraryItemTypeFields } from './LibraryItemTypeFields'
@@ -45,6 +46,7 @@ export function LibraryItemForm({
   hideImageUpload,
 }: LibraryItemFormProps) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const photoRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
   const [libraryPhotos, setLibraryPhotos] = useState<LibraryPhotoEntry[]>([])
@@ -106,19 +108,24 @@ export function LibraryItemForm({
     setSaving(true)
     try {
       const finalName = name.trim() || autoName()
+      const fields = {
+        name: finalName,
+        colors,
+        yarnBrand,
+        yarnMaterial,
+        yarnAmountG,
+        yarnAmountM,
+        fabricLength,
+        fabricWidth,
+        needleSize,
+        circularLength,
+        hookSize,
+      }
+      const payload = libraryFieldsToPayload(selectedType, fields, finalName)
       const item = await libraryApi.create({
         itemType: selectedType,
-        name: finalName,
-        colors: hasColors && colors.length > 0 ? colors : undefined,
-        yarnMaterial: selectedType === 'YARN' ? yarnMaterial || undefined : undefined,
-        yarnBrand: selectedType === 'YARN' ? yarnBrand || undefined : undefined,
-        yarnAmountG: selectedType === 'YARN' && yarnAmountG ? parseInt(yarnAmountG) : undefined,
-        yarnAmountM: selectedType === 'YARN' && yarnAmountM ? parseInt(yarnAmountM) : undefined,
-        fabricLengthCm: selectedType === 'FABRIC' && fabricLength ? parseInt(fabricLength) : undefined,
-        fabricWidthCm: selectedType === 'FABRIC' && fabricWidth ? parseInt(fabricWidth) : undefined,
-        needleSizeMm: selectedType === 'KNITTING_NEEDLE' ? needleSize || undefined : undefined,
-        circularLengthCm: selectedType === 'KNITTING_NEEDLE' && circularLength ? parseInt(circularLength) : undefined,
-        hookSizeMm: selectedType === 'CROCHET_HOOK' ? hookSize || undefined : undefined,
+        ...payload,
+        colors: hasColors && colors.length > 0 ? payload.colors : undefined,
       })
       if (!hideImageUpload && staged.length > 0) {
         const main = staged.find(img => img.isMain)
@@ -134,6 +141,8 @@ export function LibraryItemForm({
       } else {
         onCreated(item)
       }
+    } catch {
+      showToast(t('action_failed'), 'info')
     } finally {
       setSaving(false)
     }

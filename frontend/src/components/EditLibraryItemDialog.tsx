@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { useConfirmDelete } from '../hooks/useConfirmDelete'
+import { useModalA11y } from '../hooks/useModalA11y'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
 import {
@@ -13,13 +14,19 @@ import {
   LIBRARY_PHOTO_ACCEPT,
 } from './LibraryItemForm'
 import { LibraryItemTypeFields } from './LibraryItemTypeFields'
-import { itemSummary, libraryItemImageUrl, isImageUrl } from '../utils/libraryUtils'
+import {
+  itemSummary,
+  libraryItemImageUrl,
+  isImageUrl,
+  libraryFieldsToPayload,
+  type LibraryFormFields,
+} from '../utils/libraryUtils'
 import { FileTypeIcon } from './FileTypeIcon'
 import { StarIcon, CloseIcon, PlusIcon, LoadingDotsIcon } from './UiIcons'
 import { resolveColorDisplay } from '../colors'
 import { FiCheck, FiTrash2 } from 'react-icons/fi'
 
-function itemToFields(item: LibraryItem) {
+function itemToFields(item: LibraryItem): LibraryFormFields {
   return {
     name: item.name,
     colors: (item.colors ?? []) as string[],
@@ -59,67 +66,16 @@ export function EditLibraryItemDialog({
   const itemType = item.itemType as LibraryItemType
   const hasColors = COLOR_ITEM_TYPES.includes(itemType)
 
-  function setField<K extends keyof ReturnType<typeof itemToFields>>(key: K, val: ReturnType<typeof itemToFields>[K]) {
+  function setField<K extends keyof LibraryFormFields>(key: K, val: LibraryFormFields[K]) {
     setFields(f => ({ ...f, [key]: val }))
   }
 
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = prev
-    }
-  }, [])
+  useModalA11y(panelRef, onClose)
 
-  useEffect(() => {
-    panelRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onClose()
-        return
-      }
-      if (e.key !== 'Tab') return
-      const panel = panelRef.current
-      if (!panel) return
-      const focusable = panel.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      if (focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  // Live preview re-renders from the current form state so every edit is visible.
-  const previewItem: LibraryItem = useMemo(
-    () => ({
-      ...item,
-      name: fields.name || item.name,
-      colors: fields.colors,
-      yarnBrand: fields.yarnBrand || undefined,
-      yarnMaterial: fields.yarnMaterial || undefined,
-      yarnAmountG: fields.yarnAmountG ? parseInt(fields.yarnAmountG) : undefined,
-      yarnAmountM: fields.yarnAmountM ? parseInt(fields.yarnAmountM) : undefined,
-      fabricLengthCm: fields.fabricLength ? parseInt(fields.fabricLength) : undefined,
-      fabricWidthCm: fields.fabricWidth ? parseInt(fields.fabricWidth) : undefined,
-      needleSizeMm: fields.needleSize || undefined,
-      circularLengthCm: fields.circularLength ? parseInt(fields.circularLength) : undefined,
-      hookSizeMm: fields.hookSize || undefined,
-    }),
-    [item, fields]
-  )
+  const previewItem: LibraryItem = useMemo(() => {
+    const { colors, ...rest } = libraryFieldsToPayload(itemType, fields, item.name)
+    return { ...item, ...rest, colors: colors ?? [] }
+  }, [item, itemType, fields])
   const previewSummary = itemSummary(previewItem)
   const displayUrl = libraryItemImageUrl(item)
 
@@ -131,6 +87,8 @@ export function EditLibraryItemDialog({
       const updated = await libraryApi.registerLibraryImage(item.id, file)
       onUpdated(updated)
       showToast(t('library_photo_added_toast'))
+    } catch {
+      showToast(t('upload_failed'), 'info')
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -140,23 +98,12 @@ export function EditLibraryItemDialog({
   async function handleSave() {
     setSaving(true)
     try {
-      const updated = await libraryApi.update(item.id, {
-        name: fields.name.trim() || item.name,
-        colors: hasColors ? fields.colors : undefined,
-        yarnBrand: itemType === 'YARN' ? fields.yarnBrand || undefined : undefined,
-        yarnMaterial: itemType === 'YARN' ? fields.yarnMaterial || undefined : undefined,
-        yarnAmountG: itemType === 'YARN' && fields.yarnAmountG ? parseInt(fields.yarnAmountG) : undefined,
-        yarnAmountM: itemType === 'YARN' && fields.yarnAmountM ? parseInt(fields.yarnAmountM) : undefined,
-        fabricLengthCm: itemType === 'FABRIC' && fields.fabricLength ? parseInt(fields.fabricLength) : undefined,
-        fabricWidthCm: itemType === 'FABRIC' && fields.fabricWidth ? parseInt(fields.fabricWidth) : undefined,
-        needleSizeMm: itemType === 'KNITTING_NEEDLE' ? fields.needleSize || undefined : undefined,
-        circularLengthCm:
-          itemType === 'KNITTING_NEEDLE' && fields.circularLength ? parseInt(fields.circularLength) : undefined,
-        hookSizeMm: itemType === 'CROCHET_HOOK' ? fields.hookSize || undefined : undefined,
-      })
+      const updated = await libraryApi.update(item.id, libraryFieldsToPayload(itemType, fields, item.name))
       onUpdated(updated)
       showToast({ title: t('lib_item_updated_toast'), detail: updated.name }, 'success')
       onClose()
+    } catch {
+      showToast(t('action_failed'), 'info')
     } finally {
       setSaving(false)
     }
@@ -178,16 +125,14 @@ export function EditLibraryItemDialog({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={t('material_editing')}
+        aria-label={t('lib_editing')}
         tabIndex={-1}
         className="animate-dialog-in relative z-10 flex max-h-[90vh] w-full flex-col rounded-t-3xl bg-[#FDFBF7] shadow-warm-lg outline-none sm:max-h-[85vh] sm:max-w-lg sm:rounded-3xl"
       >
         <div className="mx-auto mt-2 h-1.5 w-10 flex-shrink-0 rounded-full bg-soft-brown/40 sm:hidden" aria-hidden />
 
         <div className="flex items-start justify-between gap-3 px-5 pt-4 sm:pt-5">
-          <p className="pt-1 text-[11px] font-bold uppercase tracking-wider text-sand-green-dark">
-            {t('material_editing')}
-          </p>
+          <p className="pt-1 text-[11px] font-bold uppercase tracking-wider text-sand-green-dark">{t('lib_editing')}</p>
           <button
             type="button"
             onClick={onClose}
@@ -282,7 +227,7 @@ export function EditLibraryItemDialog({
           />
 
           <div className="space-y-2 border-t border-soft-brown/20 pt-3.5">
-            <p className="text-sm font-medium text-ink/80">{t('cover_photos_label')}</p>
+            <p className="text-sm font-medium text-ink/80">{t('lib_photos_label')}</p>
             <div className="flex flex-wrap items-center gap-2.5">
               {(item.images ?? []).map(img => (
                 <div key={img.id} className="group relative flex-shrink-0">
@@ -303,8 +248,12 @@ export function EditLibraryItemDialog({
                   <button
                     type="button"
                     onClick={async () => {
-                      onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))
-                      showToast(t('changes_saved_toast'))
+                      try {
+                        onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))
+                        showToast(t('lib_item_updated_toast'))
+                      } catch {
+                        showToast(t('action_failed'), 'info')
+                      }
                     }}
                     className={`absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full transition-colors ${img.isMain ? 'bg-sand-green-dark text-white' : 'bg-black/40 text-white hover:bg-sand-green-dark'}`}
                     title={img.isMain ? t('main_image') : t('set_as_main')}
@@ -372,7 +321,7 @@ export function EditLibraryItemDialog({
               className="btn-primary inline-flex min-h-[44px] items-center justify-center gap-1.5 text-sm"
             >
               <FiCheck className="text-base" />
-              {saving ? t('saving') : t('material_save_changes')}
+              {saving ? t('saving') : t('lib_save_changes')}
             </button>
           </div>
         </div>

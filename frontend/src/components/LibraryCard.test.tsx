@@ -54,7 +54,8 @@ vi.mock('./LibraryItemTypeFields', () => ({
 const baseItem: LibraryItem = {
   id: 1,
   itemType: 'KNITTING_NEEDLE',
-  name: 'Merino Wool',
+  name: '3.5 mm Knitting Needle',
+  needleSizeMm: '3.5',
   colors: [],
   createdAt: 0,
 }
@@ -68,9 +69,7 @@ function renderCard(
 ) {
   const onDelete = callbacks.onDelete ?? (vi.fn() as (id: number) => void)
   const onUpdated = callbacks.onUpdated ?? (vi.fn() as (updated: LibraryItem) => void)
-  render(
-    <LibraryCard item={{ ...baseItem, ...overrides }} subtitle="1 project" onDelete={onDelete} onUpdated={onUpdated} />
-  )
+  render(<LibraryCard item={{ ...baseItem, ...overrides }} onDelete={onDelete} onUpdated={onUpdated} />)
   return { onDelete, onUpdated }
 }
 
@@ -79,52 +78,52 @@ describe('LibraryCard', () => {
 
   it('renders item name', () => {
     renderCard()
-    expect(screen.getByText('Merino Wool')).toBeInTheDocument()
+    expect(screen.getByText('3.5 mm Knitting Needle')).toBeInTheDocument()
   })
 
-  it('renders subtitle', () => {
+  it('renders item summary as subtitle', () => {
     renderCard()
-    expect(screen.getByText('1 project')).toBeInTheDocument()
+    expect(screen.getByText('3.5 mm')).toBeInTheDocument()
   })
 
   it('renders color swatches with display names', () => {
-    renderCard({ colors: ['Red', 'Blue'] })
+    renderCard({ itemType: 'YARN', name: 'Merino Wool', colors: ['Red', 'Blue'] })
     expect(screen.getByText('Red')).toBeInTheDocument()
     expect(screen.getByText('Blue')).toBeInTheDocument()
   })
 
-  it('shows camera placeholder when no image is set', () => {
+  it('shows placeholder when no image is set', () => {
     renderCard()
-    expect(document.querySelector('svg')).toBeTruthy()
+    expect(screen.getByTestId('library-card-placeholder')).toBeInTheDocument()
   })
 
   it('calls onDelete with item id when delete button is clicked', async () => {
     const onDelete = vi.fn()
     renderCard({}, { onDelete })
-    await userEvent.click(screen.getByTitle('delete'))
+    await userEvent.click(screen.getByLabelText('delete'))
     expect(onDelete).toHaveBeenCalledWith(1)
   })
 
   it('opens the edit dialog when the edit button is clicked', async () => {
     renderCard()
-    await userEvent.click(screen.getByTitle('edit'))
-    expect(screen.getByText('material_editing')).toBeInTheDocument()
-    expect(screen.getByText('material_save_changes')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('edit'))
+    expect(screen.getByText('lib_editing')).toBeInTheDocument()
+    expect(screen.getByText('lib_save_changes')).toBeInTheDocument()
     expect(screen.getByText('cancel')).toBeInTheDocument()
   })
 
   it('pre-fills the name input with the current item name', async () => {
     renderCard()
-    await userEvent.click(screen.getByTitle('edit'))
-    expect(screen.getByDisplayValue('Merino Wool')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('edit'))
+    expect(screen.getByDisplayValue('3.5 mm Knitting Needle')).toBeInTheDocument()
   })
 
   it('exits edit mode when cancel is clicked without saving', async () => {
     renderCard()
-    await userEvent.click(screen.getByTitle('edit'))
+    await userEvent.click(screen.getByLabelText('edit'))
     await userEvent.click(screen.getByText('cancel'))
-    expect(screen.queryByText('material_save_changes')).not.toBeInTheDocument()
-    expect(screen.getByTitle('edit')).toBeInTheDocument()
+    expect(screen.queryByText('lib_save_changes')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('edit')).toBeInTheDocument()
   })
 
   it('calls libraryApi.update with the current name and calls onUpdated', async () => {
@@ -133,10 +132,10 @@ describe('LibraryCard', () => {
     const onUpdated = vi.fn() as (updated: LibraryItem) => void
 
     renderCard({}, { onUpdated })
-    await userEvent.click(screen.getByTitle('edit'))
-    await userEvent.click(screen.getByText('material_save_changes'))
+    await userEvent.click(screen.getByLabelText('edit'))
+    await userEvent.click(screen.getByText('lib_save_changes'))
 
-    expect(libraryApi.update).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'Merino Wool' }))
+    expect(libraryApi.update).toHaveBeenCalledWith(1, expect.objectContaining({ name: '3.5 mm Knitting Needle' }))
     expect(onUpdated).toHaveBeenCalledWith(updatedItem)
   })
 
@@ -144,10 +143,10 @@ describe('LibraryCard', () => {
     vi.mocked(libraryApi.update).mockResolvedValue({ ...baseItem, name: 'New Name' })
 
     renderCard()
-    await userEvent.click(screen.getByTitle('edit'))
-    await userEvent.clear(screen.getByDisplayValue('Merino Wool'))
+    await userEvent.click(screen.getByLabelText('edit'))
+    await userEvent.clear(screen.getByDisplayValue('3.5 mm Knitting Needle'))
     await userEvent.type(screen.getByRole('textbox'), 'New Name')
-    await userEvent.click(screen.getByText('material_save_changes'))
+    await userEvent.click(screen.getByText('lib_save_changes'))
 
     expect(libraryApi.update).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'New Name' }))
   })
@@ -155,9 +154,9 @@ describe('LibraryCard', () => {
   it('returns to view mode after a successful save', async () => {
     vi.mocked(libraryApi.update).mockResolvedValue(baseItem)
     renderCard()
-    await userEvent.click(screen.getByTitle('edit'))
-    await userEvent.click(screen.getByText('material_save_changes'))
-    expect(screen.queryByText('material_save_changes')).not.toBeInTheDocument()
-    expect(screen.getByTitle('edit')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('edit'))
+    await userEvent.click(screen.getByText('lib_save_changes'))
+    expect(screen.queryByText('lib_save_changes')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('edit')).toBeInTheDocument()
   })
 })

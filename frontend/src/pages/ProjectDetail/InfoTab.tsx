@@ -72,10 +72,13 @@ export function InfoTab({
             showToast(t('changes_saved_toast'))
           }}
           onRemove={key =>
-            confirmDelete(t('delete_cover_image_confirm'), async () => {
-              onUpdate(await projectsApi.deleteCoverImage(projectId, key as number))
-              showToast(t('cover_image_removed_toast'))
-            })
+            confirmDelete(
+              t('delete_cover_image_confirm'),
+              async () => {
+                onUpdate(await projectsApi.deleteCoverImage(projectId, key as number))
+              },
+              'cover_image_removed_toast'
+            )
           }
           onAdd={() => coverImageRef.current?.click()}
           onFile={uploadCoverFile}

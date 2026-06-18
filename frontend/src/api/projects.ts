@@ -215,12 +215,13 @@ export const projectsApi = {
       .eq('project_id', id)
       .eq('section', MATERIAL)
       .eq('material_id', materialId)
-    await supabase
+    const { error: imgDeleteError } = await supabase
       .from('project_images')
       .delete()
       .eq('project_id', id)
       .eq('section', MATERIAL)
       .eq('material_id', materialId)
+    raiseError(imgDeleteError, 'Failed to delete material images')
     const { error } = await supabase.from('materials').delete().eq('id', materialId)
     raiseError(error, 'Failed to delete material')
     await Promise.all(((imgs as { stored_name: string }[]) ?? []).map(i => deleteUploadedFile(i.stored_name)))

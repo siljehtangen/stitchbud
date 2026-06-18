@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { HiCheckCircle, HiInformationCircle } from 'react-icons/hi2'
 import { FiTrash2 } from 'react-icons/fi'
 
@@ -45,15 +45,26 @@ function VariantIcon({ variant }: { variant: ToastVariant }) {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const idRef = useRef(0)
+  const timeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
+
+  useEffect(() => {
+    const timeouts = timeoutsRef.current
+    return () => {
+      timeouts.forEach(clearTimeout)
+      timeouts.clear()
+    }
+  }, [])
 
   const showToast = useCallback((message: ToastMessage, variant: ToastVariant = 'success', action?: ToastAction) => {
     const id = ++idRef.current
     const title = typeof message === 'string' ? message : message.title
     const detail = typeof message === 'string' ? undefined : message.detail
     setToasts(prev => [...prev, { id, title, detail, variant, action }])
-    window.setTimeout(() => {
+    const timeoutId = setTimeout(() => {
+      timeoutsRef.current.delete(timeoutId)
       setToasts(prev => prev.filter(t => t.id !== id))
     }, TOAST_MS)
+    timeoutsRef.current.add(timeoutId)
   }, [])
 
   return (
