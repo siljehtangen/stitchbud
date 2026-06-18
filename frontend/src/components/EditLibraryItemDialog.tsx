@@ -243,82 +243,10 @@ export function EditLibraryItemDialog({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-3 pt-4">
-          <div className="space-y-2">
-            <p className="text-xs text-warm-gray">{t('material_photos_hint')}</p>
-            <div className="flex flex-wrap items-start gap-2">
-              {(item.images ?? []).map(img => (
-                <div key={img.id} className="group relative flex-shrink-0">
-                  {isImageUrl(img.storedName) ? (
-                    <img
-                      src={img.storedName}
-                      alt={img.originalName}
-                      className={`h-14 w-14 rounded-xl border-2 object-cover ${img.isMain ? 'border-sand-green' : 'border-transparent'}`}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div
-                      className={`flex h-14 w-14 items-center justify-center rounded-xl border-2 text-warm-gray ${img.isMain ? 'border-sand-green' : 'border-soft-brown/30'}`}
-                    >
-                      <FileTypeIcon url={img.storedName} className="h-6 w-6" />
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))
-                      showToast(t('changes_saved_toast'))
-                    }}
-                    className={`absolute left-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full text-xs transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
-                    title={img.isMain ? t('main_image') : t('set_as_main')}
-                  >
-                    <StarIcon className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      confirmDelete(
-                        t('delete_library_photo_confirm'),
-                        async () => {
-                          onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))
-                        },
-                        'library_photo_removed_toast'
-                      )
-                    }
-                    className="absolute right-0.5 top-0.5 hidden h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 group-hover:flex"
-                    title={t('delete')}
-                  >
-                    <CloseIcon className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-              {(item.images ?? []).length < MAX_LIBRARY_PHOTOS && (
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                  className="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed border-soft-brown/30 bg-soft-brown/10 text-warm-gray transition-colors hover:border-sand-green"
-                  title={t('lib_upload_image')}
-                >
-                  <span className="text-lg leading-none">
-                    {uploading ? <LoadingDotsIcon className="h-5 w-5" /> : <PlusIcon className="h-5 w-5" />}
-                  </span>
-                  <span className="px-0.5 text-center text-[10px] leading-tight">{t('upload_cover_image')}</span>
-                </button>
-              )}
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept={LIBRARY_PHOTO_ACCEPT}
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-          </div>
-
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-4 pt-4">
           <Field label={t('lib_name')} required>
             <input
-              className="input text-sm py-1.5"
+              className="input max-w-none text-sm"
               value={fields.name}
               onChange={e => setField('name', e.target.value)}
               placeholder={t('lib_name')}
@@ -352,6 +280,76 @@ export function EditLibraryItemDialog({
             hookSize={fields.hookSize}
             setHookSize={v => setField('hookSize', v)}
           />
+
+          <div className="space-y-2 border-t border-soft-brown/20 pt-3.5">
+            <p className="text-sm font-medium text-ink/80">{t('cover_photos_label')}</p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {(item.images ?? []).map(img => (
+                <div key={img.id} className="group relative flex-shrink-0">
+                  {isImageUrl(img.storedName) ? (
+                    <img
+                      src={img.storedName}
+                      alt={img.originalName}
+                      className={`h-16 w-16 rounded-xl border-2 object-cover ${img.isMain ? 'border-sand-green-dark' : 'border-soft-brown/20'}`}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div
+                      className={`flex h-16 w-16 items-center justify-center rounded-xl border-2 text-warm-gray ${img.isMain ? 'border-sand-green-dark' : 'border-soft-brown/20'}`}
+                    >
+                      <FileTypeIcon url={img.storedName} className="h-6 w-6" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))
+                      showToast(t('changes_saved_toast'))
+                    }}
+                    className={`absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full transition-colors ${img.isMain ? 'bg-sand-green-dark text-white' : 'bg-black/40 text-white hover:bg-sand-green-dark'}`}
+                    title={img.isMain ? t('main_image') : t('set_as_main')}
+                  >
+                    <StarIcon className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      confirmDelete(
+                        t('delete_library_photo_confirm'),
+                        async () => {
+                          onUpdated(await libraryApi.deleteLibraryImage(item.id, img.id))
+                        },
+                        'library_photo_removed_toast'
+                      )
+                    }
+                    className="absolute right-1 top-1 hidden h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 group-hover:flex"
+                    title={t('delete')}
+                  >
+                    <CloseIcon className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+              {(item.images ?? []).length < MAX_LIBRARY_PHOTOS && (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  aria-label={t('lib_upload_image')}
+                  title={t('lib_upload_image')}
+                  className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-soft-brown/40 bg-soft-brown/10 text-warm-gray transition-colors hover:border-sand-green-dark hover:bg-sand-green/10 hover:text-sand-green-dark"
+                >
+                  {uploading ? <LoadingDotsIcon className="h-6 w-6" /> : <PlusIcon className="h-6 w-6" />}
+                </button>
+              )}
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept={LIBRARY_PHOTO_ACCEPT}
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-soft-brown/20 px-5 py-4">
