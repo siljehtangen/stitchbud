@@ -146,7 +146,36 @@
 }
 
 .animate-toast-in {
-  animation: toast-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes toast-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.animate-toast-timer {
+  transform-origin: left center;
+  animation: toast-timer linear forwards;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dialog-in {
+  animation: dialog-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @layer base {
@@ -164,7 +193,9 @@
     .animate-blob-2,
     .animate-blob-3,
     .animate-butterfly,
-    .animate-toast-in {
+    .animate-toast-in,
+    .animate-toast-timer,
+    .animate-dialog-in {
       animation: none !important;
     }
   }

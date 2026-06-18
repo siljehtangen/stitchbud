@@ -149,7 +149,6 @@ export default function Library() {
                         item={item}
                         subtitle={itemSummary(item)}
                         onDelete={handleDelete}
-                        onImageUploaded={handleUpdated}
                         onUpdated={handleUpdated}
                       />
                     ))}

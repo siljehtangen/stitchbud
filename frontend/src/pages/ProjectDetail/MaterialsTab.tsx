@@ -92,10 +92,11 @@ export function MaterialsTab({
                       async () => {
                         onUpdate(await projectsApi.deleteMaterial(projectId, m.id))
                       },
-                      'material_removed_toast'
+                      'material_removed_toast',
+                      { tone: 'neutral' }
                     )
                   }
-                  className="flex-shrink-0 px-1 text-warm-gray hover:text-red-400"
+                  className="flex-shrink-0 px-1 text-warm-gray hover:text-[#b06a4f]"
                   title={t('delete')}
                 >
                   <CloseIcon className="h-5 w-5" />

@@ -130,6 +130,8 @@
   "delete_material_confirm": "Er du sikker på at du vil fjerne {{name}} fra dette prosjektet?",
   "material_added_toast": "Materiale lagt til i prosjektet",
   "material_removed_toast": "Materiale fjernet",
+  "material_editing": "Redigerer materiale",
+  "material_save_changes": "Lagre endringer",
   "delete_cover_image_confirm": "Er du sikker på at du vil fjerne dette omslagsbildet fra prosjektet?",
   "cover_image_removed_toast": "Omslagsbilde fjernet",
   "delete_attachment_confirm": "Er du sikker på at du vil fjerne vedlegget «{{name}}»?",

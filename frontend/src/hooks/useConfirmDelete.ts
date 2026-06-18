@@ -9,12 +9,17 @@ export function useConfirmDelete() {
   const { t } = useTranslation()
 
   return useCallback(
-    async (message: string, action: () => Promise<void>, successToastKey?: string): Promise<boolean> => {
-      const ok = await confirm({ message, confirmLabel: t('dialog_btn_remove'), tone: 'danger' })
+    async (
+      message: string,
+      action: () => Promise<void>,
+      successToastKey?: string,
+      opts?: { tone?: 'danger' | 'neutral' }
+    ): Promise<boolean> => {
+      const ok = await confirm({ message, confirmLabel: t('dialog_btn_remove'), tone: opts?.tone ?? 'danger' })
       if (!ok) return false
       try {
         await action()
-        if (successToastKey) showToast(t(successToastKey as Parameters<typeof t>[0]))
+        if (successToastKey) showToast(t(successToastKey as Parameters<typeof t>[0]), 'removal')
         return true
       } catch {
         showToast(t('action_failed'), 'info')

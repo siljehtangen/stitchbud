@@ -130,6 +130,8 @@
   "delete_material_confirm": "Remove \"{{name}}\" from this project?",
   "material_added_toast": "Material added to project",
   "material_removed_toast": "Material removed",
+  "material_editing": "Editing material",
+  "material_save_changes": "Save changes",
   "delete_cover_image_confirm": "Are you sure you want to remove this cover image from the project?",
   "cover_image_removed_toast": "Cover image removed",
   "delete_attachment_confirm": "Remove attachment \"{{name}}\"?",
