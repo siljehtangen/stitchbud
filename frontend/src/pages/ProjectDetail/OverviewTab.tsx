@@ -152,7 +152,7 @@ export function OverviewTab({
   const coverUrls = projectCoverImageUrls(project)
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-col items-end gap-1">
         <button
           onClick={downloadOverview}
@@ -163,127 +163,129 @@ export function OverviewTab({
         </button>
         {exportError && <p className="text-xs text-red-500">{exportError}</p>}
       </div>
-      <Section title={t('section_info')}>
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-ink text-base">{name}</h3>
-            {description && <p className="text-sm text-ink/80 whitespace-pre-wrap mt-1">{description}</p>}
+      <div className="card space-y-6">
+        <Section title={t('section_info')}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:items-start">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-ink text-base">{name}</h3>
+              {description && <p className="text-sm text-ink/80 whitespace-pre-wrap mt-1">{description}</p>}
+            </div>
+            {coverUrls.length > 0 && (
+              <div className="flex gap-2 flex-wrap sm:justify-end">
+                {coverUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt=""
+                    className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          {coverUrls.length > 0 && (
-            <div className="flex gap-2 flex-wrap sm:justify-end">
-              {coverUrls.map((url, i) => (
-                <img
-                  key={i}
-                  src={url}
-                  alt=""
-                  className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm"
-                  loading="lazy"
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </Section>
+        </Section>
 
-      {(filledCraftFields.length > 0 || hasMaterials) && (
-        <Section title={t('section_materials')}>
-          {filledCraftFields.length > 0 && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-3">
-              {filledCraftFields.map(({ key, labelKey }) => (
-                <div key={key}>
-                  <span className="text-xs text-warm-gray">{t(labelKey as Parameters<typeof t>[0])}: </span>
-                  <span className="text-sm text-ink/80">{craftDetails[key]}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          {hasMaterials && (
-            <div className="space-y-4">
-              {project.materials.map(m => {
-                const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
-                const colorLabel = colorEntry ? getColorName(colorEntry, i18n.language) : m.color
-                const imgs = materialImageUrls(m)
-                return (
-                  <div key={m.id} className="space-y-2">
-                    <span className="text-sm text-ink/80 block font-medium">
-                      {m.type}
-                      {colorLabel ? ` — ${colorLabel}` : ''}
-                      {m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
-                    </span>
-                    {imgs.length > 0 ? (
-                      <div className="flex gap-2 flex-wrap">
-                        {imgs.map((url, i) => (
-                          <img
-                            key={`${url}-${i}`}
-                            src={url}
-                            alt=""
-                            className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm pointer-events-none select-none"
-                            loading="lazy"
-                          />
-                        ))}
-                      </div>
-                    ) : null}
+        {(filledCraftFields.length > 0 || hasMaterials) && (
+          <Section title={t('section_materials')}>
+            {filledCraftFields.length > 0 && (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 mb-3">
+                {filledCraftFields.map(({ key, labelKey }) => (
+                  <div key={key}>
+                    <span className="text-xs text-warm-gray">{t(labelKey as Parameters<typeof t>[0])}: </span>
+                    <span className="text-sm text-ink/80">{craftDetails[key]}</span>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </Section>
-      )}
+                ))}
+              </div>
+            )}
+            {hasMaterials && (
+              <div className="space-y-4">
+                {project.materials.map(m => {
+                  const colorEntry = m.colorHex ? COLOR_MAP_BY_HEX[m.colorHex] : undefined
+                  const colorLabel = colorEntry ? getColorName(colorEntry, i18n.language) : m.color
+                  const imgs = materialImageUrls(m)
+                  return (
+                    <div key={m.id} className="space-y-2">
+                      <span className="text-sm text-ink/80 block font-medium">
+                        {m.type}
+                        {colorLabel ? ` — ${colorLabel}` : ''}
+                        {m.amount ? ` (${m.amount}${m.unit ? ` ${m.unit}` : ''})` : ''}
+                      </span>
+                      {imgs.length > 0 ? (
+                        <div className="flex gap-2 flex-wrap">
+                          {imgs.map((url, i) => (
+                            <img
+                              key={`${url}-${i}`}
+                              src={url}
+                              alt=""
+                              className="w-28 h-28 object-cover rounded-xl flex-shrink-0 shadow-sm pointer-events-none select-none"
+                              loading="lazy"
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Section>
+        )}
 
-      {(recipeText || project.files.length > 0) && (
-        <Section title={t('section_recipe')}>
-          {project.files.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
-              {project.files.map(f => {
-                const url = f.storedName
-                return f.fileType === 'image' ? (
-                  <a key={f.id} href={url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={url}
-                      alt={f.originalName}
-                      className="w-20 h-20 object-cover rounded-xl shadow-sm"
-                      loading="lazy"
-                    />
-                  </a>
-                ) : (
-                  <a
-                    key={f.id}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
-                  >
-                    <FileTypeIcon fileType={f.fileType} />
-                    <span className="text-ink/80 max-w-[8rem] truncate">{f.originalName}</span>
-                  </a>
-                )
-              })}
-            </div>
-          )}
-          {recipeText && <p className="text-sm text-ink/80 whitespace-pre-wrap mt-2">{recipeText}</p>}
-        </Section>
-      )}
+        {(recipeText || project.files.length > 0) && (
+          <Section title={t('section_recipe')}>
+            {project.files.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {project.files.map(f => {
+                  const url = f.storedName
+                  return f.fileType === 'image' ? (
+                    <a key={f.id} href={url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={url}
+                        alt={f.originalName}
+                        className="w-20 h-20 object-cover rounded-xl shadow-sm"
+                        loading="lazy"
+                      />
+                    </a>
+                  ) : (
+                    <a
+                      key={f.id}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 card py-2 px-3 text-sm hover:shadow-md"
+                    >
+                      <FileTypeIcon fileType={f.fileType} />
+                      <span className="text-ink/80 max-w-[8rem] truncate">{f.originalName}</span>
+                    </a>
+                  )
+                })}
+              </div>
+            )}
+            {recipeText && <p className="text-sm text-ink/80 whitespace-pre-wrap mt-2">{recipeText}</p>}
+          </Section>
+        )}
 
-      {project.category !== 'SEWING' && project.patternGrids?.length > 0 && (
-        <Section title={t('section_pattern_grid')}>
-          {project.patternGrids.map((grid, i) => (
-            <div key={grid.id} className={i > 0 ? 'mt-4' : ''}>
-              {project.patternGrids.length > 1 && (
-                <p className="text-xs text-warm-gray mb-1">
-                  {i + 1}/{project.patternGrids.length}
-                </p>
-              )}
-              <PatternGridReadOnly
-                rows={grid.rows}
-                cols={grid.cols}
-                cellDataJson={grid.cellData}
-                showSymbols={project.category === 'KNITTING'}
-              />
-            </div>
-          ))}
-        </Section>
-      )}
+        {project.category !== 'SEWING' && project.patternGrids?.length > 0 && (
+          <Section title={t('section_pattern_grid')}>
+            {project.patternGrids.map((grid, i) => (
+              <div key={grid.id} className={i > 0 ? 'mt-4' : ''}>
+                {project.patternGrids.length > 1 && (
+                  <p className="text-xs text-warm-gray mb-1">
+                    {i + 1}/{project.patternGrids.length}
+                  </p>
+                )}
+                <PatternGridReadOnly
+                  rows={grid.rows}
+                  cols={grid.cols}
+                  cellDataJson={grid.cellData}
+                  showSymbols={project.category === 'KNITTING'}
+                />
+              </div>
+            ))}
+          </Section>
+        )}
+      </div>
     </div>
   )
 }

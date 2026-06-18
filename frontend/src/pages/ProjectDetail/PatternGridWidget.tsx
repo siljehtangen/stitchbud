@@ -145,7 +145,7 @@ function GridCanvas({
 
   return (
     <div className="flex gap-4 items-start">
-      <div className="overflow-auto">
+      <div className="overflow-auto rounded-xl border border-[rgb(var(--border-light))] bg-soft-brown/5 p-2">
         <canvas
           ref={canvasRef}
           className={`rounded-lg block${editing ? ' cursor-crosshair' : ''}`}
@@ -247,7 +247,7 @@ export function PatternGridWidget({
       <div className="flex items-center gap-2">
         <button
           onClick={() => (editing ? flushAndStopEditing() : setEditing(true))}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${editing ? 'bg-sand-green text-ink' : 'bg-soft-brown/20 text-warm-gray'}`}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${editing ? 'border-sand-green-dark bg-sand-green-dark text-white' : 'border-[rgb(var(--border-light))] bg-white text-warm-gray hover:text-ink'}`}
         >
           {editing ? <FiCheck className="text-sm" /> : <FiEdit2 className="text-sm" />}
           {editing ? t('done_editing_grid') : t('edit_grid')}
@@ -306,11 +306,11 @@ export function PatternGridWidget({
                     setMode('symbol')
                   }}
                   title={t(s.labelKey as Parameters<typeof t>[0])}
-                  className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-bold transition-colors
+                  className={`w-7 h-7 flex items-center justify-center rounded-lg border text-xs font-bold transition-colors
                     ${
                       mode === 'symbol' && selectedSymbol === s.symbol
-                        ? 'border-gray-700 bg-sand-green text-ink'
-                        : 'border-soft-brown/30 bg-soft-brown/10 text-ink/80 hover:bg-sand-blue/20'
+                        ? 'border-sand-green-dark bg-sand-green-dark text-white'
+                        : 'border-[rgb(var(--border-light))] bg-white text-ink/80 hover:bg-sand-green/10'
                     }`}
                 >
                   {s.symbol}
