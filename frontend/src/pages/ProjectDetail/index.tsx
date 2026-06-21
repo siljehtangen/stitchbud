@@ -104,7 +104,7 @@ export default function ProjectDetail() {
         showToast(t('changes_saved_toast'))
       }
     } catch {
-      showToast(t('save_failed'), 'info')
+      showToast(t('save_failed'), 'error')
     }
   }, 800)
 
@@ -194,7 +194,7 @@ export default function ProjectDetail() {
       showToast(t(next ? 'project_made_public_toast' : 'project_made_private_toast'))
     } catch {
       setIsPublic(!next)
-      showToast(t('save_failed'), 'info')
+      showToast(t('save_failed'), 'error')
     }
   }
 

@@ -52,7 +52,7 @@ export function KnitTab({
       setActiveGridIndex(i => Math.min(i, Math.max(0, updated.patternGrids.length - 1)))
       showToast(t('grid_deleted_toast'))
     } catch {
-      showToast(t('upload_failed'), 'info')
+      showToast(t('upload_failed'), 'error')
     }
   }
 
@@ -124,7 +124,7 @@ export function KnitTab({
                 )
                 showToast(t('changes_saved_toast'))
               } catch {
-                showToast(t('save_failed'), 'info')
+                showToast(t('save_failed'), 'error')
               }
             }}
           />
@@ -150,7 +150,7 @@ export function KnitTab({
                 )
                 showToast(t('changes_saved_toast'))
               } catch {
-                showToast(t('save_failed'), 'info')
+                showToast(t('save_failed'), 'error')
               }
             }}
           />

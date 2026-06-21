@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { reportError } from '../sentry'
 
 export function useAsyncData<T>(fetchFn: () => Promise<T>, initial: T) {
   const [data, setData] = useState<T>(initial)
@@ -20,7 +21,7 @@ export function useAsyncData<T>(fetchFn: () => Promise<T>, initial: T) {
       })
       .catch(err => {
         if (!controller.signal.aborted) {
-          console.error('[useAsyncData] fetch error:', err)
+          reportError(err, { context: 'useAsyncData' })
           setError(err instanceof Error ? err : new Error(String(err)))
         }
       })

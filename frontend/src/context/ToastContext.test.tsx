@@ -50,6 +50,21 @@ describe('ToastContext', () => {
     expect(screen.getByText('Second')).toBeInTheDocument()
   })
 
+  it('renders error variant toasts', async () => {
+    function ShowErrorToast() {
+      const { showToast } = useToast()
+      return <button onClick={() => showToast('Something failed', 'error')}>Show error</button>
+    }
+
+    render(
+      <ToastProvider>
+        <ShowErrorToast />
+      </ToastProvider>
+    )
+    await userEvent.click(screen.getByText('Show error'))
+    expect(screen.getByText('Something failed')).toBeInTheDocument()
+  })
+
   it('throws when useToast is called outside ToastProvider', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => render(<ShowToastButton />)).toThrow('useToast must be used within ToastProvider')

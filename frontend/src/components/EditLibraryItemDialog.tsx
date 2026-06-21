@@ -25,6 +25,7 @@ import { FileTypeIcon } from './FileTypeIcon'
 import { StarIcon, CloseIcon, PlusIcon, LoadingDotsIcon } from './UiIcons'
 import { resolveColorDisplay } from '../colors'
 import { FiCheck, FiTrash2 } from 'react-icons/fi'
+import { reportError } from '../sentry'
 
 function itemToFields(item: LibraryItem): LibraryFormFields {
   return {
@@ -87,8 +88,9 @@ export function EditLibraryItemDialog({
       const updated = await libraryApi.registerLibraryImage(item.id, file)
       onUpdated(updated)
       showToast(t('library_photo_added_toast'))
-    } catch {
-      showToast(t('upload_failed'), 'info')
+    } catch (err) {
+      reportError(err, { context: 'library photo upload', itemId: item.id })
+      showToast(t('upload_failed'), 'error')
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -102,8 +104,9 @@ export function EditLibraryItemDialog({
       onUpdated(updated)
       showToast({ title: t('lib_item_updated_toast'), detail: updated.name }, 'success')
       onClose()
-    } catch {
-      showToast(t('action_failed'), 'info')
+    } catch (err) {
+      reportError(err, { context: 'library item update', itemId: item.id })
+      showToast(t('action_failed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -251,10 +254,12 @@ export function EditLibraryItemDialog({
                       try {
                         onUpdated(await libraryApi.setLibraryImageMain(item.id, img.id))
                         showToast(t('lib_item_updated_toast'))
-                      } catch {
-                        showToast(t('action_failed'), 'info')
+                      } catch (err) {
+                        reportError(err, { context: 'library set main image', itemId: item.id, imageId: img.id })
+                        showToast(t('action_failed'), 'error')
                       }
                     }}
+                    aria-label={img.isMain ? t('main_image') : t('set_as_main')}
                     className={`absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full transition-colors ${img.isMain ? 'bg-sand-green-dark text-white' : 'bg-black/40 text-white hover:bg-sand-green-dark'}`}
                     title={img.isMain ? t('main_image') : t('set_as_main')}
                   >
@@ -271,6 +276,7 @@ export function EditLibraryItemDialog({
                         'library_photo_removed_toast'
                       )
                     }
+                    aria-label={t('delete')}
                     className="absolute right-1 top-1 hidden h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70 group-hover:flex"
                     title={t('delete')}
                   >

@@ -1,7 +1,7 @@
 import type { LibraryItem, LibraryItemType } from '../types'
 import type { TFunction } from 'i18next'
 
-const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
+export const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
 
 export type LibraryFormFields = {
   name: string

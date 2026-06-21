@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { HiCheckCircle, HiInformationCircle } from 'react-icons/hi2'
+import { HiCheckCircle, HiExclamationCircle, HiInformationCircle } from 'react-icons/hi2'
 import { FiTrash2 } from 'react-icons/fi'
 
-type ToastVariant = 'success' | 'info' | 'removal'
+type ToastVariant = 'success' | 'info' | 'error' | 'removal'
 
 type ToastMessage = string | { title: string; detail?: string }
 
@@ -27,17 +27,20 @@ const TOAST_MS = 3800
 const VARIANT_CHIP: Record<ToastVariant, string> = {
   success: 'bg-sand-green/25 text-sand-green',
   info: 'bg-sand-blue/30 text-sand-blue',
+  error: 'bg-[#b86a55]/30 text-[#e0a98f]',
   removal: 'bg-[#b86a55]/30 text-[#e0a98f]',
 }
 
 const VARIANT_BAR: Record<ToastVariant, string> = {
   success: 'bg-sand-green',
   info: 'bg-sand-blue',
+  error: 'bg-[#c98a72]',
   removal: 'bg-[#c98a72]',
 }
 
 function VariantIcon({ variant }: { variant: ToastVariant }) {
   if (variant === 'removal') return <FiTrash2 className="h-4 w-4" />
+  if (variant === 'error') return <HiExclamationCircle className="h-[18px] w-[18px]" />
   if (variant === 'info') return <HiInformationCircle className="h-[18px] w-[18px]" />
   return <HiCheckCircle className="h-[18px] w-[18px]" />
 }

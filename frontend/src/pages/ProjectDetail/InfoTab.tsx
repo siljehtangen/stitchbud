@@ -7,7 +7,8 @@ import { Field } from '../../components/Field'
 import { DateField } from '../../components/DateField'
 import { CoverImageGallery } from '../../components/CoverImageGallery'
 import { useConfirmDelete } from '../../hooks/useConfirmDelete'
-import { MAX_LIBRARY_PHOTOS } from '../../components/LibraryItemForm'
+import { MAX_LIBRARY_PHOTOS, LIBRARY_PHOTO_ACCEPT } from '../../components/LibraryItemForm'
+import { reportError } from '../../sentry'
 
 export function InfoTab({
   project,
@@ -38,7 +39,8 @@ export function InfoTab({
       const updated = await projectsApi.uploadCoverImage(projectId, file)
       onUpdate(updated)
       showToast(t('cover_added_toast'))
-    } catch {
+    } catch (err) {
+      reportError(err, { context: 'cover image upload', projectId })
       setCoverState(s => ({ ...s, error: t('upload_failed') }))
     } finally {
       setCoverState(s => ({ ...s, uploading: false }))
@@ -68,8 +70,13 @@ export function InfoTab({
           max={MAX_LIBRARY_PHOTOS}
           uploading={coverState.uploading}
           onSetMain={async key => {
-            onUpdate(await projectsApi.setCoverImageMain(projectId, key as number))
-            showToast(t('changes_saved_toast'))
+            try {
+              onUpdate(await projectsApi.setCoverImageMain(projectId, key as number))
+              showToast(t('changes_saved_toast'))
+            } catch (err) {
+              reportError(err, { context: 'set cover image main', projectId, imageId: key })
+              showToast(t('action_failed'), 'error')
+            }
           }}
           onRemove={key =>
             confirmDelete(
@@ -87,7 +94,7 @@ export function InfoTab({
         <input
           ref={coverImageRef}
           type="file"
-          accept="image/png,image/jpeg,image/jpg"
+          accept={LIBRARY_PHOTO_ACCEPT}
           onChange={handleCoverImageUpload}
           className="hidden"
         />

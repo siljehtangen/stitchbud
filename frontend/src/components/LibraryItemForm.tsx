@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '../context/ToastContext'
 import { libraryApi } from '../api'
 import type { LibraryItem, LibraryItemType } from '../types'
-import { typeLabel, libraryFieldsToPayload } from '../utils/libraryUtils'
+import { typeLabel, libraryFieldsToPayload, COLOR_ITEM_TYPES } from '../utils/libraryUtils'
 import { GiChopsticks, GiPirateHook, GiRolledCloth } from 'react-icons/gi'
 import { PiYarnFill } from 'react-icons/pi'
 import { LibraryItemTypeFields } from './LibraryItemTypeFields'
@@ -11,12 +11,13 @@ import { Field } from './Field'
 import { ColorPicker } from './ColorPicker'
 import { StarIcon, CloseIcon, PlusIcon } from './UiIcons'
 import { FiCheck, FiX } from 'react-icons/fi'
+import { reportError } from '../sentry'
 
 export { Field } from './Field'
 export { ColorPicker } from './ColorPicker'
 
 export const ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC', 'KNITTING_NEEDLE', 'CROCHET_HOOK']
-export const COLOR_ITEM_TYPES: LibraryItemType[] = ['YARN', 'FABRIC']
+export { COLOR_ITEM_TYPES } from '../utils/libraryUtils'
 
 export const TYPE_ICONS: Record<LibraryItemType, React.ReactNode> = {
   YARN: <PiYarnFill className="text-sand-green-dark" />,
@@ -127,22 +128,34 @@ export function LibraryItemForm({
         ...payload,
         colors: hasColors && colors.length > 0 ? payload.colors : undefined,
       })
-      if (!hideImageUpload && staged.length > 0) {
-        const main = staged.find(img => img.isMain)
-        const others = staged.filter(img => !img.isMain)
-        let updated = item
-        if (main) updated = await libraryApi.registerLibraryImage(item.id, main.file)
-        for (const img of others) {
-          updated = await libraryApi.registerLibraryImage(item.id, img.file)
+      try {
+        if (!hideImageUpload && staged.length > 0) {
+          const main = staged.find(img => img.isMain)
+          const others = staged.filter(img => !img.isMain)
+          let updated = item
+          if (main) updated = await libraryApi.registerLibraryImage(item.id, main.file)
+          for (const img of others) {
+            updated = await libraryApi.registerLibraryImage(item.id, img.file)
+          }
+          staged.forEach(p => URL.revokeObjectURL(p.preview))
+          setLibraryPhotos([])
+          onCreated(updated)
+        } else {
+          onCreated(item)
         }
-        staged.forEach(p => URL.revokeObjectURL(p.preview))
-        setLibraryPhotos([])
-        onCreated(updated)
-      } else {
-        onCreated(item)
+      } catch (uploadErr) {
+        reportError(uploadErr, { context: 'library create photo upload', itemId: item.id })
+        try {
+          await libraryApi.delete(item.id)
+        } catch (deleteErr) {
+          reportError(deleteErr, { context: 'library create rollback', itemId: item.id })
+          onCreated(item)
+        }
+        showToast(t('upload_failed'), 'error')
       }
-    } catch {
-      showToast(t('action_failed'), 'info')
+    } catch (err) {
+      reportError(err, { context: 'library create' })
+      showToast(t('action_failed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -160,6 +173,7 @@ export function LibraryItemForm({
             <button
               key={type}
               type="button"
+              aria-pressed={selectedType === type}
               onClick={() => {
                 onTypeChange(type)
                 setColors([])
@@ -229,6 +243,7 @@ export function LibraryItemForm({
                 <button
                   type="button"
                   onClick={() => setPhotoMain(i)}
+                  aria-label={img.isMain ? t('main_image') : t('set_as_main')}
                   className={`absolute top-1 left-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-colors ${img.isMain ? 'bg-sand-green text-white' : 'bg-black/40 text-white hover:bg-sand-green'}`}
                   title={img.isMain ? t('main_image') : t('set_as_main')}
                 >
@@ -237,6 +252,7 @@ export function LibraryItemForm({
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
+                  aria-label={t('delete')}
                   className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white hidden group-hover:flex items-center justify-center transition-colors"
                   title={t('delete')}
                 >

@@ -20,6 +20,7 @@ export default function Library() {
     setData: setItems,
     loading,
     error,
+    refetch,
   } = useAsyncData(() => libraryApi.getAll(), [] as LibraryItem[])
   const [adding, setAdding] = useState(false)
   const [selectedType, setSelectedType] = useState<LibraryItemType>('YARN')
@@ -130,7 +131,12 @@ export default function Library() {
           {loading ? (
             <div className="text-center py-12 text-warm-gray">{t('loading')}</div>
           ) : error ? (
-            <div className="text-center py-12 text-red-400 text-sm">{t('load_failed')}</div>
+            <div className="text-center py-12 space-y-3">
+              <p className="text-red-400 text-sm">{t('load_failed')}</p>
+              <button type="button" onClick={refetch} className="btn-ghost text-sm">
+                {t('retry')}
+              </button>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="card text-center py-10">
               <p className="text-warm-gray text-sm">{t('library_empty')}</p>

@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConfirmDialog } from '../context/ConfirmDialogContext'
 import { useToast } from '../context/ToastContext'
+import { reportError } from '../sentry'
 
 export function useConfirmDelete() {
   const { confirm } = useConfirmDialog()
@@ -21,8 +22,9 @@ export function useConfirmDelete() {
         await action()
         if (successToastKey) showToast(t(successToastKey as Parameters<typeof t>[0]), 'removal')
         return true
-      } catch {
-        showToast(t('action_failed'), 'info')
+      } catch (err) {
+        reportError(err, { context: 'confirm delete action' })
+        showToast(t('action_failed'), 'error')
         return false
       }
     },

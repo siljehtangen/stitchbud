@@ -122,7 +122,7 @@ export function AddMaterialDialog({
       setPendingItem(null)
       showToast(t('material_added_toast'))
     } catch {
-      showToast(t('upload_failed'), 'info')
+      showToast(t('upload_failed'), 'error')
     } finally {
       setSaving(false)
     }

@@ -32,6 +32,7 @@ export function LibraryFilterBar({
       <div className="flex gap-1.5 flex-wrap">
         <button
           type="button"
+          aria-pressed={filterType === null}
           onClick={() => setFilterType(null)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
             filterType === null ? 'bg-sand-blue text-ink' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'
@@ -43,6 +44,7 @@ export function LibraryFilterBar({
           <button
             key={type}
             type="button"
+            aria-pressed={filterType === type}
             onClick={() => setFilterType(filterType === type ? null : type)}
             className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filterType === type ? 'bg-sand-blue text-ink' : 'bg-soft-brown/20 text-warm-gray hover:bg-sand-blue/20'

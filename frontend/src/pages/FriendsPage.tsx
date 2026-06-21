@@ -119,7 +119,7 @@ export default function FriendsPage() {
       setFriends(f => [...f, newFriend])
       showToast(t('friends_accepted'))
     } catch {
-      showToast(t('friends_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'error')
     }
   }
 
@@ -129,7 +129,7 @@ export default function FriendsPage() {
       setRequests(r => r.filter(r => r.friendshipId !== req.friendshipId))
       showToast(t('friends_declined_toast'))
     } catch {
-      showToast(t('friends_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'error')
     }
   }
 
@@ -139,7 +139,7 @@ export default function FriendsPage() {
       setSentRequests(s => s.filter(r => r.friendshipId !== req.friendshipId))
       showToast(t('friends_cancelled_toast'))
     } catch {
-      showToast(t('friends_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'error')
     }
   }
 
@@ -149,7 +149,7 @@ export default function FriendsPage() {
       setFriends(f => f.filter(f => f.friendshipId !== friend.friendshipId))
       showToast(t('friends_removed_toast'))
     } catch {
-      showToast(t('friends_action_failed'), 'info')
+      showToast(t('friends_action_failed'), 'error')
     }
   }
 

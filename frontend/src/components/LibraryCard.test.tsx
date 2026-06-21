@@ -41,7 +41,7 @@ vi.mock('./LibraryItemForm', () => ({
     </div>
   ),
   ColorPicker: () => null,
-  MAX_LIBRARY_PHOTOS: 5,
+  MAX_LIBRARY_PHOTOS: 3,
   LIBRARY_PHOTO_ACCEPT: 'image/*',
   COLOR_ITEM_TYPES: ['YARN', 'FABRIC'],
   TYPE_ICONS: { YARN: 'y', FABRIC: 'f', KNITTING_NEEDLE: 'n', CROCHET_HOOK: 'h' },

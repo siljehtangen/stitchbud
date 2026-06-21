@@ -57,6 +57,7 @@ export function CoverImageGallery({
           <button
             type="button"
             onClick={() => onSetMain(img.key)}
+            aria-label={img.isMain ? t('main_image') : t('set_as_main')}
             className={`absolute top-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center shadow-sm transition-colors ${
               img.isMain
                 ? 'bg-sand-green-dark text-white'
@@ -69,6 +70,7 @@ export function CoverImageGallery({
           <button
             type="button"
             onClick={() => onRemove(img.key)}
+            aria-label={t('delete')}
             className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/85 text-warm-gray hover:bg-red-500 hover:text-white shadow-sm hidden group-hover:flex items-center justify-center transition-colors"
             title={t('delete')}
           >

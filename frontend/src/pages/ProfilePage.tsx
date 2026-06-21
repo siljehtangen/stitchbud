@@ -56,7 +56,7 @@ function DangerAction({
       await onConfirm()
       setConfirming(false)
     } catch {
-      showToast(t('action_failed'), 'info')
+      showToast(t('action_failed'), 'error')
     } finally {
       setPending(false)
     }
