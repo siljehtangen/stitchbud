@@ -40,7 +40,7 @@ export default function App() {
         <ToastProvider>
           <ConfirmDialogProvider>
             <AuthProvider>
-              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              <BrowserRouter>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={<Landing />} />

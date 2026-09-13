@@ -1,15 +1,17 @@
 import { Document, Page, Text, View, StyleSheet, Image, Link, Font } from '@react-pdf/renderer'
 
 Font.register({
-  family: 'Inter',
+  family: 'Fraunces',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZs.woff' },
     {
-      src: 'https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZs.woff',
+      src: 'https://fonts.gstatic.com/s/fraunces/v38/6NUh8FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0K7iN7hzFUPJH58nib1603gg7S2nfgRYIctxujDQ.woff',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/fraunces/v38/6NUh8FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0K7iN7hzFUPJH58nib1603gg7S2nfgRYIcUByjDQ.woff',
       fontWeight: 'bold',
     },
     {
-      src: 'https://fonts.gstatic.com/s/inter/v20/UcCM3FwrK3iLTcvneQg7Ca725JhhKnNqk4j1ebLhAm8SrXTc2dthjg.woff',
+      src: 'https://fonts.gstatic.com/s/fraunces/v38/6NVf8FyLNQOQZAnv9ZwNjucMHVn85Ni7emAe9lKqZTnbB-gzTK0K1ChJdt9vIVYX9G37lvd9sPEKsxx664UJf1hLTf7V.woff',
       fontStyle: 'italic',
     },
   ],
@@ -26,15 +28,15 @@ import { materialImageUrls, projectCoverImageUrls } from '../projectOverviewMedi
 const accent = '#6FA8BC'
 
 const S = StyleSheet.create({
-  page: { fontFamily: 'Inter', fontSize: 10, color: '#333', padding: 48 },
-  h1: { fontSize: 22, fontFamily: 'Inter', fontWeight: 'bold', marginBottom: 4 },
+  page: { fontFamily: 'Fraunces', fontSize: 10, color: '#333', padding: 48 },
+  h1: { fontSize: 22, fontFamily: 'Fraunces', fontWeight: 'bold', marginBottom: 4 },
   meta: { fontSize: 9, color: '#888', marginBottom: 16 },
   coverImages: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
   coverImage: { flex: 1, minWidth: 100, height: 180, objectFit: 'contain', marginRight: 6 },
   section: { marginBottom: 22 },
   sectionTitle: {
     fontSize: 7.5,
-    fontFamily: 'Inter',
+    fontFamily: 'Fraunces',
     fontWeight: 'bold',
     color: accent,
     borderBottomWidth: 1,
@@ -162,8 +164,10 @@ export function ProjectOverviewPdf({
           </View>
           {ownerLabel && (
             <View style={{ alignItems: 'flex-end', paddingLeft: 12 }}>
-              <Text style={{ fontSize: 7.5, color: '#aaa', fontFamily: 'Inter' }}>{labels.createdBy}</Text>
-              <Text style={{ fontSize: 9, color: '#555', fontFamily: 'Inter', fontWeight: 'bold' }}>{ownerLabel}</Text>
+              <Text style={{ fontSize: 7.5, color: '#aaa', fontFamily: 'Fraunces' }}>{labels.createdBy}</Text>
+              <Text style={{ fontSize: 9, color: '#555', fontFamily: 'Fraunces', fontWeight: 'bold' }}>
+                {ownerLabel}
+              </Text>
             </View>
           )}
         </View>
