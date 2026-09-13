@@ -30,6 +30,7 @@
     "@react-pdf/renderer": "^4.9.0",
     "@sentry/react": "^10.74.0",
     "@supabase/supabase-js": "^2.116.0",
+    "@vercel/speed-insights": "^2.0.0",
     "i18next": "^26.4.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
