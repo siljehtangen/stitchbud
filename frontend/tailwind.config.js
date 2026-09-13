@@ -23,7 +23,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Instrument Serif', 'serif'],
+        serif: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'warm': '0 1px 2px rgba(76,41,35,.05), 0 18px 40px -24px rgba(76,41,35,.18)',

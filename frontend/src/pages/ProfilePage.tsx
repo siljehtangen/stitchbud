@@ -130,7 +130,6 @@ export default function ProfilePage() {
         <div className="relative min-w-0">
           {displayName && <p className="font-serif text-2xl leading-tight text-ink truncate">{displayName}</p>}
           <p className="text-sm text-warm-gray truncate">{email}</p>
-          <p className="text-xs text-warm-gray/90 mt-1 italic">{t('profile_tagline')}</p>
         </div>
       </div>
 

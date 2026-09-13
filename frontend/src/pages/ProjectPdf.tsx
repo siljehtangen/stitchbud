@@ -1,6 +1,21 @@
 import { Document, Page, Text, View, StyleSheet, Image, Link, Font } from '@react-pdf/renderer'
 
 Font.register({
+  family: 'Inter',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZs.woff' },
+    {
+      src: 'https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZs.woff',
+      fontWeight: 'bold',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/inter/v20/UcCM3FwrK3iLTcvneQg7Ca725JhhKnNqk4j1ebLhAm8SrXTc2dthjg.woff',
+      fontStyle: 'italic',
+    },
+  ],
+})
+
+Font.register({
   family: 'NotoSans',
   src: 'https://fonts.gstatic.com/s/notosans/v36/o-0mIpQlx3QUlC5A4PNB6Ryti20_6n1iPHjc5a7du2xxN0E.ttf',
 })
@@ -11,15 +26,16 @@ import { materialImageUrls, projectCoverImageUrls } from '../projectOverviewMedi
 const accent = '#6FA8BC'
 
 const S = StyleSheet.create({
-  page: { fontFamily: 'Helvetica', fontSize: 10, color: '#333', padding: 48 },
-  h1: { fontSize: 22, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
+  page: { fontFamily: 'Inter', fontSize: 10, color: '#333', padding: 48 },
+  h1: { fontSize: 22, fontFamily: 'Inter', fontWeight: 'bold', marginBottom: 4 },
   meta: { fontSize: 9, color: '#888', marginBottom: 16 },
   coverImages: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
   coverImage: { flex: 1, minWidth: 100, height: 180, objectFit: 'contain', marginRight: 6 },
   section: { marginBottom: 22 },
   sectionTitle: {
     fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Inter',
+    fontWeight: 'bold',
     color: accent,
     borderBottomWidth: 1,
     borderBottomColor: '#d6ebf2',
@@ -146,8 +162,8 @@ export function ProjectOverviewPdf({
           </View>
           {ownerLabel && (
             <View style={{ alignItems: 'flex-end', paddingLeft: 12 }}>
-              <Text style={{ fontSize: 7.5, color: '#aaa', fontFamily: 'Helvetica' }}>{labels.createdBy}</Text>
-              <Text style={{ fontSize: 9, color: '#555', fontFamily: 'Helvetica-Bold' }}>{ownerLabel}</Text>
+              <Text style={{ fontSize: 7.5, color: '#aaa', fontFamily: 'Inter' }}>{labels.createdBy}</Text>
+              <Text style={{ fontSize: 9, color: '#555', fontFamily: 'Inter', fontWeight: 'bold' }}>{ownerLabel}</Text>
             </View>
           )}
         </View>

@@ -81,7 +81,7 @@ export default function Dashboard() {
 
         <div className="relative p-5 md:p-7">
           <div className="flex items-center gap-3">
-            <h1 className="font-serif italic text-[28px] md:text-[38px] leading-[1.1] text-ink tracking-tight">
+            <h1 className="font-serif text-[28px] md:text-[38px] leading-[1.1] text-ink tracking-tight">
               {firstName ? `${t('welcome_back')}, ${firstName}` : t('welcome_back')}
             </h1>
             <GiButterfly className="animate-butterfly text-sand-green-dark text-3xl md:text-4xl shrink-0" aria-hidden />
